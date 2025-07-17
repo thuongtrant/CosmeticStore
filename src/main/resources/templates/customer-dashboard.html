@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard - Cosmetic Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+        .content-area {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .user-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        .nav-link {
+            color: white !important;
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+        }
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar p-4">
+                <h4 class="mb-4">🛍️ Customer Portal</h4>
+
+                <!-- User Info -->
+                <div class="user-info" id="userInfo">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar bg-white text-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                            <i class="fas fa-user fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0" id="displayUsername">Loading...</h6>
+                            <small id="displayRole">CUSTOMER</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <nav class="nav flex-column">
+                    <a class="nav-link active" href="#" onclick="showTab('overview')">
+                        <i class="fas fa-tachometer-alt me-2"></i> Tổng quan
+                    </a>
+                    <a class="nav-link" href="#" onclick="showTab('profile')">
+                        <i class="fas fa-user me-2"></i> Thông tin cá nhân
+                    </a>
+                    <a class="nav-link" href="#" onclick="showTab('orders')">
+                        <i class="fas fa-shopping-bag me-2"></i> Đơn hàng
+                    </a>
+                    <a class="nav-link" href="#" onclick="showTab('products')">
+                        <i class="fas fa-box me-2"></i> Sản phẩm
+                    </a>
+                    <hr class="my-3">
+                    <a class="nav-link" href="#" onclick="logout()">
+                        <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 content-area p-4">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 id="pageTitle">Tổng quan khách hàng</h2>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-success me-2">Online</span>
+                        <small class="text-muted" id="currentTime"></small>
+                    </div>
+                </div>
+
+                <!-- Overview Tab -->
+                <div id="tab-overview" class="tab-content">
+                    <div class="row mb-4">
+                        <div class="col-md-3 mb-3">
+                            <div class="stats-card p-4 text-center">
+                                <i class="fas fa-shopping-cart fa-2x text-success mb-2"></i>
+                                <h4 class="mb-1">12</h4>
+                                <small class="text-muted">Đơn hàng</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="stats-card p-4 text-center">
+                                <i class="fas fa-heart fa-2x text-danger mb-2"></i>
+                                <h4 class="mb-1">34</h4>
+                                <small class="text-muted">Yêu thích</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="stats-card p-4 text-center">
+                                <i class="fas fa-star fa-2x text-warning mb-2"></i>
+                                <h4 class="mb-1">56</h4>
+                                <small class="text-muted">Điểm tích lũy</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="stats-card p-4 text-center">
+                                <i class="fas fa-dollar-sign fa-2x text-info mb-2"></i>
+                                <h4 class="mb-1">$1,234</h4>
+                                <small class="text-muted">Tổng chi tiêu</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="stats-card p-4">
+                                <h5>Đơn hàng gần đây</h5>
+                                <div class="list-group list-group-flush">
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>Kem dưỡng ẩm Lancome</span>
+                                        <small class="text-success">Đã giao</small>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>Son môi Chanel</span>
+                                        <small class="text-warning">Đang giao</small>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>Nước hoa Dior</span>
+                                        <small class="text-info">Đã đặt</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="stats-card p-4">
+                                <h5>Ưu đãi dành cho bạn</h5>
+                                <div class="alert alert-success">
+                                    <i class="fas fa-gift me-2"></i>
+                                    Giảm 20% cho đơn hàng tiếp theo!
+                                </div>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-star me-2"></i>
+                                    Tích điểm để nhận quà tặng đặc biệt.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Tab -->
+                <div id="tab-profile" class="tab-content" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="stats-card p-4">
+                                <h5>Thông tin cá nhân</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>ID:</strong> <span id="profileId">-</span></p>
+                                        <p><strong>Tên đăng nhập:</strong> <span id="profileUsername">-</span></p>
+                                        <p><strong>Email:</strong> <span id="profileEmail">-</span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Vai trò:</strong> <span class="badge bg-success">CUSTOMER</span></p>
+                                        <p><strong>Trạng thái:</strong> <span class="badge bg-success">Hoạt động</span></p>
+                                        <p><strong>Ngày tham gia:</strong> <span id="joinDate">-</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Orders Tab -->
+                <div id="tab-orders" class="tab-content" style="display: none;">
+                    <div class="stats-card p-4">
+                        <h5>📦 Đơn hàng của tôi</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Mã đơn</th>
+                                        <th>Sản phẩm</th>
+                                        <th>Số lượng</th>
+                                        <th>Tổng tiền</th>
+                                        <th>Trạng thái</th>
+                                        <th>Ngày đặt</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>#001</td>
+                                        <td>Kem dưỡng ẩm Lancome</td>
+                                        <td>2</td>
+                                        <td>$89.99</td>
+                                        <td><span class="badge bg-success">Đã giao</span></td>
+                                        <td>12/07/2025</td>
+                                    </tr>
+                                    <tr>
+                                        <td>#002</td>
+                                        <td>Son môi Chanel</td>
+                                        <td>1</td>
+                                        <td>$45.50</td>
+                                        <td><span class="badge bg-warning">Đang giao</span></td>
+                                        <td>11/07/2025</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products Tab -->
+                <div id="tab-products" class="tab-content" style="display: none;">
+                    <div class="stats-card p-4">
+                        <h5>🛍️ Sản phẩm yêu thích</h5>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-star fa-2x text-warning mb-2"></i>
+                                        <h6>Kem dưỡng ẩm</h6>
+                                        <p class="text-muted">$29.99</p>
+                                        <button class="btn btn-success btn-sm">Mua lại</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-heart fa-2x text-danger mb-2"></i>
+                                        <h6>Son môi</h6>
+                                        <p class="text-muted">$19.99</p>
+                                        <button class="btn btn-success btn-sm">Mua lại</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-spray-can fa-2x text-info mb-2"></i>
+                                        <h6>Nước hoa</h6>
+                                        <p class="text-muted">$89.99</p>
+                                        <button class="btn btn-success btn-sm">Mua lại</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script>
+        let userInfo = null;
+        let authToken = localStorage.getItem('authToken');
+
+        // Check authentication on page load
+        window.onload = function() {
+            if (!authToken) {
+                alert('Bạn chưa đăng nhập! Đang chuyển hướng...');
+                window.location.href = '/login';
+                return;
+            }
+
+            loadUserInfo();
+            updateTime();
+            setInterval(updateTime, 1000);
+        };
+
+        // Load user information
+        function loadUserInfo() {
+            const storedUserInfo = localStorage.getItem('userInfo');
+            if (storedUserInfo) {
+                userInfo = JSON.parse(storedUserInfo);
+                updateUserDisplay();
+            }
+        }
+
+        // Update user display
+        function updateUserDisplay() {
+            if (userInfo) {
+                document.getElementById('displayUsername').textContent = userInfo.username;
+
+                // Profile tab
+                document.getElementById('profileId').textContent = userInfo.id;
+                document.getElementById('profileUsername').textContent = userInfo.username;
+                document.getElementById('profileEmail').textContent = userInfo.email;
+                document.getElementById('joinDate').textContent = new Date().toLocaleDateString();
+            }
+        }
+
+        // Update current time
+        function updateTime() {
+            document.getElementById('currentTime').textContent = new Date().toLocaleString();
+        }
+
+        // Show tab
+        function showTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.style.display = 'none');
+
+            // Remove active class from all nav links
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => link.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById('tab-' + tabName).style.display = 'block';
+
+            // Update page title
+            const titles = {
+                'overview': 'Tổng quan khách hàng',
+                'profile': 'Thông tin cá nhân',
+                'orders': 'Đơn hàng của tôi',
+                'products': 'Sản phẩm yêu thích'
+            };
+            document.getElementById('pageTitle').textContent = titles[tabName];
+
+            // Add active class to clicked nav link
+            event.target.classList.add('active');
+        }
+
+        // Logout
+        function logout() {
+            if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userInfo');
+                alert('Đăng xuất thành công!');
+                window.location.href = '/login';
+            }
+        }
+    </script>
+</body>
+</html>
+
