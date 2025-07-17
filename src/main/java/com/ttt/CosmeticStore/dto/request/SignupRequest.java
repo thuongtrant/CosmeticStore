@@ -1,5 +1,6 @@
 package com.ttt.CosmeticStore.dto.request;
 
+import com.ttt.CosmeticStore.validation.StrongPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -15,7 +16,15 @@ public class SignupRequest {
     private String email;
 
     @NotBlank(message = "Password không được để trống")
-    @Size(min = 6, max = 40, message = "Password phải có độ dài từ 6-40 ký tự")
+    @Size(min = 8, max = 40, message = "Password phải có độ dài từ 8-40 ký tự")
+    @StrongPassword(
+        minLength = 8,
+        requireUppercase = true,
+        requireLowercase = true,
+        requireDigit = true,
+        requireSpecialChar = true,
+        message = "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt"
+    )
     private String password;
 
     @Size(max = 15, message = "Phone không được vượt quá 15 ký tự")

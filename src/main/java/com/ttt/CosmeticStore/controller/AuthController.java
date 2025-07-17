@@ -95,41 +95,6 @@ public class AuthController {
         return ResponseEntity.ok("Đăng ký thành công!");
     }
 
-//    // THÊM API ENDPOINT CHO ADMIN DASHBOARD TEST
-//    @GetMapping("/admin/dashboard")
-//    @PreAuthorize("hasRole('ADMIN')")
-//    public ResponseEntity<?> getAdminDashboard(Authentication authentication) {
-//        // Kiểm tra xác thực và quyền admin
-//        if (authentication == null || !authentication.isAuthenticated()) {
-//            return ResponseEntity.status(401).body(Map.of("error", "Chưa đăng nhập"));
-//        }
-//
-//        // Kiểm tra quyền ADMIN một cách chặt chẽ
-//        boolean hasAdminRole = authentication.getAuthorities().stream()
-//                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-//
-//        if (!hasAdminRole) {
-//            return ResponseEntity.status(403).body(Map.of("error", "Bạn không có quyền truy cập. Chỉ Admin mới được phép."));
-//        }
-//
-//        // Tạo response data cho dashboard
-//        Map<String, Object> dashboardData = new HashMap<>();
-//        dashboardData.put("adminName", authentication.getName());
-//        dashboardData.put("role", "ADMIN");
-//        dashboardData.put("message", "Chào mừng đến Dashboard Admin!");
-//        dashboardData.put("timestamp", System.currentTimeMillis());
-//
-//        // Thêm thống kê mock data
-//        Map<String, Object> statistics = new HashMap<>();
-//        statistics.put("totalUsers", 150);
-//        statistics.put("totalProducts", 89);
-//        statistics.put("totalOrders", 245);
-//        statistics.put("monthlyRevenue", 125000000);
-//
-//        dashboardData.put("statistics", statistics);
-//
-//        return ResponseEntity.ok(dashboardData);
-//    }
 
     @GetMapping("/dashboard")
     @PreAuthorize("hasRole('ADMIN')")
@@ -198,3 +163,38 @@ public class AuthController {
 //        }
 //    }
 }
+//    // THÊM API ENDPOINT CHO ADMIN DASHBOARD TEST
+//    @GetMapping("/admin/dashboard")
+//    @PreAuthorize("hasRole('ADMIN')")
+//    public ResponseEntity<?> getAdminDashboard(Authentication authentication) {
+//        // Kiểm tra xác thực và quyền admin
+//        if (authentication == null || !authentication.isAuthenticated()) {
+//            return ResponseEntity.status(401).body(Map.of("error", "Chưa đăng nhập"));
+//        }
+//
+//        // Kiểm tra quyền ADMIN một cách chặt chẽ
+//        boolean hasAdminRole = authentication.getAuthorities().stream()
+//                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+//
+//        if (!hasAdminRole) {
+//            return ResponseEntity.status(403).body(Map.of("error", "Bạn không có quyền truy cập. Chỉ Admin mới được phép."));
+//        }
+//
+//        // Tạo response data cho dashboard
+//        Map<String, Object> dashboardData = new HashMap<>();
+//        dashboardData.put("adminName", authentication.getName());
+//        dashboardData.put("role", "ADMIN");
+//        dashboardData.put("message", "Chào mừng đến Dashboard Admin!");
+//        dashboardData.put("timestamp", System.currentTimeMillis());
+//
+//        // Thêm thống kê mock data
+//        Map<String, Object> statistics = new HashMap<>();
+//        statistics.put("totalUsers", 150);
+//        statistics.put("totalProducts", 89);
+//        statistics.put("totalOrders", 245);
+//        statistics.put("monthlyRevenue", 125000000);
+//
+//        dashboardData.put("statistics", statistics);
+//
+//        return ResponseEntity.ok(dashboardData);
+//    }

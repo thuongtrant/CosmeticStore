@@ -236,9 +236,14 @@
                                                th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''"
                                                placeholder="Nhập mật khẩu...">
                                         <div th:if="${#fields.hasErrors('password')}" class="invalid-feedback">
-                                            <span th:errors="*{password}"></span>
+                                            <ul class="mb-0 ps-3">
+                                                <li th:each="error : ${#fields.errors('password')}" th:text="${error}"></li>
+                                            </ul>
                                         </div>
-                                        <small class="text-muted">6-40 ký tự</small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Mật khẩu mạnh: 8+ ký tự, có chữ hoa, thường, số và ký tự đặc biệt
+                                        </small>
                                     </div>
 
                                     <div class="col-md-6 mb-3">
