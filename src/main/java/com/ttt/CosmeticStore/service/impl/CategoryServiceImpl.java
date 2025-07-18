@@ -1,42 +1,65 @@
 package com.ttt.CosmeticStore.service.impl;
 
+import com.ttt.CosmeticStore.dto.request.CategoryRequest;
+import com.ttt.CosmeticStore.dto.response.CategoryResponse;
 import com.ttt.CosmeticStore.entity.Category;
 import com.ttt.CosmeticStore.repository.CategoryRepository;
 import com.ttt.CosmeticStore.service.CategoryService;
-import lombok.RequiredArgsConstructor;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
-    private final CategoryRepository categoryRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     @Override
-    public List<Category> getAllCategories() {
-        return categoryRepository.findAllByOrderByNameAsc();
+    public List<CategoryResponse> getAllCategories() {
+        return categoryRepository.findAll()
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Optional<Category> getCategoryById(Long id) {
-        return categoryRepository.findById(id);
+    public CategoryResponse getCategoryById(Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy danh mục với ID: " + id));
+        return convertToResponse(category);
     }
 
     @Override
-    public Category saveCategory(Category category) {
-        return categoryRepository.save(category);
+    public CategoryResponse createCategory(CategoryRequest request) {
+        Category category = new Category();
+        category.setName(request.getName());
+        return convertToResponse(categoryRepository.save(category));
+    }
+
+    @Override
+    public CategoryResponse updateCategory(Long id, CategoryRequest request) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy danh mục với ID: " + id));
+        category.setName(request.getName());
+        return convertToResponse(categoryRepository.save(category));
     }
 
     @Override
     public void deleteCategory(Long id) {
+        if (!categoryRepository.existsById(id)) {
+            throw new EntityNotFoundException("Không tìm thấy danh mục với ID: " + id);
+        }
         categoryRepository.deleteById(id);
     }
 
-    @Override
-    public Optional<Category> getCategoryByName(String name) {
-        return categoryRepository.findByName(name);
+    private CategoryResponse convertToResponse(Category category) {
+        CategoryResponse response = new CategoryResponse();
+        response.setId(category.getId());
+        response.setName(category.getName());
+        return response;
     }
 }

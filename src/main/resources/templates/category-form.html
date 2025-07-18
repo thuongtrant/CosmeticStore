@@ -33,10 +33,11 @@
                 </div>
                 <div class="card-body">
                     <form th:object="${category}"
-                          th:action="${category.id} ? @{/admin/category/{id}(id=${category.id})} : @{/admin/category}"
+                          th:action="${category.id} ? @{/admin/categories/{id}(id=${category.id})} : @{/admin/categories}"
                           method="post">
 
-                        <!-- Category Name -->
+
+                    <!-- Category Name -->
                         <div class="mb-4">
                             <label for="name" class="form-label">
                                 <i class="fas fa-tag"></i> Tên danh mục <span class="text-danger">*</span>

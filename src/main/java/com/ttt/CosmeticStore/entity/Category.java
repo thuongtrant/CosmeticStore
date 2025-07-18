@@ -1,6 +1,7 @@
 package com.ttt.CosmeticStore.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,6 +18,7 @@ public class Category {
 
     @Size(max = 255)
     @Column(name = "name")
+    @NotBlank(message = "Tên danh mục không được để trống")
     private String name;
 
 }

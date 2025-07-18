@@ -1,14 +1,16 @@
 package com.ttt.CosmeticStore.service;
 
+import com.ttt.CosmeticStore.dto.request.CategoryRequest;
+import com.ttt.CosmeticStore.dto.response.CategoryResponse;
 import com.ttt.CosmeticStore.entity.Category;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface CategoryService {
-    List<Category> getAllCategories();
-    Optional<Category> getCategoryById(Long id);
-    Category saveCategory(Category category);
+    List<CategoryResponse> getAllCategories();
+    CategoryResponse getCategoryById(Long id);
+    CategoryResponse createCategory(CategoryRequest request);
+    CategoryResponse updateCategory(Long id, CategoryRequest request);
     void deleteCategory(Long id);
-    Optional<Category> getCategoryByName(String name);
 }
