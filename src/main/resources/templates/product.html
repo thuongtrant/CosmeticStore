@@ -3,104 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Form danh mục - BFY Store </title>
+    <title>Quản lý sản phẩm - BFY Store</title>
     <th:block th:replace="base :: resources"></th:block>
     <th:block th:replace="base :: styles"></th:block>
 </head>
 <body>
 <div th:replace="base :: header"></div>
-<!--<div class="container mt-4">-->
-<!--    <div class="container-fluid mt-4">-->
-<!--        <div class="row">-->
-<!--            <div class="col-12">-->
-<!--                <div class="d-flex justify-content-between align-items-center mb-4">-->
-<!--                    <h2><i class="fas fa-list"></i> Quản lý sản phẩm</h2>-->
-<!--                    <div>-->
-<!--                        <a th:href="@{/admin/product/new}" class="btn btn-secondary"-->
-<!--                           style="background-color: #d6ada9; color: white; border-color: #d6ada9; padding: 8px 12px; border-radius: 3px; text-decoration: none; margin: 10px">-->
-<!--                            <i class="fas fa-plus"></i> Thêm sản phẩm mới-->
-<!--                        </a>-->
-<!--                        <a th:href="@{/dashboard}" class="btn btn-secondary">-->
-<!--                            <i class="fas fa-arrow-left"></i> Quay lại Dashboard-->
-<!--                        </a>-->
-<!--                    </div>-->
-<!--                </div>-->
-
-<!--                <div class="card">-->
-<!--                    <div class="card-header">-->
-<!--                        <h5><i class="fas fa-list"></i> Danh sách sản phẩm</h5>-->
-<!--                    </div>-->
-<!--                    <div class="card-body">-->
-<!--                        <div class="row">-->
-<!--                            <div th:each="product : ${products}" class="col-md-4 mb-3">-->
-<!--                                <div class="card-body">-->
-<!--                                    <h5 th:text="${product.name}"></h5>-->
-<!--                                    <p><strong>Loại:</strong> <span th:text="${product.type}"></span></p>-->
-<!--                                    <p><strong>Giá:</strong> <span th:text="${product.price}"></span> đ</p>-->
-<!--                                    <p><strong>Kho:</strong> <span th:text="${product.inventory}"></span></p>-->
-<!--                                    <p><strong>Danh mục:</strong> <span th:text="${product.category.name}"></span></p>-->
-<!--                                    <a th:href="@{'/admin/product/edit/' + ${product.id}}" class="btn btn-warning"-->
-<!--                                       style="background-color: #a6f1ff; border-color: #a6f1ff">Sửa</a>-->
-
-<!--                                    <a th:href="@{'/admin/product/delete/' + ${product.id}}"-->
-<!--                                       onclick="return confirm('Xóa sản phẩm này?')"-->
-<!--                                       class="btn btn-danger btn-sm">Xóa</a>-->
-<!--                                </div>-->
-<!--                            </div>-->
-<!--                        </div>-->
-
-<!--                        <div th:if="${#lists.isEmpty(products)}" class="text-center py-5">-->
-<!--                            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>-->
-<!--                            <h5 class="text-muted">Chưa có sản phẩm nào</h5>-->
-<!--                            <p class="text-muted">Hãy thêm sản phẩm đầu tiên để bắt đầu quản lý sản phẩm</p>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </div>-->
-
-<!--</div>-->
 <div class="container mt-5">
     <div class="row mb-4">
-        <div class="col">
-            <h2>Quản lý sản phẩm</h2>
-        </div>
+<!--        <div class="col">-->
+<!--            <h2>Quản lý sản phẩm</h2>-->
+<!--        </div>-->
         <div class="col text-end">
-            <a th:href="@{/admin/product/new}" class="btn btn-primary"
-               style="background-color: #d6ada9; color: white; border-color: #d6ada9; padding: 8px 12px; border-radius: 3px;
-                text-decoration: none; margin: 10px">Thêm sản phẩm mới</a>
+            <a th:href="@{/admin/products/add}" class="btn btn-primary"
+               style="background-color: #d6ada9; color: white; border-color: #d6ada9; padding: 8px 12px; border-radius: 3px; text-decoration: none; margin: 10px">
+                Thêm sản phẩm mới
+            </a>
             <a th:href="@{/admin/dashboard}" class="btn btn-secondary">Quay lại Dashboard</a>
         </div>
     </div>
-
     <div class="card">
         <div class="card-header">
             <h4>Danh sách sản phẩm</h4>
         </div>
         <div class="card-body">
             <div th:if="${products != null and not #lists.isEmpty(products)}">
-                <table class="table table-striped">
+                <table class="table table-striped align-middle">
                     <thead>
                     <tr>
-                        <th>Tên</th>
-                        <th>Loại</th>
+                        <th>Ảnh đại diện</th>
+                        <th>Tên sản phẩm</th>
                         <th>Giá</th>
-                        <th>Kho</th>
                         <th>Danh mục</th>
+                        <th>Ảnh phụ</th>
                         <th>Hành động</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:each="product : ${products}">
-                        <td th:text="${product.name}"></td>
-                        <td th:text="${product.type}"></td>
-                        <td th:text="${product.price} + ' đ'"></td>
-                        <td th:text="${product.inventory}"></td>
-                        <td th:text="${product.category?.name}"></td>
                         <td>
-                            <a th:href="@{/admin/product/edit/{id}(id=${product.id})}" class="btn btn-warning btn-sm" style="background-color: #a6f1ff; border-color: #a6f1ff">Sửa</a>
-                            <a th:href="@{/admin/product/delete/{id}(id=${product.id})}" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')">Xóa</a>
+                            <img th:if="${product.mainImage}" th:src="${product.mainImage}"
+                                 alt="main image" style="height:60px;width:auto;border-radius:6px;">
+                        </td>
+                        <td th:text="${product.name}"></td>
+                        <td th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                        <td th:text="${product.categoryName}"></td>
+                        <td>
+                            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                                <img th:each="img : ${product.images}" th:src="${img}"
+                                     alt="img" style="height:32px;width:auto;border-radius:3px;">
+                            </div>
+                        </td>
+
+                        <td>
+                            <a th:href="@{/admin/products/{id}/edit(id=${product.id})}" class="btn btn-warning btn-sm" style="background-color: #a6f1ff; border-color: #a6f1ff">Sửa</a>
+                            <a th:href="@{/admin/products/{id}/delete(id=${product.id})}" class="btn btn-danger btn-sm"
+                               onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')">Xóa</a>
                         </td>
                     </tr>
                     </tbody>

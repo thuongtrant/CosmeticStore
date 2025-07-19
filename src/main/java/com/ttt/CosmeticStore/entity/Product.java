@@ -1,12 +1,15 @@
 package com.ttt.CosmeticStore.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -44,9 +47,11 @@ public class Product {
 
     @Size(max = 500)
     @Column(name = "name", length = 500)
+    @NotBlank(message = "Tên sản phẩm không được để trống")
     private String name;
 
     @Column(name = "price", precision = 38, scale = 2)
+    @NotNull(message = "Giá sản phẩm không được để trống")
     private BigDecimal price;
 
     @Size(max = 100)
@@ -57,4 +62,8 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    private String mainImageUrl; // Ảnh đại diện sản phẩm
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Image> images = new ArrayList<>();
 }

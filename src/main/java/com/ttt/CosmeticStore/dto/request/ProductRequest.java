@@ -2,21 +2,22 @@ package com.ttt.CosmeticStore.dto.request;
 
 import lombok.Getter;
 import lombok.Setter;
-
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
 public class ProductRequest {
-    private Long id;
     private String name;
-    private String type;
-    private String benefits;
     private String description;
-    private String howToUse;
     private BigDecimal price;
     private Integer inventory;
-    private Boolean isBestSeller;
-    private Boolean isNew;
+    private String type;
+    private String benefits;
+    private String howToUse;
+    private Boolean isBestSeller; // mặc định null → xử lý ở service nếu null thì false
+    private Boolean isNew;        // tương tự
     private Long categoryId;
+    private String mainImage;         // url ảnh đại diện
+    private List<String> images;      // list url ảnh phụ
 }

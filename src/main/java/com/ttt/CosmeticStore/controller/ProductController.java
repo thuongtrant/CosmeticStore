@@ -1,196 +1,131 @@
-//package com.ttt.CosmeticStore.controller;
-//
-//import com.cloudinary.Cloudinary;
-//import com.ttt.CosmeticStore.dto.request.ProductRequest;
-//import com.ttt.CosmeticStore.entity.Category;
-//import com.ttt.CosmeticStore.entity.Image;
-//import com.ttt.CosmeticStore.entity.Product;
-//import com.ttt.CosmeticStore.repository.CategoryRepository;
-//import com.ttt.CosmeticStore.repository.ImageRepository;
-//import com.ttt.CosmeticStore.service.ProductService;
-//import lombok.RequiredArgsConstructor;
-//import org.springframework.stereotype.Controller;
-//import org.springframework.ui.Model;
-//import org.springframework.web.bind.annotation.*;
-//import org.springframework.web.multipart.MultipartFile;
-//
-//import java.io.IOException;
-//import java.util.List;
-//import java.util.Map;
-//
-//@Controller
-//@RequestMapping("/admin/product")
-//@RequiredArgsConstructor
-//public class ProductController {
-//    private final ProductService productService;
-//    private final CategoryRepository categoryRepository;
-//    private final ImageRepository imageRepository;
-//    private final Cloudinary cloudinary;
-//
-//    @GetMapping
-//    public String listProducts(Model model) {
-//        List<Product> products = productService.getAllProducts();
-//        model.addAttribute("products", products);
-//        return "product";
-//    }
-//
-////    @GetMapping("/new")
-////    public String createForm(Model model) {
-////        model.addAttribute("productRequest", new ProductRequest());
-////        model.addAttribute("categories", categoryRepository.findAll());
-////        return "product-form";
-////    }
-//
-//    @PostMapping("/save")
-//    public String saveProduct(@ModelAttribute ProductRequest productRequest,
-//                              @RequestParam("imageFile") MultipartFile imageFile) throws IOException {
-//        productService.createProduct(productRequest, imageFile);
-//        return "redirect:/admin/product";
-//    }
-//
-////
-////    @GetMapping("/new")
-////    public String showAddProductForm(Model model) {
-////        model.addAttribute("productRequest", new ProductRequest());
-////        model.addAttribute("categories", categoryRepository.findAll());
-////        return "product-form";
-////    }
-//
-//    @GetMapping("/new")
-//    public String showAddProductForm(Model model) {
-//        model.addAttribute("productRequest", new ProductRequest());
-//        List<Category> categories = categoryRepository.findAll();
-//        model.addAttribute("categories", categories);
-//        if (categories.isEmpty()) {
-//            model.addAttribute("error", "Chưa có danh mục nào, vui lòng thêm danh mục trước.");
-//        }
-//        return "product-form";
-//    }
-//    @GetMapping("/edit/{id}")
-//    public String editForm(@PathVariable Long id, Model model) {
-//        Product product = productService.getProductById(id).orElseThrow();
-//        ProductRequest dto = productService.mapToRequest(product);
-//        model.addAttribute("productRequest", dto);
-//        model.addAttribute("categories", categoryRepository.findAll());
-//        return "product-form";
-//    }
-//
-//    @GetMapping("/delete/{id}")
-//    public String delete(@PathVariable Long id) {
-//        productService.deleteProduct(id);
-//        return "redirect:/admin/product";
-//    }
-//}
-
 package com.ttt.CosmeticStore.controller;
 
-import com.cloudinary.Cloudinary;
+import com.ttt.CosmeticStore.dto.request.CategoryRequest;
 import com.ttt.CosmeticStore.dto.request.ProductRequest;
-import com.ttt.CosmeticStore.entity.Category;
-import com.ttt.CosmeticStore.entity.Image;
-import com.ttt.CosmeticStore.entity.Product;
-import com.ttt.CosmeticStore.repository.CategoryRepository;
-import com.ttt.CosmeticStore.repository.ImageRepository;
+import com.ttt.CosmeticStore.dto.response.ProductResponse;
+import com.ttt.CosmeticStore.service.CategoryService;
 import com.ttt.CosmeticStore.service.ProductService;
+import com.ttt.CosmeticStore.service.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Controller
-@RequestMapping("/admin/product")
+@RequestMapping("/admin/products")
 @RequiredArgsConstructor
 public class ProductController {
+
     private final ProductService productService;
-    private final CategoryRepository categoryRepository;
-    private final ImageRepository imageRepository;
-    private final Cloudinary cloudinary;
+    private final CloudinaryService cloudinaryService;
+    private final CategoryService categoryService;
 
     @GetMapping
     public String listProducts(Model model) {
-        try {
-            List<Product> products = productService.getAllProducts();
-            model.addAttribute("products", products);
-            return "product";
-        } catch (Exception e) {
-            model.addAttribute("error", "Có lỗi xảy ra khi tải danh sách sản phẩm");
-            return "product";
-        }
+        model.addAttribute("products", productService.getAllProducts());
+        return "product";
+    }
+    @PostMapping("/test-upload")
+    @ResponseBody
+    public String testUpload(@RequestParam("files") MultipartFile[] files) {
+        return "So file: " + files.length;
     }
 
-    @GetMapping("/new")
-    public String showAddProductForm(Model model) {
+    @GetMapping("/add")
+    public String addProductForm(Model model) {
+        model.addAttribute("product", new ProductRequest());
+        model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("mode", "create");
+        return "product-form";
+    }
+
+    @PostMapping
+    public String createProduct(@ModelAttribute("product") ProductRequest request,
+                                @RequestParam("mainImageFile") MultipartFile mainImageFile,
+                                @RequestParam(value = "imageFiles", required = false) MultipartFile[] imageFiles,
+                                Model model) {
         try {
-            model.addAttribute("productRequest", new ProductRequest());
-            List<Category> categories = categoryRepository.findAll();
-            model.addAttribute("categories", categories);
-
-            if (categories.isEmpty()) {
-                model.addAttribute("error", "Chưa có danh mục nào, vui lòng thêm danh mục trước khi thêm sản phẩm.");
+            // upload main image
+            if (mainImageFile != null && !mainImageFile.isEmpty()) {
+                String mainImageUrl = cloudinaryService.uploadImage(mainImageFile);
+                request.setMainImage(mainImageUrl);
             }
+            // upload images phụ
+            List<String> imageUrls = new ArrayList<>();
+            if (imageFiles != null) {
+                for (MultipartFile image : imageFiles) {
+                    if (image != null && !image.isEmpty()) {
+                        String url = cloudinaryService.uploadImage(image);
+                        imageUrls.add(url);
+                    }
+                }
+            }
+            request.setImages(imageUrls);
 
-            return "product-form";
+            // Xử lý isBestSeller, isNew
+            if (request.getIsBestSeller() == null) request.setIsBestSeller(false);
+            if (request.getIsNew() == null) request.setIsNew(false);
+
+            productService.createProduct(request);
+            return "redirect:/admin/products";
         } catch (Exception e) {
-            model.addAttribute("error", "Có lỗi xảy ra khi tải form thêm sản phẩm");
-            return "redirect:/admin/product";
+            model.addAttribute("errorMessage", "Lỗi khi thêm sản phẩm: " + e.getMessage());
+            return "product-form";
         }
     }
 
     @GetMapping("/edit/{id}")
-    public String editForm(@PathVariable Long id, Model model) {
-        try {
-            Product product = productService.getProductById(id)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
-
-            ProductRequest dto = productService.mapToRequest(product);
-            dto.setId(id);
-
-            model.addAttribute("productRequest", dto);
-            model.addAttribute("categories", categoryRepository.findAll());
-
-            return "product-form";
-        } catch (Exception e) {
-            model.addAttribute("error", "Có lỗi xảy ra khi tải form sửa sản phẩm");
-            return "redirect:/admin/product";
-        }
+    public String editProductForm(@PathVariable Long id, Model model) {
+        ProductResponse response = productService.getProductById(id);
+        model.addAttribute("product", response);
+        model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("mode", "edit");
+        return "product-form";
     }
 
-    @PostMapping("/save")
-    public String saveProduct(@ModelAttribute ProductRequest productRequest,
-                              @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
-                              Model model) {
+    @PostMapping("/edit/{id}")
+    public String updateProduct(@PathVariable Long id,
+                                @ModelAttribute("product") ProductRequest request,
+                                @RequestParam(value = "mainImage", required = false) MultipartFile mainImage,
+                                @RequestParam(value = "images", required = false) MultipartFile[] images,
+                                Model model) {
         try {
-            // Kiểm tra danh mục có tồn tại không
-            if (productRequest.getCategoryId() == null) {
-                model.addAttribute("error", "Vui lòng chọn danh mục");
-                model.addAttribute("categories", categoryRepository.findAll());
-                return "product-form";
+            // upload main image nếu có upload mới
+            if (mainImage != null && !mainImage.isEmpty()) {
+                String mainImageUrl = cloudinaryService.uploadImage(mainImage);
+                request.setMainImage(mainImageUrl);
             }
+            // upload images phụ nếu có
+            List<String> imageUrls = new ArrayList<>();
+            if (images != null) {
+                for (MultipartFile image : images) {
+                    if (image != null && !image.isEmpty()) {
+                        String url = cloudinaryService.uploadImage(image);
+                        imageUrls.add(url);
+                    }
+                }
+            }
+            if (!imageUrls.isEmpty()) request.setImages(imageUrls);
 
-                productService.createProduct(productRequest, imageFile);
+            // Xử lý isBestSeller, isNew
+            if (request.getIsBestSeller() == null) request.setIsBestSeller(false);
+            if (request.getIsNew() == null) request.setIsNew(false);
 
-
-            return "redirect:/admin/product";
+            productService.updateProduct(id, request);
+            return "redirect:/products";
         } catch (Exception e) {
-            model.addAttribute("error", "Có lỗi xảy ra khi lưu sản phẩm: " + e.getMessage());
-            model.addAttribute("categories", categoryRepository.findAll());
+            model.addAttribute("errorMessage", "Lỗi khi cập nhật sản phẩm: " + e.getMessage());
             return "product-form";
         }
     }
 
-    @GetMapping("/delete/{id}")
-    public String delete(@PathVariable Long id, Model model) {
-        try {
-            productService.deleteProduct(id);
-            return "redirect:/admin/product";
-        } catch (Exception e) {
-            model.addAttribute("error", "Có lỗi xảy ra khi xóa sản phẩm");
-            return "redirect:/admin/product";
-        }
+    @PostMapping("/delete/{id}")
+    public String deleteProduct(@PathVariable Long id) {
+        productService.deleteProduct(id);
+        return "redirect:/products";
     }
 }
