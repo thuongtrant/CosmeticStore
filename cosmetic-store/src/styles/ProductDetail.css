@@ -1,0 +1,55 @@
+/* ProductDetail.css */
+.nav-tabs .nav-link {
+    color: #333;
+    font-weight: 500;
+}
+.nav-tabs .nav-link.active {
+    background-color: #f8f9fa;
+    color: #E0B7B3;
+    border-bottom: 2px solid #eabbb7;
+}
+.nav-tabs .nav-link:hover {
+    color: #E0B7B3;
+}
+.card-img-top {
+    transition: transform 0.3s;
+}
+.card-img-top:hover {
+    transform: scale(1.02);
+}
+.price {
+    color:#E0B7B3 ;
+}
+/* ProductDetail.css */
+.main-image:hover {
+    transform: scale(1.05); /* Hiệu ứng phóng to nhẹ khi hover */
+}
+
+.thumbnail-image:hover {
+    border: 2px solid #eabbb7 !important; /* Viền nổi bật khi hover thumbnail */
+    transform: scale(1.1); /* Phóng to nhẹ */
+    transition: all 0.2s ease;
+}
+
+.card {
+    border-radius: 8px;
+    overflow: hidden; /* Đảm bảo hình ảnh không tràn ra ngoài */
+}
+
+.d-grid {
+    justify-content: start; /* Căn trái các thumbnail */
+}
+
+/* Responsive cho màn hình nhỏ */
+@media (max-width: 768px) {
+    .main-image {
+        height: 250px !important; /* Giảm kích thước ảnh chính trên mobile */
+    }
+    .d-grid {
+        grid-template-columns: repeat(auto-fit, minmax(50px, 1fr)); /* Thumbnail nhỏ hơn trên mobile */
+    }
+    .thumbnail-image {
+        width: 50px !important;
+        height: 50px !important;
+    }
+}
