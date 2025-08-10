@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form danh mục - BFY Store </title>
+    <th:block th:replace="base :: resources"></th:block>
+    <th:block th:replace="base :: styles"></th:block>
+</head>
+<body>
+<div th:replace="base :: header"></div>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-edit"></i>
+                    <span th:if="${category.id}">Chỉnh sửa danh mục</span>
+                    <span th:unless="${category.id}">Thêm danh mục mới</span>
+                </h2>
+                <a href="/admin/categories" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Quay lại
+                </a>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5>
+                        <i class="fas fa-folder"></i>
+                        <span th:if="${category.id}">Chỉnh sửa thông tin danh mục</span>
+                        <span th:unless="${category.id}">Thông tin danh mục mới</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form th:object="${category}"
+                          th:action="${category.id} ? @{/admin/categories/{id}(id=${category.id})} : @{/admin/categories}"
+                          method="post">
+
+
+                    <!-- Category Name -->
+                        <div class="mb-4">
+                            <label for="name" class="form-label">
+                                <i class="fas fa-tag"></i> Tên danh mục <span class="text-danger">*</span>
+                            </label>
+                            <input type="text"
+                                   class="form-control form-control-lg"
+                                   id="name"
+                                   th:field="*{name}"
+                                   placeholder="Nhập tên danh mục (ví dụ: Chăm sóc da, Trang điểm...)"
+                                   required>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle"></i>
+                                Tên danh mục sẽ được hiển thị trong menu và trang sản phẩm
+                            </div>
+                        </div>
+
+                        <div th:if="${category.id}" class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-hashtag"></i> ID danh mục
+                            </label>
+                            <input type="text"
+                                   class="form-control"
+                                   th:value="${category.id}"
+                                   readonly
+                                   style="background-color: #f8f9fa;">
+                            <div class="form-text">
+                                ID này được tự động tạo và không thể thay đổi
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a href="/admin/categories" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> Hủy
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg" style="background-color: #d6ada9; color: white; border-color: #d6ada9;">
+                                <i class="fas fa-save"></i>
+                                <span th:if="${category.id}">Cập nhật danh mục</span>
+                                <span th:unless="${category.id}">Thêm danh mục</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+</body>
+</html>

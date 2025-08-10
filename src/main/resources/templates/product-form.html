@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Thêm/Sửa sản phẩm - BFY Store</title>
+    <th:block th:replace="base :: resources"></th:block>
+    <th:block th:replace="base :: styles"></th:block>
+</head>
+<body>
+<div th:replace="base :: header"></div>
+<div class="container mt-5">
+    <h2 th:text="${mode == 'edit'} ? 'Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới'">Thêm Sản Phẩm Mới</h2>
+    <form th:object="${product}" th:action="@{/admin/products}" method="post" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="name" class="form-label">Tên sản phẩm</label>
+            <input type="text" class="form-control" id="name" th:field="*{name}" required>
+        </div>
+        <div class="mb-3">
+            <label for="price" class="form-label">Giá (VND)</label>
+            <input type="number" step="0.01" class="form-control" id="price" th:field="*{price}" required>
+        </div>
+        <div class="mb-3">
+            <label for="inventory" class="form-label">Số lượng tồn kho</label>
+            <input type="number" class="form-control" id="inventory" th:field="*{inventory}" required>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Mô tả</label>
+            <textarea class="form-control" id="description" th:field="*{description}" rows="4"></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="type" class="form-label">Loại sản phẩm</label>
+            <input type="text" class="form-control" id="type" th:field="*{type}">
+        </div>
+        <div class="mb-3">
+            <label for="benefits" class="form-label">Lợi ích</label>
+            <textarea class="form-control" id="benefits" th:field="*{benefits}" rows="3"></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="howToUse" class="form-label">Cách sử dụng</label>
+            <textarea class="form-control" id="howToUse" th:field="*{howToUse}" rows="3"></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="ingredientIds" class="form-label">Thành phần</label>
+            <select id="ingredientIds" th:field="*{ingredientIds}" class="form-select" multiple>
+                <option th:each="ing : ${ingredients}" th:value="${ing.id}" th:text="${ing.name}"></option>
+            </select>
+        </div>
+
+        <!-- Chọn nhiều loại da phù hợp (Skin Types) -->
+        <div class="mb-3">
+            <label for="skinTypeIds" class="form-label">Loại da phù hợp</label>
+            <select id="skinTypeIds" th:field="*{skinTypeIds}" class="form-select" multiple>
+                <option th:each="skin : ${skinTypes}" th:value="${skin.id}" th:text="${skin.name}"></option>
+            </select>
+        </div>
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="isBestSeller" name="isBestSeller"
+                   th:checked="${product.isBestSeller}" th:value="true">
+            <label class="form-check-label" for="isBestSeller">Sản phẩm bán chạy</label>
+        </div>
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="isNew" name="isNew"
+                   th:checked="${product.isNew}" th:value="true">
+            <label class="form-check-label" for="isNew">Sản phẩm mới</label>
+        </div>
+        <div class="mb-3">
+            <label for="categoryId" class="form-label">Danh mục</label>
+            <select class="form-select" id="categoryId" th:field="*{categoryId}" required>
+                <option value="">Chọn danh mục</option>
+                <option th:each="category : ${categories}"
+                        th:value="${category.id}"
+                        th:text="${category.name}"></option>
+            </select>
+        </div>
+
+        <!-- main image -->
+        <input type="hidden" th:field="*{mainImage}">
+        <input type="file" class="form-control" id="mainImage" name="mainImageFile" accept="image/*">
+
+        <!-- images (list) -->
+        <input type="hidden" th:field="*{images}">
+        <input type="file" class="form-control" id="images" name="imageFiles" accept="image/*" multiple>
+
+        <button type="submit" class="btn btn-primary">Lưu</button>
+        <a th:href="@{/admin/products}" class="btn btn-secondary">Hủy</a>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+    </form>
+</div>
+</body>
+</html>
