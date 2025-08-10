@@ -15,9 +15,11 @@ public class ProductRequest {
     private String type;
     private String benefits;
     private String howToUse;
-    private Boolean isBestSeller; // mặc định null → xử lý ở service nếu null thì false
-    private Boolean isNew;        // tương tự
+    private Boolean isBestSeller;
+    private Boolean isNew;
     private Long categoryId;
-    private String mainImage;         // url ảnh đại diện
-    private List<String> images;      // list url ảnh phụ
+    private String mainImage;
+    private List<String> images;
+    private List<Long> ingredientIds;
+    private List<Long> skinTypeIds;
 }

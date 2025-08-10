@@ -66,4 +66,21 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "product_ingredient",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "ingredient_id")
+    )
+    private List<Ingredient> ingredients = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "product_skin_type",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "skin_type_id")
+    )
+    private List<SkinType> skinTypes = new ArrayList<>();
+
 }

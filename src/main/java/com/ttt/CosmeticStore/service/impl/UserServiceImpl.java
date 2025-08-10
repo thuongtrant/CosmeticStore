@@ -19,7 +19,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = getUserByUsername(username); // Tái sử dụng method
+        User user = getUserByUsername(username);
         return UserPrincipal.build(user);
     }
 

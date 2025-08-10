@@ -1,18 +1,20 @@
 package com.ttt.CosmeticStore.service.impl;
 
 import com.ttt.CosmeticStore.dto.request.ProductRequest;
+import com.ttt.CosmeticStore.dto.response.ProductDetailResponse;
 import com.ttt.CosmeticStore.dto.response.ProductResponse;
-import com.ttt.CosmeticStore.entity.Category;
-import com.ttt.CosmeticStore.entity.Image;
-import com.ttt.CosmeticStore.entity.Product;
+import com.ttt.CosmeticStore.entity.*;
 import com.ttt.CosmeticStore.exception.ResourceNotFoundException;
 import com.ttt.CosmeticStore.mapper.ProductMapper;
 import com.ttt.CosmeticStore.repository.CategoryRepository;
+import com.ttt.CosmeticStore.repository.IngredientRepository;
 import com.ttt.CosmeticStore.repository.ProductRepository;
+import com.ttt.CosmeticStore.repository.SkinTypeRepository;
 import com.ttt.CosmeticStore.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,6 +25,8 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductMapper productMapper;
+    private final IngredientRepository ingredientRepository;
+    private final SkinTypeRepository skinTypeRepository;
 
     @Override
     public List<ProductResponse> getAllProducts() {
@@ -39,6 +43,13 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    public ProductDetailResponse getProductDetailById(Long id) {
+        Product product = productRepository.findByIdWithDetails(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm với id " + id));
+        return productMapper.toDetailResponse(product);
+    }
+
+    @Override
     public ProductResponse createProduct(ProductRequest request) {
         Product product = productMapper.toEntity(request);
         // set category
@@ -46,6 +57,21 @@ public class ProductServiceImpl implements ProductService {
             Category category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục"));
             product.setCategory(category);
+        }
+        // Lấy list Ingredient theo id
+        if (request.getIngredientIds() != null && !request.getIngredientIds().isEmpty()) {
+            List<Ingredient> ingredients = ingredientRepository.findAllById(request.getIngredientIds());
+            product.setIngredients(ingredients);
+        } else {
+            product.setIngredients(new ArrayList<>());
+        }
+
+        // Lấy list SkinType theo id
+        if (request.getSkinTypeIds() != null && !request.getSkinTypeIds().isEmpty()) {
+            List<SkinType> skinTypes = skinTypeRepository.findAllById(request.getSkinTypeIds());
+            product.setSkinTypes(skinTypes);
+        } else {
+            product.setSkinTypes(new ArrayList<>());
         }
         Product saved = productRepository.save(product);
         return productMapper.toResponse(saved);
@@ -65,7 +91,16 @@ public class ProductServiceImpl implements ProductService {
                     .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục"));
             product.setCategory(category);
         }
+        if (request.getIngredientIds() != null) {
+            List<Ingredient> ingredients = ingredientRepository.findAllById(request.getIngredientIds());
+            product.setIngredients(ingredients);
+        }
 
+        // Lấy list SkinType theo id mới (nếu truyền lên)
+        if (request.getSkinTypeIds() != null) {
+            List<SkinType> skinTypes = skinTypeRepository.findAllById(request.getSkinTypeIds());
+            product.setSkinTypes(skinTypes);
+        }
         // update images
         if (request.getImages() != null) {
             product.getImages().clear(); // xóa hết ảnh cũ

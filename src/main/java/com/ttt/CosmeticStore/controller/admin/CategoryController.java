@@ -1,4 +1,4 @@
-package com.ttt.CosmeticStore.controller;
+package com.ttt.CosmeticStore.controller.admin;
 
 
 import com.ttt.CosmeticStore.dto.request.CategoryRequest;
