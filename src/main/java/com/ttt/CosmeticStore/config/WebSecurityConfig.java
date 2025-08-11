@@ -104,6 +104,9 @@ public class WebSecurityConfig {
                 // API endpoints cho user profile (cần authentication)
                 .requestMatchers("/api/secure/user/**").authenticated()
 
+                // API endpoints cho cart (cần authentication)
+                .requestMatchers("/api/cart/**").authenticated()
+
                 // Admin endpoints
                 .requestMatchers("/dashboard", "/dashboard/**").hasRole("ADMIN")
                 .requestMatchers("/admin/**").hasRole("ADMIN")

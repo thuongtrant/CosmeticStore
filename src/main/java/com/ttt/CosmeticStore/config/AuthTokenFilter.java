@@ -29,12 +29,17 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
-            // Chỉ áp dụng JWT filter cho API endpoints
             String requestURI = request.getRequestURI();
-            if (requestURI.startsWith("/api/")) {
+            System.out.println("🔍 AuthTokenFilter - Processing URI: " + requestURI);
+
+            // Áp dụng JWT filter cho tất cả API endpoints
+            if (requestURI.startsWith("/api/") && !requestURI.startsWith("/api/auth/")) {
                 String jwt = parseJwt(request);
+                System.out.println("🔑 JWT Token extracted: " + (jwt != null ? "Present" : "Null"));
+
                 if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
                     String username = jwtUtils.getUserNameFromJwtToken(jwt);
+                    System.out.println("👤 Username from JWT: " + username);
 
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                     UsernamePasswordAuthenticationToken authentication =
@@ -44,9 +49,13 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                                     userDetails.getAuthorities());
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+                    System.out.println("✅ Authentication set successfully");
+                } else {
+                    System.out.println("❌ JWT validation failed or token is null");
                 }
             }
         } catch (Exception e) {
+            System.out.println("🚨 AuthTokenFilter error: " + e.getMessage());
             logger.error("Cannot set user authentication: {}", e);
         }
 
