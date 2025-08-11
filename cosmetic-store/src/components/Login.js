@@ -5,14 +5,14 @@ import Apis from "../configs/Apis";
 import cookie from "react-cookies";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { MyDispatchContext } from "./../configs/MyContexts";
-
+import { CartDispatchContext } from "../configs/CartContext";
 const Login = () => {
     const dispatch = useContext(MyDispatchContext);
     const [user, setUser] = useState({});
     const [loading, setLoading] = useState(false);
     const nav = useNavigate();
     const [q] = useSearchParams();
-
+    const cartDispatch = useContext(CartDispatchContext);
     const info = [
         { label: "Tên đăng nhập", type: "text", field: "username" },
         { label: "Mật khẩu", type: "password", field: "password" }
@@ -34,6 +34,8 @@ const Login = () => {
             cookie.save('token', res.data.accessToken, { path: '/' });
             let userInfo = await authApis().get(endpoints['my-profile']);
             dispatch({ type: "login", payload: userInfo.data });
+            let cartRes = await authApis().get(endpoints["cartCount"]);
+            cartDispatch({ type: "set", payload: cartRes.data });
             let next = q.get('next');
             nav(next ? next : '/home');
         } catch (e) {
