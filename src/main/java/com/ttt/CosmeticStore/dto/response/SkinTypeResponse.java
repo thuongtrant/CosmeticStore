@@ -3,7 +3,7 @@ package com.ttt.CosmeticStore.dto.response;
 import lombok.Data;
 
 @Data
-public class CategoryResponse {
+public class SkinTypeResponse {
     private Long id;
     private String name;
 }

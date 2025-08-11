@@ -9,10 +9,16 @@ export const endpoints = {
     'my-profile': '/api/secure/user/my-profile',
 
     'listProduct': '/api/products/list',
-    'productDetail':productId => `/api/products/${productId}/detail`,
+    'productDetail': productId => `/api/products/${productId}/detail`,
+    'searchProducts': '/api/products/search',
+
+    // Filter APIs
+    'categories': '/api/filters/categories',
+    'ingredients': '/api/filters/ingredients',
+    'skinTypes': '/api/filters/skin-types',
 
     'addToCart': '/api/cart/add',
-    'cartCount':'/api/cart/count',
+    'cartCount': '/api/cart/count',
 };
 export const authApis = () => {
     const token = cookie.load('token');

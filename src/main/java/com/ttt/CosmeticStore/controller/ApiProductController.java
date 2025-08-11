@@ -1,6 +1,8 @@
 package com.ttt.CosmeticStore.controller;
 
 import com.ttt.CosmeticStore.dto.request.ProductRequest;
+import com.ttt.CosmeticStore.dto.request.ProductSearchRequest;
+import com.ttt.CosmeticStore.dto.response.PagedProductResponse;
 import com.ttt.CosmeticStore.dto.response.ProductDetailResponse;
 import com.ttt.CosmeticStore.dto.response.ProductResponse;
 import com.ttt.CosmeticStore.dto.response.ProductSimpleResponse;
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 public class ApiProductController {
 
     private final ProductService productService;
@@ -123,5 +126,44 @@ public class ApiProductController {
     @DeleteMapping("/{id}")
     public void deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<PagedProductResponse> searchProducts(@RequestBody ProductSearchRequest searchRequest) {
+        PagedProductResponse response = productService.searchProducts(searchRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<PagedProductResponse> searchProductsGet(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) List<Long> categoryIds,
+            @RequestParam(required = false) List<Long> ingredientIds,
+            @RequestParam(required = false) List<Long> skinTypeIds,
+            @RequestParam(required = false) java.math.BigDecimal minPrice,
+            @RequestParam(required = false) java.math.BigDecimal maxPrice,
+            @RequestParam(required = false) Boolean isBestSeller,
+            @RequestParam(required = false) Boolean isNew,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "20") Integer size) {
+
+        ProductSearchRequest searchRequest = new ProductSearchRequest();
+        searchRequest.setKeyword(keyword);
+        searchRequest.setCategoryIds(categoryIds);
+        searchRequest.setIngredientIds(ingredientIds);
+        searchRequest.setSkinTypeIds(skinTypeIds);
+        searchRequest.setMinPrice(minPrice);
+        searchRequest.setMaxPrice(maxPrice);
+        searchRequest.setIsBestSeller(isBestSeller);
+        searchRequest.setIsNew(isNew);
+        searchRequest.setSortBy(sortBy);
+        searchRequest.setSortDirection(sortDirection);
+        searchRequest.setPage(page);
+        searchRequest.setSize(size);
+
+        PagedProductResponse response = productService.searchProducts(searchRequest);
+        return ResponseEntity.ok(response);
     }
 }
