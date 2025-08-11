@@ -1,0 +1,25 @@
+.btn-add-cart {
+  border: 1px solid #000 !important;
+  color: #000 !important;
+  background-color: transparent !important;
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+.btn-add-cart:hover,
+.btn-add-cart:focus {
+  background-color: #E0B7B3 !important;
+  border-color: #E0B7B3 !important;
+  color: #fff !important;
+  text-decoration: none;
+}
+
+.btn-add-cart:active {
+  transform: translateY(0.5px);
+}
+.card-custom {
+  max-width: 300px;  /* chiều rộng tối đa của card */
+  margin: 0 auto;    /* canh giữa */
+}
+.price {
+    color:#E0B7B3 ;
+}
