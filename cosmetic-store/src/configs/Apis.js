@@ -13,6 +13,12 @@ export const endpoints = {
 
     'addToCart': '/api/cart/add',
     'cartCount':'/api/cart/count',
+    'cart':'/api/cart',
+
+    'categories' : '/api/filters/categories',
+    'ingredients':'/api/filters/ingredients',
+    'skin-types':'/api/filters/skin-types',
+    'search':'/api/products/search',
 };
 export const authApis = () => {
     const token = cookie.load('token');

@@ -13,7 +13,7 @@ import cookie from "react-cookies";
 import { CartContext, CartDispatchContext } from "./configs/CartContext";
 import cartReducer from "./reducers/CartReducer";
 import ProductDetail from "./components/Customer/ProductDetail";
-
+import Cart from "./components/Customer/Cart";
 function AppLayout() {
   const location = useLocation();
 
@@ -29,6 +29,7 @@ function AppLayout() {
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/productdetail/:productId" element={<ProductDetail />} />
+        <Route path="/cart" element={<Cart />} />
       </Routes>
       {!hideHeaderFooter && <Footer />}
     </>

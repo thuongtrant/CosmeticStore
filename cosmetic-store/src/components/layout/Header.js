@@ -66,6 +66,9 @@ import { MyUserContext, MyDispatchContext } from "../../configs/MyContexts";
 import { Link, useNavigate } from "react-router-dom";
 import { FaSearch, FaUser, FaShoppingBag } from "react-icons/fa";
 import { CartContext } from "../../configs/CartContext";
+import { NavLink } from "react-router-dom";
+import 'bootstrap/dist/css/bootstrap.min.css';
+import "../../styles/header.css";
 
 const Header = () => {
     const user = useContext(MyUserContext);
@@ -81,34 +84,30 @@ const Header = () => {
     return (
         <Navbar expand="lg" bg="white" className="shadow-sm py-3">
             <Container>
-                {/* Logo */}
                 <Navbar.Brand as={Link} to="/" style={{ color: "#E0B7B3", fontWeight: "bold" }}>
                     Beauty For You
                 </Navbar.Brand>
 
-                {/* Menu */}
                 <Nav className="mx-auto">
-                    <Nav.Link as={Link} to="/products" className="text-dark">
+                    <NavLink to="/home" className="nav-link-custom">
                         Sản phẩm
-                    </Nav.Link>
-                    <Nav.Link as={Link} to="/about" className="text-dark">
+                    </NavLink>
+                    <NavLink to="/about" className="nav-link-custom">
                         Về chúng tôi
-                    </Nav.Link>
-                    <Nav.Link as={Link} to="/news" className="text-dark">
+                    </NavLink>
+                    <NavLink to="/news" className="nav-link-custom">
                         Tin tức
-                    </Nav.Link>
+                    </NavLink>
                 </Nav>
 
-                {/* Icons & Auth */}
+
                 <div className="d-flex align-items-center">
-                    {/* Search */}
                     <FaSearch
                         className="mx-3"
                         style={{ cursor: "pointer" }}
                         title="Tìm kiếm"
                     />
 
-                    {/* User Dropdown */}
                     {user ? (
                         <Dropdown align="end">
                             <Dropdown.Toggle
@@ -144,7 +143,9 @@ const Header = () => {
                         </>
                     )}
 
-                    <div style={{ position: "relative", cursor: "pointer", margin:"10px 14px 14px 12px" }}>
+                    <div style={{ position: "relative", cursor: "pointer", margin: "10px 14px 14px 12px" }}
+                        onClick={() => nav("/cart")}>
+
                         <FaShoppingBag style={{ fontSize: "18px" }} />
                         {cartCount > 0 && (
                             <span

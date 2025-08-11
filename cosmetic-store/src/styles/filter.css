@@ -1,0 +1,95 @@
+/* Hộp lọc tổng */
+.filter-box {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(224, 183, 179, 0.25);
+  border: 1px solid rgba(224, 183, 179, 0.2);
+}
+
+/* Header của Accordion */
+/* Xoá viền ngoài của accordion */
+.accordion {
+  border: none !important;
+}
+
+/* Xoá viền item và shadow mặc định */
+.accordion-item {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Xoá line chia giữa các item */
+.accordion-item:not(:last-child) {
+  border-bottom: none !important;
+}
+
+/* Nếu vẫn còn line trong header */
+.accordion-button {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.accordion-button {
+  font-weight: 600;
+  color: #E0B7B3;
+  background-color: transparent;
+  padding: 10px 0;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: rgba(224, 183, 179, 0.08);
+  color: #d49a95;
+  box-shadow: none;
+}
+
+.accordion-button:focus {
+  border-color: rgba(224, 183, 179, 0.5);
+  box-shadow: 0 0 5px rgba(224, 183, 179, 0.5);
+}
+
+/* Body của Accordion */
+.accordion-body {
+  padding: 10px 0;
+  border-top: 1px solid rgba(224, 183, 179, 0.3);
+}
+
+/* Checkbox và radio màu hồng */
+.accordion-body input[type="checkbox"],
+.accordion-body input[type="radio"] {
+  accent-color: #E0B7B3;
+}
+
+.accordion-body label {
+  font-size: 0.9rem;
+  color: #555;
+  cursor: pointer;
+}
+
+/* Ô nhập giá */
+.filter-price-input {
+  border: 1px solid rgba(224, 183, 179, 0.5);
+  border-radius: 5px;
+  padding: 4px 6px;
+}
+
+.filter-price-input:focus {
+  outline: none;
+  border-color: #E0B7B3;
+  box-shadow: 0 0 4px rgba(224, 183, 179, 0.5);
+}
+
+/* Nút Tra cứu */
+.filter-submit-btn {
+  background-color: transparent;
+  color: #000;
+  font-weight: bold;
+  border: 1px solid #000 !important;
+  width: 100%;
+  border-radius: 6px;
+}
+
+.filter-submit-btn:hover {
+    border-color: #E0B7B3 !important;
+  background-color: #d49a95;
+  box-shadow: 0 4px 10px rgba(224, 183, 179, 0.4);
+}
