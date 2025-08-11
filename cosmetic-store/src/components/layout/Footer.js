@@ -2,7 +2,7 @@ import { Container, Row, Col, Form, Button } from "react-bootstrap";
 
 const Footer = () => {
     return (
-        <footer style={{ backgroundColor: "#E0B7B3", color: "#fff", padding: "20px 0" }}>
+        <footer style={{ backgroundColor: "#E0B7B3", color: "#fff", padding: "20px 0" , marginTop:"30px"}}>
             <Container>
                 <Row className="align-items-start" style={{ fontSize: "14px" }}>
                     <Col md={3} style={{ lineHeight: "1.6" }}>
