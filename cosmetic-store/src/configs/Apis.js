@@ -10,6 +10,9 @@ export const endpoints = {
 
     'listProduct': '/api/products/list',
     'productDetail':productId => `/api/products/${productId}/detail`,
+
+    'addToCart': '/api/cart/add',
+    'cartCount':'/api/cart/count',
 };
 export const authApis = () => {
     const token = cookie.load('token');

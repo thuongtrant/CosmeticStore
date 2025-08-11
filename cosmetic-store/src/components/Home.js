@@ -1,12 +1,17 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useReducer } from "react";
 import { MyUserContext } from "../configs/MyContexts";
 import Apis, { authApis, endpoints } from "../configs/Apis";
 import { Card, Button, Row, Col, Spinner } from "react-bootstrap";
 import MySpinner from "./layout/MySpinner";
 import '../styles/cardProduct.css';
+import cartReducer from "../reducers/CartReducer";
+import { CartDispatchContext } from "../configs/CartContext";
+
 import { useNavigate } from "react-router-dom";
+
 const Home = () => {
     const user = useContext(MyUserContext);
+    const cartDispatch = useContext(CartDispatchContext);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const nav = useNavigate();
@@ -30,6 +35,18 @@ const Home = () => {
         loadProducts();
     }, []);
 
+    const addToCart = async (productId) => {
+        try {
+            await authApis().post(endpoints["addToCart"], {
+                productId: productId,
+                quantity: 1
+            });
+            let res = await authApis().get(endpoints["cartCount"]);
+            cartDispatch({ type: "set", payload: res.data });
+        } catch (err) {
+            console.error("Lỗi thêm vào giỏ hàng:", err);
+        }
+    };
 
     return (
         <div className="container mt-4">
@@ -69,7 +86,13 @@ const Home = () => {
                                     >
                                         {p.price.toLocaleString()}₫
                                     </Card.Text>
-                                    <Button className="btn-add-cart mt-auto">
+                                    <Button
+                                        className="btn-add-cart mt-auto"
+
+                                        onClick={(e) => {
+                                            e.stopPropagation(); // Ngăn click lan ra thẻ Card
+                                            addToCart(p.id);
+                                        }}                                    >
                                         Thêm vào giỏ hàng
                                     </Button>
                                 </Card.Body>
