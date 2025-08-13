@@ -14,6 +14,8 @@ import { CartContext, CartDispatchContext } from "./configs/CartContext";
 import cartReducer from "./reducers/CartReducer";
 import ProductDetail from "./components/Customer/ProductDetail";
 import Cart from "./components/Customer/Cart";
+import Checkout from "./components/Customer/Checkout";
+import ShippingAddress  from "./components/Customer/ShippingAddress";
 function AppLayout() {
   const location = useLocation();
 
@@ -30,6 +32,8 @@ function AppLayout() {
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/productdetail/:productId" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/shippingAddress" element={<ShippingAddress />} />
       </Routes>
       {!hideHeaderFooter && <Footer />}
     </>

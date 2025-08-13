@@ -9,16 +9,21 @@ export const endpoints = {
     'my-profile': '/api/secure/user/my-profile',
 
     'listProduct': '/api/products/list',
-    'productDetail':productId => `/api/products/${productId}/detail`,
+    'productDetail': productId => `/api/products/${productId}/detail`,
 
     'addToCart': '/api/cart/add',
-    'cartCount':'/api/cart/count',
-    'cart':'/api/cart',
+    'cartCount': '/api/cart/count',
+    'cart': '/api/cart',
+    'cartRemove': productId => `/api/cart/remove/${productId}`,
+    'cartUpdate': (productId, quantity) => `/api/cart/update/${productId}?quantity=${quantity}`,
+    'categories': '/api/filters/categories',
+    'ingredients': '/api/filters/ingredients',
+    'skin-types': '/api/filters/skin-types',
+    'search': '/api/products/search',
 
-    'categories' : '/api/filters/categories',
-    'ingredients':'/api/filters/ingredients',
-    'skin-types':'/api/filters/skin-types',
-    'search':'/api/products/search',
+    'shippingAddress': '/api/shipping-address',
+    'defaultAddress': '/api/shipping-address/default ',
+    'checkout': '/api/payment/checkout'
 };
 export const authApis = () => {
     const token = cookie.load('token');

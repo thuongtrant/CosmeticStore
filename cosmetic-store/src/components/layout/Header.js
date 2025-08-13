@@ -82,7 +82,7 @@ const Header = () => {
     };
 
     return (
-        <Navbar expand="lg" bg="white" className="shadow-sm py-3">
+        <Navbar expand="lg" bg="white" className="shadow-sm py-3 fixed-top">
             <Container>
                 <Navbar.Brand as={Link} to="/" style={{ color: "#E0B7B3", fontWeight: "bold" }}>
                     Beauty For You
