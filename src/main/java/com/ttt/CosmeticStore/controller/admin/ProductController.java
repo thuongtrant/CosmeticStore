@@ -4,6 +4,7 @@ import com.ttt.CosmeticStore.dto.request.ProductRequest;
 import com.ttt.CosmeticStore.dto.response.ProductResponse;
 import com.ttt.CosmeticStore.service.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -15,11 +16,15 @@ import java.util.List;
 @Controller
 @RequestMapping("/admin/products")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')") // Thêm annotation này
 public class ProductController {
 
     private final ProductService productService;
     private final CloudinaryService cloudinaryService;
     private final CategoryService categoryService;
+    private final IngredientService ingredientService;
+    private final SkinTypeService skinTypeService;
+
     @GetMapping
     public String listProducts(Model model) {
         model.addAttribute("products", productService.getAllProducts());
@@ -31,6 +36,8 @@ public class ProductController {
     public String addProductForm(Model model) {
         model.addAttribute("product", new ProductRequest());
         model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("ingredients", ingredientService.getAllIngredients());
+        model.addAttribute("skinTypes", skinTypeService.getAllSkinTypes());
         model.addAttribute("mode", "create");
         return "product-form";
     }
@@ -77,6 +84,8 @@ public class ProductController {
         ProductResponse response = productService.getProductById(id);
         model.addAttribute("product", response);
         model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("ingredients", ingredientService.getAllIngredients());
+        model.addAttribute("skinTypes", skinTypeService.getAllSkinTypes());
         model.addAttribute("mode", "edit");
         return "product-form";
     }
@@ -109,6 +118,6 @@ public class ProductController {
     @PostMapping("/{id}/delete")
     public String deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
-        return "redirect:/products";
+        return "redirect:/admin/products";
     }
 }
