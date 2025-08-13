@@ -19,6 +19,10 @@
 .card-custom {
   max-width: 300px;  /* chiều rộng tối đa của card */
   margin: 0 auto;    /* canh giữa */
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(224, 183, 179, 0.25);
+  border: 1px solid rgba(224, 183, 179, 0.3);
 }
 .price {
     color:#E0B7B3 ;

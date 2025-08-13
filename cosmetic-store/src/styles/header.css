@@ -28,3 +28,6 @@
 .nav-link-custom:hover::after {
   transform: scaleX(1);
 }
+.marginTop{
+  margin-top: 150px;
+}

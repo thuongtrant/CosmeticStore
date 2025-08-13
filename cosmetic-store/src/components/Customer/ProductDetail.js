@@ -1,24 +1,35 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext,useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { authApis, endpoints } from "../../configs/Apis";
 import MySpinner from "../layout/MySpinner";
 import { Card, Button, Row, Col } from "react-bootstrap";
 import '../../styles/ProductDetail.css';
 import '../../styles/cardProduct.css';
+import { CartDispatchContext } from "../../configs/CartContext";
+import '../../styles/header.css'
 
 const ProductDetail = () => {
+    const cartDispatch = useContext(CartDispatchContext);
+
     const { productId } = useParams();
-    const [product, setProduct] = useState(null);
+    const [product, setProduct] = useState({});
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("ingredients");
-    const [mainImage, setMainImage] = useState(null);
-
+    const [mainImage, setMainImage] = useState("/images/no-image.png");
+    const thumbnails = product?.mainImage
+        ? [product.mainImage, ...(product.images?.filter(img => img !== product.mainImage) || [])]
+        : product.images || [];
     useEffect(() => {
         const loadDetail = async () => {
             try {
                 let res = await authApis().get(endpoints['productDetail'](productId));
-                setProduct(res.data);
-                setMainImage(res.data.imageUrls && res.data.imageUrls.length > 0 ? res.data.imageUrls[0] : "/images/no-image.png");
+                const data = res.data || {};
+                setProduct(data);
+
+                // Set ảnh chính mặc định
+                if (data.mainImage) {
+                    setMainImage(data.mainImage);
+                }
             } catch (err) {
                 console.error(err);
             } finally {
@@ -55,27 +66,40 @@ const ProductDetail = () => {
         }
     };
 
+    const addToCart = async (productId) => {
+        try {
+            await authApis().post(endpoints["addToCart"], {
+                productId,
+                quantity: 1
+            });
+            let res = await authApis().get(endpoints["cartCount"]);
+            cartDispatch({ type: "set", payload: res.data });
+        } catch (err) {
+            console.error("Lỗi thêm vào giỏ hàng:", err);
+        }
+    };
     return (
-        <div className="container mt-4">
+        <div className="container marginTop">
             <Row>
-               <Col md={6} className="mb-4">
+                <Col md={6} className="mb-4">
                     <Card className="shadow-sm border-0">
                         <Card.Img
                             variant="top"
                             src={mainImage}
                             alt={product.name}
                             style={{
-                                height: "350px", 
-                                objectFit: "contain", 
+                                height: "350px",
+                                objectFit: "contain",
                                 borderRadius: "8px",
                                 transition: "transform 0.3s ease",
                             }}
                             className="main-image"
                         />
                     </Card>
+
                     <div className="d-grid gap-2 mt-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(60px, 1fr))", maxWidth: "350px" }}>
-                        {product.imageUrls && product.imageUrls.length > 0 ? (
-                            product.imageUrls.map((img, idx) => (
+                        {thumbnails.length > 0 ? (
+                            thumbnails.map((img, idx) => (
                                 <img
                                     key={idx}
                                     src={img}
@@ -89,8 +113,7 @@ const ProductDetail = () => {
                                         cursor: "pointer",
                                         transition: "border 0.2s ease",
                                     }}
-                                    onClick={() => handleThumbnailClick(img)}
-                                    className="thumbnail-image"
+                                    onClick={() => setMainImage(img)}
                                 />
                             ))
                         ) : (
@@ -101,22 +124,25 @@ const ProductDetail = () => {
                                     width: "60px",
                                     height: "60px",
                                     objectFit: "cover",
-                                    border: mainImage === "/images/no-image.png" ? "2px solid #eabbb7" : "1px solid #ddd",
+                                    border: "1px solid #ddd",
                                     borderRadius: "4px",
                                     cursor: "pointer",
                                 }}
-                                onClick={() => handleThumbnailClick("/images/no-image.png")}
                             />
                         )}
                     </div>
+
+
                 </Col>
 
                 <Col md={6}>
                     <h3 className="mb-3">{product.name}</h3>
                     <h4 className="price mb-3">{product.price.toLocaleString()} ₫</h4>
                     <p><strong>Mô tả:</strong> {product.description || "Chưa có mô tả"}</p>
-                    <Button variant="outline-dark" className="mb-3 btn-add-cart">Thêm Vào Giỏ Hàng</Button>
-                    <hr style={{ borderTop: "3px solid #eabbb7", margin: "1.5rem 0" }}/>
+                    <Button variant="outline-dark" className="mb-3 btn-add-cart" onClick={() => {
+                        addToCart(product.id);
+                    }}>Thêm Vào Giỏ Hàng</Button>
+                    <hr style={{ borderTop: "3px solid #eabbb7", margin: "1.5rem 0" }} />
                     <p><strong>Loại:</strong> {product.categoryName || "Chưa có thông tin"}</p>
                     <p><strong>Tình trạng kho:</strong> {product.inventory > 0 ? `${product.inventory} sản phẩm` : "Hết hàng"}</p>
                     <p><strong>Trạng thái:</strong> {product.isBestSeller ? "Bán chạy" : product.isNew ? "Mới" : "Bình thường"}</p>
