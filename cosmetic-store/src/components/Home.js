@@ -7,15 +7,23 @@ import '../styles/cardProduct.css';
 import "../styles/filter.css";
 import { CartDispatchContext } from "../configs/CartContext";
 import { useNavigate } from "react-router-dom";
-
+import qs from "qs";
 const Home = () => {
     const user = useContext(MyUserContext);
     const cartDispatch = useContext(CartDispatchContext);
 
     const [products, setProducts] = useState([]);
+    const [originalProducts, setOriginalProducts] = useState([]); 
     const [categories, setCategories] = useState([]);
     const [ingredients, setIngredients] = useState([]);
     const [skinTypes, setSkinTypes] = useState([]);
+
+    const [selectedCategories, setSelectedCategories] = useState([]);
+    const [selectedIngredients, setSelectedIngredients] = useState([]);
+    const [selectedSkinTypes, setSelectedSkinTypes] = useState([]);
+    const [minPrice, setMinPrice] = useState("");
+    const [maxPrice, setMaxPrice] = useState("");
+    const [keyword, setKeyword] = useState("");
 
     const [loading, setLoading] = useState(true);
     const nav = useNavigate();
@@ -39,16 +47,14 @@ const Home = () => {
         loadFilters();
     }, []);
 
-    // Load products
     useEffect(() => {
         const loadProducts = async () => {
+            setLoading(true);
             try {
                 let res = await authApis().get(endpoints['listProduct']);
                 if (Array.isArray(res.data)) {
                     setProducts(res.data);
-                } else {
-                    console.error("API không trả về mảng:", res.data);
-                    setProducts([]);
+                    setOriginalProducts(res.data); // Lưu lại bản gốc
                 }
             } catch (err) {
                 console.error(err);
@@ -59,7 +65,66 @@ const Home = () => {
         loadProducts();
     }, []);
 
-    // Add to cart
+    // Toggle checkbox
+    const toggleSelection = (value, setState, state) => {
+        if (state.includes(value)) {
+            setState(state.filter(v => v !== value));
+        } else {
+            setState([...state, value]);
+        }
+    };
+
+    // Gọi search khi click Tra Cứu
+    const handleSearch = async () => {
+        // Kiểm tra nếu tất cả filter trống thì giữ nguyên
+        if (
+            !keyword &&
+            selectedCategories.length === 0 &&
+            selectedIngredients.length === 0 &&
+            selectedSkinTypes.length === 0 &&
+            !minPrice &&
+            !maxPrice
+        ) {
+            setProducts(originalProducts);
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const params = {
+                keyword: keyword || null,
+                categoryIds: selectedCategories.length > 0 ? selectedCategories : null,
+                ingredientIds: selectedIngredients.length > 0 ? selectedIngredients : null,
+                skinTypeIds: selectedSkinTypes.length > 0 ? selectedSkinTypes : null,
+                minPrice: minPrice || null,
+                maxPrice: maxPrice || null,
+                sortBy: "id",
+                sortDirection: "ASC",
+                page: 0,
+                size: 20
+            };
+
+            let res = await authApis().get(endpoints["search"], {
+                params,
+                paramsSerializer: (params) => {
+                    return qs.stringify(params, { arrayFormat: 'repeat' });
+                }
+            });
+
+            // Response backend: { products: [...], currentPage, totalPages, ... }
+            if (res.data && Array.isArray(res.data.products)) {
+                setProducts(res.data.products);
+            } else {
+                setProducts([]);
+            }
+        } catch (err) {
+            console.error("Lỗi search products:", err);
+            setProducts([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const addToCart = async (productId) => {
         try {
             await authApis().post(endpoints["addToCart"], {
@@ -77,6 +142,7 @@ const Home = () => {
         <div className="container mt-4">
             <h3 className="text-center mb-4">Sản phẩm</h3>
             <Row>
+                {/* FILTER */}
                 <Col md={3}>
                     <div className="filter-box p-3 shadow-sm">
                         <h5 className="fw-bold mb-3" style={{ marginLeft: "5px" }}>LỌC</h5>
@@ -92,6 +158,8 @@ const Home = () => {
                                             type="checkbox"
                                             label={c.name}
                                             value={c.id}
+                                            checked={selectedCategories.includes(c.id)}
+                                            onChange={() => toggleSelection(c.id, setSelectedCategories, selectedCategories)}
                                         />
                                     ))}
                                 </Accordion.Body>
@@ -107,6 +175,8 @@ const Home = () => {
                                             type="checkbox"
                                             label={i.name}
                                             value={i.id}
+                                            checked={selectedIngredients.includes(i.id)}
+                                            onChange={() => toggleSelection(i.id, setSelectedIngredients, selectedIngredients)}
                                         />
                                     ))}
                                 </Accordion.Body>
@@ -122,6 +192,8 @@ const Home = () => {
                                             type="checkbox"
                                             label={s.name}
                                             value={s.id}
+                                            checked={selectedSkinTypes.includes(s.id)}
+                                            onChange={() => toggleSelection(s.id, setSelectedSkinTypes, selectedSkinTypes)}
                                         />
                                     ))}
                                 </Accordion.Body>
@@ -131,22 +203,31 @@ const Home = () => {
                             <Accordion.Item eventKey="3">
                                 <Accordion.Header>Phạm Vi Giá</Accordion.Header>
                                 <Accordion.Body>
-                                    <Form.Check type="radio" name="price" label="Dưới 200" />
-                                    <Form.Check type="radio" name="price" label="200 - 400" />
-                                    <Form.Check type="radio" name="price" label="400 trở lên" />
-                                    <div className="d-flex gap-2 mt-2">
-                                        <Form.Control size="sm" placeholder="Giá từ" />
-                                        <Form.Control size="sm" placeholder="Đến" />
+                                    <div className="d-flex gap-2">
+                                        <Form.Control
+                                            size="sm"
+                                            placeholder="Giá từ"
+                                            value={minPrice}
+                                            onChange={(e) => setMinPrice(e.target.value)}
+                                        />
+                                        <Form.Control
+                                            size="sm"
+                                            placeholder="Đến"
+                                            value={maxPrice}
+                                            onChange={(e) => setMaxPrice(e.target.value)}
+                                        />
                                     </div>
                                 </Accordion.Body>
                             </Accordion.Item>
                         </Accordion>
 
-                        <Button className="filter-submit-btn mt-3">Tra Cứu</Button>
+                        <Button className="filter-submit-btn mt-3" onClick={handleSearch}>
+                            Tra Cứu
+                        </Button>
                     </div>
                 </Col>
 
-                {/* Danh sách sản phẩm */}
+                {/* PRODUCTS */}
                 <Col md={9}>
                     {loading ? (
                         <MySpinner animation="border" />
