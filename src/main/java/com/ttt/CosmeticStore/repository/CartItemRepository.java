@@ -19,4 +19,8 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
     @Query("SELECT COUNT(ci) FROM CartItem ci WHERE ci.cart.user.id = :userId")
     Integer countItemsByUserId(@Param("userId") Long userId);
+
+    @Modifying
+    @Query("DELETE FROM CartItem ci WHERE ci.cart = :cart")
+    void deleteByCart(@Param("cart") com.ttt.CosmeticStore.entity.Cart cart);
 }

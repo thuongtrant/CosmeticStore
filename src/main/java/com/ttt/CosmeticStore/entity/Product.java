@@ -62,6 +62,7 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    @Column(name = "main_image_url")
     private String mainImageUrl; // Ảnh đại diện sản phẩm
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)

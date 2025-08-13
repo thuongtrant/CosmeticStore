@@ -80,6 +80,20 @@ public class ProductServiceImpl implements ProductService {
         } else {
             product.setSkinTypes(new ArrayList<>());
         }
+
+        // Handle additional images
+        if (request.getImages() != null && !request.getImages().isEmpty()) {
+            List<Image> imageEntities = request.getImages().stream()
+                    .map(imageUrl -> {
+                        Image image = new Image();
+                        image.setImageUrl(imageUrl);
+                        image.setProduct(product);
+                        return image;
+                    })
+                    .collect(Collectors.toList());
+            product.setImages(imageEntities);
+        }
+
         Product saved = productRepository.save(product);
         return productMapper.toResponse(saved);
     }

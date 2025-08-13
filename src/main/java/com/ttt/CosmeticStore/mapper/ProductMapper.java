@@ -80,10 +80,8 @@ public class ProductMapper {
         simple.setIsBestSeller(productResponse.getIsBestSeller());
         simple.setIsNew(productResponse.getIsNew());
 
-        // Set main image (first image if available)
-        if (productResponse.getImages() != null && !productResponse.getImages().isEmpty()) {
-            simple.setMainImageUrl(productResponse.getImages().get(0));
-        }
+        // Use mainImage directly from ProductResponse
+        simple.setMainImageUrl(productResponse.getMainImage());
 
         return simple;
     }
@@ -105,10 +103,8 @@ public class ProductMapper {
             simple.setCategoryName(product.getCategory().getName());
         }
 
-        // Set main image (first image if available)
-        if (product.getImages() != null && !product.getImages().isEmpty()) {
-            simple.setMainImageUrl(product.getImages().get(0).getImageUrl());
-        }
+        // Use mainImageUrl directly from Product entity
+        simple.setMainImageUrl(product.getMainImageUrl());
 
         return simple;
     }
