@@ -24,25 +24,34 @@ public class ProductMapper {
         response.setDescription(product.getDescription());
         response.setBenefits(product.getBenefits());
         response.setHowToUse(product.getHowToUse());
+        response.setType(product.getType());
         response.setPrice(product.getPrice());
         response.setInventory(product.getInventory());
         response.setIsBestSeller(product.getIsBestSeller());
         response.setIsNew(product.getIsNew());
+        response.setMainImage(product.getMainImageUrl());
 
-        // Set category name
+        // Set category info
         if (product.getCategory() != null) {
+            response.setCategoryId(product.getCategory().getId());
             response.setCategoryName(product.getCategory().getName());
         }
 
-        // Set skin types
+        // Set skin types with IDs
         if (product.getSkinTypes() != null) {
+            response.setSkinTypeIds(product.getSkinTypes().stream()
+                    .map(skinType -> skinType.getId())
+                    .collect(Collectors.toList()));
             response.setSkinTypes(product.getSkinTypes().stream()
                     .map(skinType -> skinType.getName())
                     .collect(Collectors.toList()));
         }
 
-        // Set ingredients
+        // Set ingredients with IDs
         if (product.getIngredients() != null) {
+            response.setIngredientIds(product.getIngredients().stream()
+                    .map(ingredient -> ingredient.getId())
+                    .collect(Collectors.toList()));
             response.setIngredients(product.getIngredients().stream()
                     .map(ingredient -> ingredient.getName())
                     .collect(Collectors.toList()));
@@ -50,7 +59,7 @@ public class ProductMapper {
 
         // Set image URLs
         if (product.getImages() != null) {
-            response.setImageUrls(product.getImages().stream()
+            response.setImages(product.getImages().stream()
                     .map(image -> image.getImageUrl())
                     .collect(Collectors.toList()));
         }
@@ -72,8 +81,8 @@ public class ProductMapper {
         simple.setIsNew(productResponse.getIsNew());
 
         // Set main image (first image if available)
-        if (productResponse.getImageUrls() != null && !productResponse.getImageUrls().isEmpty()) {
-            simple.setMainImageUrl(productResponse.getImageUrls().get(0));
+        if (productResponse.getImages() != null && !productResponse.getImages().isEmpty()) {
+            simple.setMainImageUrl(productResponse.getImages().get(0));
         }
 
         return simple;
@@ -114,10 +123,12 @@ public class ProductMapper {
         product.setDescription(request.getDescription());
         product.setBenefits(request.getBenefits());
         product.setHowToUse(request.getHowToUse());
+        product.setType(request.getType());
         product.setPrice(request.getPrice());
         product.setInventory(request.getInventory());
         product.setIsBestSeller(request.getIsBestSeller() != null ? request.getIsBestSeller() : false);
         product.setIsNew(request.getIsNew() != null ? request.getIsNew() : false);
+        product.setMainImageUrl(request.getMainImage());
 
         return product;
     }
@@ -131,10 +142,14 @@ public class ProductMapper {
         product.setDescription(request.getDescription());
         product.setBenefits(request.getBenefits());
         product.setHowToUse(request.getHowToUse());
+        product.setType(request.getType());
         product.setPrice(request.getPrice());
         product.setInventory(request.getInventory());
         product.setIsBestSeller(request.getIsBestSeller() != null ? request.getIsBestSeller() : false);
         product.setIsNew(request.getIsNew() != null ? request.getIsNew() : false);
+        if (request.getMainImage() != null) {
+            product.setMainImageUrl(request.getMainImage());
+        }
     }
 
     public ProductDetailResponse toDetailResponse(Product product) {

@@ -16,12 +16,17 @@ public class ProductResponse {
     private String description;
     private String benefits;
     private String howToUse;
+    private String type;
     private BigDecimal price;
     private Integer inventory;
     private Boolean isBestSeller;
     private Boolean isNew;
+    private Long categoryId;
     private String categoryName;
-    private List<String> skinTypes;
+    private List<Long> ingredientIds;
     private List<String> ingredients;
-    private List<String> imageUrls;
+    private List<Long> skinTypeIds;
+    private List<String> skinTypes;
+    private String mainImage;
+    private List<String> images;
 }
