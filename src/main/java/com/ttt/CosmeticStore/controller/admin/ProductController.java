@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Controller
@@ -93,25 +94,88 @@ public class ProductController {
     @PostMapping("/{id}/edit")
     public String updateProduct(@PathVariable Long id,
                                 @ModelAttribute("product") ProductRequest request,
-                                @RequestParam(value = "mainImage", required = false) MultipartFile mainImage,
-                                @RequestParam(value = "images", required = false) MultipartFile[] images,
+                                @RequestParam(value = "mainImageFile", required = false) MultipartFile mainImageFile,
+                                @RequestParam(value = "imageFiles", required = false) MultipartFile[] imageFiles,
+                                @RequestParam(value = "deleteMainImage", required = false) String deleteMainImage,
+                                @RequestParam(value = "deletedImages", required = false) String deletedImages,
                                 Model model) {
-        if (mainImage != null && !mainImage.isEmpty()) {
-            String mainImageUrl = cloudinaryService.uploadImage(mainImage);
-            request.setMainImage(mainImageUrl);
-        }
-        List<String> imageUrls = new ArrayList<>(request.getImages() != null ? request.getImages() : List.of());
-        if (images != null) {
-            for (MultipartFile f : images) {
-                if (f != null && !f.isEmpty()) {
-                    imageUrls.add(cloudinaryService.uploadImage(f));
+        try {
+            // Lấy thông tin sản phẩm hiện tại để giữ lại hình ảnh cũ
+            ProductResponse currentProduct = productService.getProductById(id);
+
+            // Xử lý hình ảnh chính
+            if ("true".equals(deleteMainImage)) {
+                // Nếu xóa hình ảnh chính và có upload hình mới
+                if (mainImageFile != null && !mainImageFile.isEmpty()) {
+                    String mainImageUrl = cloudinaryService.uploadImage(mainImageFile);
+                    request.setMainImage(mainImageUrl);
+                } else {
+                    // Nếu xóa nhưng không upload hình mới, bắt buộc phải có hình
+                    model.addAttribute("errorMessage", "Bạn phải chọn hình ảnh chính mới khi xóa hình ảnh hiện tại!");
+                    model.addAttribute("categories", categoryService.getAllCategories());
+                    model.addAttribute("ingredients", ingredientService.getAllIngredients());
+                    model.addAttribute("skinTypes", skinTypeService.getAllSkinTypes());
+                    model.addAttribute("mode", "edit");
+                    return "product-form";
+                }
+            } else if (mainImageFile != null && !mainImageFile.isEmpty()) {
+                // Thay đổi hình ảnh chính
+                String mainImageUrl = cloudinaryService.uploadImage(mainImageFile);
+                request.setMainImage(mainImageUrl);
+            } else {
+                // Giữ lại hình ảnh cũ
+                request.setMainImage(currentProduct.getMainImage());
+            }
+
+            // Xử lý hình ảnh phụ
+            List<String> imageUrls = new ArrayList<>();
+
+            // Lọc ra những ảnh cũ không bị xóa
+            if (currentProduct.getImages() != null) {
+                List<String> deletedImagesList = new ArrayList<>();
+                if (deletedImages != null && !deletedImages.isEmpty()) {
+                    deletedImagesList = Arrays.asList(deletedImages.split(","));
+                }
+
+                for (String existingImage : currentProduct.getImages()) {
+                    if (!deletedImagesList.contains(existingImage)) {
+                        imageUrls.add(existingImage);
+                    }
                 }
             }
-        }
-        request.setImages(imageUrls);
 
-        // 3. Gọi update
-        productService.updateProduct(id, request);
+            // Thêm hình ảnh phụ mới nếu có
+            if (imageFiles != null) {
+                for (MultipartFile file : imageFiles) {
+                    if (file != null && !file.isEmpty()) {
+                        String imageUrl = cloudinaryService.uploadImage(file);
+                        imageUrls.add(imageUrl);
+                    }
+                }
+            }
+            request.setImages(imageUrls);
+
+            // Xử lý isBestSeller, isNew
+            if (request.getIsBestSeller() == null) request.setIsBestSeller(false);
+            if (request.getIsNew() == null) request.setIsNew(false);
+
+            // Cập nhật sản phẩm
+            productService.updateProduct(id, request);
+            return "redirect:/admin/products";
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Lỗi khi cập nhật sản phẩm: " + e.getMessage());
+            model.addAttribute("categories", categoryService.getAllCategories());
+            model.addAttribute("ingredients", ingredientService.getAllIngredients());
+            model.addAttribute("skinTypes", skinTypeService.getAllSkinTypes());
+            model.addAttribute("mode", "edit");
+            return "product-form";
+        }
+    }
+
+    // Thêm method GET cho delete để hỗ trợ link từ HTML
+    @GetMapping("/{id}/delete")
+    public String deleteProductConfirm(@PathVariable Long id) {
+        productService.deleteProduct(id);
         return "redirect:/admin/products";
     }
 
