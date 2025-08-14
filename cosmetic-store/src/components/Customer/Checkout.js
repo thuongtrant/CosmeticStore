@@ -3,7 +3,6 @@ import { authApis, endpoints } from "../../configs/Apis";
 import { Row, Col, Table, Button, Image, Form } from "react-bootstrap";
 import MySpinner from "../layout/MySpinner";
 import { useNavigate } from "react-router-dom";
-import '../../styles/header.css'
 
 const Checkout = () => {
     const [cart, setCart] = useState(null);
@@ -51,7 +50,7 @@ const Checkout = () => {
             let res = await authApis().post(endpoints["checkout"], payload);
             if (res.data?.success) {
                 alert("✅ Đặt hàng thành công! Mã đơn: " + res.data.order.orderNumber);
-                nav("/orders/" + res.data.order.id);
+                nav("/orderDetail/" + res.data.order.orderNumber);
             } else {
                 alert("❌ Đặt hàng thất bại!");
             }
@@ -68,7 +67,7 @@ const Checkout = () => {
     if (loading) return <MySpinner animation="border" />;
 
     return (
-        <div className="container marginTop">
+        <div className="container mt-4">
             <h3 className="text-center mb-4" style={{ color: "#E0B7B3" }}>THANH TOÁN</h3>
             <Row>
                 {/* Danh sách sản phẩm */}

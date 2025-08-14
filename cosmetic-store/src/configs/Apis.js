@@ -23,7 +23,10 @@ export const endpoints = {
 
     'shippingAddress': '/api/shipping-address',
     'defaultAddress': '/api/shipping-address/default ',
-    'checkout': '/api/payment/checkout'
+
+    'checkout': '/api/payment/checkout',
+    'orders' : 'api/payment/orders',
+    'orderDetail' :orderNumber => `/api/payment/order/${orderNumber}`
 };
 export const authApis = () => {
     const token = cookie.load('token');

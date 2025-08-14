@@ -2,7 +2,6 @@
     display: flex;
     height: 350px;
     background-color: #E0B7B3;
-    margin-top: 70px; /* tránh bị che bởi fixed header */
 }
 
 .hero-left {

@@ -6,7 +6,6 @@ import { Link, useNavigate } from "react-router-dom";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../../styles/cardProduct.css';
 import { CartDispatchContext } from "../../configs/CartContext";
-import '../../styles/header.css'
 const Cart = () => {
     const [cart, setCart] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -60,7 +59,7 @@ const Cart = () => {
     }
 
     return (
-        <div className="container marginTop">
+        <div className="container mt-4">
             <h3 className="text-center mb-4" style={{ color: "#E0B7B3" }}>GIỎ HÀNG</h3>
             <Row>
                 {/* Danh sách sản phẩm */}

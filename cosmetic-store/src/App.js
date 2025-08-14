@@ -16,6 +16,8 @@ import ProductDetail from "./components/Customer/ProductDetail";
 import Cart from "./components/Customer/Cart";
 import Checkout from "./components/Customer/Checkout";
 import ShippingAddress  from "./components/Customer/ShippingAddress";
+import OrderDetail from "./components/Customer/OrderDetail";
+import Orders from "./components/Customer/Orders";
 function AppLayout() {
   const location = useLocation();
 
@@ -34,6 +36,9 @@ function AppLayout() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/shippingAddress" element={<ShippingAddress />} />
+        <Route path="/orderDetail/:orderNumber" element={<OrderDetail />} />
+        <Route path="/orders" element={<Orders />} />
+
       </Routes>
       {!hideHeaderFooter && <Footer />}
     </>
