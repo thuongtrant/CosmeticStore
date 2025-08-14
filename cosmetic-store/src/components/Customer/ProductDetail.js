@@ -6,7 +6,6 @@ import { Card, Button, Row, Col } from "react-bootstrap";
 import '../../styles/ProductDetail.css';
 import '../../styles/cardProduct.css';
 import { CartDispatchContext } from "../../configs/CartContext";
-import '../../styles/header.css'
 
 const ProductDetail = () => {
     const cartDispatch = useContext(CartDispatchContext);
@@ -79,7 +78,7 @@ const ProductDetail = () => {
         }
     };
     return (
-        <div className="container marginTop">
+        <div className="container mt-4">
             <Row>
                 <Col md={6} className="mb-4">
                     <Card className="shadow-sm border-0">

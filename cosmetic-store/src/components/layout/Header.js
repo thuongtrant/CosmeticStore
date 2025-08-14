@@ -126,6 +126,9 @@ const Header = () => {
                                 <Dropdown.Item as={Link} to="/profile">
                                     Hồ sơ
                                 </Dropdown.Item>
+                                <Dropdown.Item as={Link} to="/orders">
+                                    Đơn hàng của bạn
+                                </Dropdown.Item>
                                 <Dropdown.Divider />
                                 <Dropdown.Item onClick={logout}>
                                     Đăng xuất
