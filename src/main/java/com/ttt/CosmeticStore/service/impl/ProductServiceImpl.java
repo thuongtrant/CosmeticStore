@@ -3,6 +3,7 @@ package com.ttt.CosmeticStore.service.impl;
 import com.ttt.CosmeticStore.dto.request.ProductRequest;
 import com.ttt.CosmeticStore.dto.request.ProductSearchRequest;
 import com.ttt.CosmeticStore.dto.response.PagedProductResponse;
+import com.ttt.CosmeticStore.dto.response.PagedSimpleProductResponse;
 import com.ttt.CosmeticStore.dto.response.ProductDetailResponse;
 import com.ttt.CosmeticStore.dto.response.ProductResponse;
 import com.ttt.CosmeticStore.dto.response.ProductSimpleResponse;
@@ -199,6 +200,78 @@ public class ProductServiceImpl implements ProductService {
         response.setHasNext(productPage.hasNext());
         response.setHasPrevious(productPage.hasPrevious());
 
+        return response;
+    }
+
+    @Override
+    public List<ProductSimpleResponse> getProductsByType(String type, int limit) {
+        List<Product> products;
+
+        switch (type.toLowerCase()) {
+            case "new":
+            case "newest":
+                products = productRepository.findTop8ByIsNewTrueOrderByIdDesc();
+                break;
+            case "bestseller":
+            case "best-seller":
+                products = productRepository.findTop8ByIsBestSellerTrueOrderByIdDesc();
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid product type: " + type);
+        }
+
+        return products.stream()
+                .limit(limit)
+                .map(productMapper::convertToSimpleResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public PagedSimpleProductResponse getAllProductsPaged(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Product> productPage = productRepository.findAll(pageable);
+
+        List<ProductSimpleResponse> products = productPage.getContent().stream()
+                .map(productMapper::convertToSimpleResponse)
+                .collect(Collectors.toList());
+
+        return createPagedSimpleResponse(products, productPage);
+    }
+
+    @Override
+    public PagedSimpleProductResponse getProductsByTypePaged(String type, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Product> productPage;
+
+        switch (type.toLowerCase()) {
+            case "new":
+            case "newest":
+                productPage = productRepository.findByIsNewTrue(pageable);
+                break;
+            case "bestseller":
+            case "best-seller":
+                productPage = productRepository.findByIsBestSellerTrue(pageable);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid product type: " + type);
+        }
+
+        List<ProductSimpleResponse> products = productPage.getContent().stream()
+                .map(productMapper::convertToSimpleResponse)
+                .collect(Collectors.toList());
+
+        return createPagedSimpleResponse(products, productPage);
+    }
+
+    private PagedSimpleProductResponse createPagedSimpleResponse(List<ProductSimpleResponse> products, Page<Product> productPage) {
+        PagedSimpleProductResponse response = new PagedSimpleProductResponse();
+        response.setProducts(products);
+        response.setCurrentPage(productPage.getNumber());
+        response.setTotalPages(productPage.getTotalPages());
+        response.setTotalElements(productPage.getTotalElements());
+        response.setSize(productPage.getSize());
+        response.setHasNext(productPage.hasNext());
+        response.setHasPrevious(productPage.hasPrevious());
         return response;
     }
 

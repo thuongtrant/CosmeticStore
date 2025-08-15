@@ -10,7 +10,12 @@
 <div th:replace="base :: header"></div>
 <div class="container mt-5">
     <h2 th:text="${mode == 'edit'} ? 'Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới'">Thêm Sản Phẩm Mới</h2>
-    <form th:object="${product}" th:action="@{/admin/products}" method="post" enctype="multipart/form-data">
+    <form th:object="${product}"
+          th:action="${mode == 'edit'} ? @{'/admin/products/' + ${product.id} + '/edit'} : @{/admin/products}"
+          method="post" enctype="multipart/form-data">
+
+        <!-- Thêm trường id ẩn cho chế độ edit -->
+        <input type="hidden" th:if="${mode == 'edit'}" th:value="${product.id}" name="id">
 
         <div class="mb-3">
             <label for="name" class="form-label">Tên sản phẩm</label>
@@ -69,12 +74,51 @@
                    th:checked="${product.isNew}" th:value="true">
             <label class="form-check-label" for="isNew">Sản phẩm mới</label>
         </div>
-        <div class="mb-3">
-            <label for="mainImage" class="form-label">Hình ảnh chính</label>
-            <input type="file" class="form-control" id="mainImage" name="mainImageFile" accept="image/*">
+
+        <!-- Hiển thị hình ảnh hiện tại khi edit -->
+        <div class="mb-3" th:if="${mode == 'edit' and product.mainImage != null and !#strings.isEmpty(product.mainImage)}">
+            <label class="form-label">Hình ảnh chính hiện tại</label>
+            <div style="position: relative; display: inline-block;">
+                <img th:src="${product.mainImage}" alt="Hình ảnh chính" style="max-width: 200px; height: auto; border-radius: 6px;">
+                <button type="button" class="btn btn-danger btn-sm delete-main-image"
+                        style="position: absolute; top: 5px; right: 5px; padding: 2px 6px; font-size: 12px;"
+                        onclick="deleteMainImage()">×</button>
+            </div>
+            <input type="hidden" id="deleteMainImage" name="deleteMainImage" value="false">
         </div>
+
         <div class="mb-3">
-            <label for="images" class="form-label">Hình ảnh phụ</label>
+            <label for="mainImage" class="form-label">
+                <span th:if="${mode == 'edit'}">Thay đổi hình ảnh chính (để trống nếu không muốn thay đổi)</span>
+                <span th:unless="${mode == 'edit'}">Hình ảnh chính</span>
+            </label>
+            <input type="file" class="form-control" id="mainImage" name="mainImageFile" accept="image/*"
+                   th:required="${mode != 'edit'}">
+        </div>
+
+        <!-- Hiển thị hình ảnh phụ hiện tại khi edit -->
+        <div class="mb-3" th:if="${mode == 'edit' and product.images != null and not #lists.isEmpty(product.images)}">
+            <label class="form-label">Hình ảnh phụ hiện tại</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <div th:each="img, iterStat : ${product.images}" style="position: relative; display: inline-block;">
+                    <img th:src="${img}" alt="Hình ảnh phụ"
+                         style="max-width: 100px; height: auto; border-radius: 3px;"
+                         th:id="'image-' + ${iterStat.index}">
+                    <button type="button" class="btn btn-danger btn-sm delete-image"
+                            style="position: absolute; top: 2px; right: 2px; padding: 1px 4px; font-size: 10px;"
+                            th:data-index="${iterStat.index}"
+                            th:data-image="${img}"
+                            onclick="deleteImageHandler(this)">×</button>
+                </div>
+            </div>
+            <input type="hidden" id="deletedImages" name="deletedImages" value="">
+        </div>
+
+        <div class="mb-3">
+            <label for="images" class="form-label">
+                <span th:if="${mode == 'edit'}">Thêm hình ảnh phụ mới</span>
+                <span th:unless="${mode == 'edit'}">Hình ảnh phụ</span>
+            </label>
             <input type="file" class="form-control" id="images" name="imageFiles" accept="image/*" multiple>
         </div>
         <button type="submit" class="btn btn-primary">Lưu</button>
@@ -82,5 +126,38 @@
         <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
     </form>
 </div>
+
+<script>
+    let deletedImagesList = [];
+
+    function deleteMainImage() {
+        if (confirm('Bạn có chắc muốn xóa hình ảnh chính này?')) {
+            // Ẩn container của hình ảnh chính
+            const mainImageContainer = document.querySelector('.mb-3').querySelector('div[style*="position: relative"]').parentElement;
+            mainImageContainer.style.display = 'none';
+
+            // Đánh dấu để xóa hình ảnh chính
+            document.getElementById('deleteMainImage').value = 'true';
+
+            // Bắt buộc phải chọn hình ảnh mới
+            document.getElementById('mainImage').required = true;
+        }
+    }
+
+    function deleteImageHandler(button) {
+        const index = button.getAttribute('data-index');
+        const imageUrl = button.getAttribute('data-image');
+
+        if (confirm('Bạn có chắc muốn xóa hình ảnh này?')) {
+            // Ẩn hình ảnh
+            const imageElement = document.getElementById('image-' + index);
+            imageElement.parentElement.style.display = 'none';
+
+            // Thêm URL vào danh sách ảnh bị xóa
+            deletedImagesList.push(imageUrl);
+            document.getElementById('deletedImages').value = deletedImagesList.join(',');
+        }
+    }
+</script>
 </body>
 </html>
