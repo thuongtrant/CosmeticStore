@@ -8,6 +8,7 @@ const Checkout = () => {
     const [cart, setCart] = useState(null);
     const [address, setAddress] = useState(null);
     const [note, setNote] = useState("");
+    const [paymentMethods, setPaymentMethods] = useState([]);
     const [paymentMethod, setPaymentMethod] = useState("COD");
     const [loading, setLoading] = useState(true);
     const nav = useNavigate();
@@ -23,6 +24,11 @@ const Checkout = () => {
             } else {
                 setAddress(null);
             }
+            let paymentRes = await authApis().get(endpoints["paymentMethods"]);
+            if (paymentRes.data?.success)
+                setPaymentMethods(paymentRes.data.methods)
+            if (paymentRes.data.methods.length > 0)
+                setPaymentMethod(paymentRes.data.methods[0].id)
         } catch (err) {
             console.error("Lỗi tải dữ liệu:", err);
         } finally {
@@ -149,16 +155,17 @@ const Checkout = () => {
                             />
                         </Form.Group>
 
-                        {/* Chọn phương thức thanh toán */}
                         <Form.Group className="mt-3">
                             <Form.Label>Phương thức thanh toán</Form.Label>
                             <Form.Select
                                 value={paymentMethod}
                                 onChange={(e) => setPaymentMethod(e.target.value)}
                             >
-                                <option value="COD">Thanh toán khi nhận hàng (COD)</option>
-                                <option value="BANK">Chuyển khoản ngân hàng</option>
-                                <option value="VNPAY">Thanh toán qua VNPAY</option>
+                                {paymentMethods.map((pm) => (
+                                    <option key={pm.id} value={pm.id}>
+                                        {pm.name} - {pm.description}
+                                    </option>
+                                ))}
                             </Form.Select>
                         </Form.Group>
 

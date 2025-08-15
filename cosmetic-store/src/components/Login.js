@@ -37,7 +37,7 @@ const Login = () => {
             let cartRes = await authApis().get(endpoints["cartCount"]);
             cartDispatch({ type: "set", payload: cartRes.data });
             let next = q.get('next');
-            nav(next ? next : '/home');
+            nav(next ? next : '/homepage');
         } catch (e) {
             alert("Đăng nhập thất bại!");
         } finally {

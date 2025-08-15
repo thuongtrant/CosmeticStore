@@ -8,8 +8,9 @@ export const endpoints = {
     'login': '/api/auth/signin',
     'my-profile': '/api/secure/user/my-profile',
 
-    'listProduct': '/api/products/list',
+    // 'listProduct': '/api/products/list',
     'productDetail': productId => `/api/products/${productId}/detail`,
+    // 'productsByType': (type, limit) => `/api/products/by-type?productType=${type}&limit=${limit}`,
     'productsByType': (type, limit) => `/api/products/by-type?productType=${type}&limit=${limit}`,
 
     // API phân trang mới
@@ -31,7 +32,9 @@ export const endpoints = {
 
     'checkout': '/api/payment/checkout',
     'orders' : 'api/payment/orders',
-    'orderDetail' :orderNumber => `/api/payment/order/${orderNumber}`
+    'orderDetail' :orderNumber => `/api/payment/order/${orderNumber}`,
+    'paymentMethods': '/api/payment/methods',
+
 };
 export const authApis = () => {
     const token = cookie.load('token');
