@@ -14,4 +14,6 @@ public interface OrderService {
     List<OrderResponse> getUserOrders(User user);
 
     OrderResponse getOrderByNumber(String orderNumber);
+    void updatePaymentStatus(String orderNumber, String status, String transactionId);
+
 }

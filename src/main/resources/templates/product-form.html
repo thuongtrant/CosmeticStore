@@ -11,11 +11,11 @@
 <div class="container mt-5">
     <h2 th:text="${mode == 'edit'} ? 'Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới'">Thêm Sản Phẩm Mới</h2>
     <form th:object="${product}"
-          th:action="${mode == 'edit'} ? @{/admin/products/{id}/edit(id=${product.id})} : @{/admin/products}"
+          th:action="${mode == 'edit'} ? @{'/admin/products/' + ${product.id} + '/edit'} : @{/admin/products}"
           method="post" enctype="multipart/form-data">
 
         <!-- Thêm trường id ẩn cho chế độ edit -->
-        <input type="hidden" th:if="${mode == 'edit'}" th:field="*{id}">
+        <input type="hidden" th:if="${mode == 'edit'}" th:value="${product.id}" name="id">
 
         <div class="mb-3">
             <label for="name" class="form-label">Tên sản phẩm</label>
@@ -106,7 +106,9 @@
                          th:id="'image-' + ${iterStat.index}">
                     <button type="button" class="btn btn-danger btn-sm delete-image"
                             style="position: absolute; top: 2px; right: 2px; padding: 1px 4px; font-size: 10px;"
-                            th:onclick="'deleteImage(' + ${iterStat.index} + ', \'' + ${img} + '\')'">×</button>
+                            th:data-index="${iterStat.index}"
+                            th:data-image="${img}"
+                            onclick="deleteImageHandler(this)">×</button>
                 </div>
             </div>
             <input type="hidden" id="deletedImages" name="deletedImages" value="">
@@ -142,7 +144,10 @@
         }
     }
 
-    function deleteImage(index, imageUrl) {
+    function deleteImageHandler(button) {
+        const index = button.getAttribute('data-index');
+        const imageUrl = button.getAttribute('data-image');
+
         if (confirm('Bạn có chắc muốn xóa hình ảnh này?')) {
             // Ẩn hình ảnh
             const imageElement = document.getElementById('image-' + index);

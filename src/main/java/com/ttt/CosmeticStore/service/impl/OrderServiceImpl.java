@@ -182,4 +182,26 @@ public class OrderServiceImpl implements OrderService {
             cartItemRepository.deleteByCart(cart);
         }
     }
+
+    @Override
+    @Transactional
+    public void updatePaymentStatus(String orderNumber, String status, String transactionId) {
+        Order order = orderRepository.findByOrderNumber(orderNumber)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        Payment payment = order.getPayment();
+
+        if ("COMPLETED".equals(status)) {
+            payment.setStatus(Payment.PaymentStatus.COMPLETED);
+            payment.setPaymentDate(LocalDateTime.now());
+            payment.setTransactionId(transactionId);
+            order.setStatus(Order.OrderStatus.CONFIRMED);
+        } else if ("FAILED".equals(status)) {
+            payment.setStatus(Payment.PaymentStatus.FAILED);
+            order.setStatus(Order.OrderStatus.CANCELLED);
+        }
+
+        paymentRepository.save(payment);
+        orderRepository.save(order);
+    }
 }
