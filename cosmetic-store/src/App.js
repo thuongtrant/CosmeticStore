@@ -18,6 +18,7 @@ import Checkout from "./components/Customer/Checkout";
 import ShippingAddress  from "./components/Customer/ShippingAddress";
 import OrderDetail from "./components/Customer/OrderDetail";
 import Orders from "./components/Customer/Orders";
+import HomePage from "./components/HomePage";
 function AppLayout() {
   const location = useLocation();
 
@@ -38,7 +39,7 @@ function AppLayout() {
         <Route path="/shippingAddress" element={<ShippingAddress />} />
         <Route path="/orderDetail/:orderNumber" element={<OrderDetail />} />
         <Route path="/orders" element={<Orders />} />
-
+        <Route path="/homepage" element={<HomePage />}/>
       </Routes>
       {!hideHeaderFooter && <Footer />}
     </>

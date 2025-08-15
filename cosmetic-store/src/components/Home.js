@@ -5,16 +5,19 @@ import { Card, Button, Row, Col, Form, Accordion } from "react-bootstrap";
 import MySpinner from "./layout/MySpinner";
 import '../styles/cardProduct.css';
 import "../styles/filter.css";
+import "../styles/pagination.css"; // dùng chung style
 import { CartDispatchContext } from "../configs/CartContext";
 import { useNavigate } from "react-router-dom";
 import qs from "qs";
 import FirstHeader from "./layout/FirstHeader";
+
 const Home = () => {
-    const user = useContext(MyUserContext);
     const cartDispatch = useContext(CartDispatchContext);
 
     const [products, setProducts] = useState([]);
-    const [originalProducts, setOriginalProducts] = useState([]);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+
     const [categories, setCategories] = useState([]);
     const [ingredients, setIngredients] = useState([]);
     const [skinTypes, setSkinTypes] = useState([]);
@@ -27,6 +30,8 @@ const Home = () => {
     const [keyword, setKeyword] = useState("");
 
     const [loading, setLoading] = useState(true);
+    const [animate, setAnimate] = useState(false);
+
     const nav = useNavigate();
 
     // Load filters
@@ -48,15 +53,18 @@ const Home = () => {
         loadFilters();
     }, []);
 
+    // Load sản phẩm với pagination
     useEffect(() => {
         const loadProducts = async () => {
             setLoading(true);
+            setAnimate(false);
             try {
-                let res = await authApis().get(endpoints['listProduct']);
-                if (Array.isArray(res.data)) {
-                    setProducts(res.data);
-                    setOriginalProducts(res.data); // Lưu lại bản gốc
+                let res = await authApis().get(endpoints['productsAllPaged'](currentPage, 9));
+                if (res.data?.products) {
+                    setProducts(res.data.products);
+                    setTotalPages(res.data.totalPages);
                 }
+                setTimeout(() => setAnimate(true), 50); // trigger fade-in
             } catch (err) {
                 console.error(err);
             } finally {
@@ -64,7 +72,7 @@ const Home = () => {
             }
         };
         loadProducts();
-    }, []);
+    }, [currentPage]);
 
     // Toggle checkbox
     const toggleSelection = (value, setState, state) => {
@@ -75,22 +83,10 @@ const Home = () => {
         }
     };
 
-    // Gọi search khi click Tra Cứu
+    // Gọi search
     const handleSearch = async () => {
-        // Kiểm tra nếu tất cả filter trống thì giữ nguyên
-        if (
-            !keyword &&
-            selectedCategories.length === 0 &&
-            selectedIngredients.length === 0 &&
-            selectedSkinTypes.length === 0 &&
-            !minPrice &&
-            !maxPrice
-        ) {
-            setProducts(originalProducts);
-            return;
-        }
-
         setLoading(true);
+        setAnimate(false);
         try {
             const params = {
                 keyword: keyword || null,
@@ -102,22 +98,20 @@ const Home = () => {
                 sortBy: "id",
                 sortDirection: "ASC",
                 page: 0,
-                size: 20
+                size: 9
             };
 
             let res = await authApis().get(endpoints["search"], {
                 params,
-                paramsSerializer: (params) => {
-                    return qs.stringify(params, { arrayFormat: 'repeat' });
-                }
+                paramsSerializer: (params) => qs.stringify(params, { arrayFormat: 'repeat' })
             });
 
-            // Response backend: { products: [...], currentPage, totalPages, ... }
-            if (res.data && Array.isArray(res.data.products)) {
+            if (res.data?.products) {
                 setProducts(res.data.products);
-            } else {
-                setProducts([]);
+                setTotalPages(res.data.totalPages || 1);
+                setCurrentPage(0);
             }
+            setTimeout(() => setAnimate(true), 50);
         } catch (err) {
             console.error("Lỗi search products:", err);
             setProducts([]);
@@ -128,16 +122,44 @@ const Home = () => {
 
     const addToCart = async (productId) => {
         try {
-            await authApis().post(endpoints["addToCart"], {
-                productId,
-                quantity: 1
-            });
+            await authApis().post(endpoints["addToCart"], { productId, quantity: 1 });
             let res = await authApis().get(endpoints["cartCount"]);
             cartDispatch({ type: "set", payload: res.data });
         } catch (err) {
             console.error("Lỗi thêm vào giỏ hàng:", err);
         }
     };
+
+    const renderPagination = () => (
+        <div className="pagination-container">
+            <button
+                className="pagination-btn"
+                disabled={currentPage === 0}
+                onClick={() => setCurrentPage(prev => prev - 1)}
+            >
+                « 
+            </button>
+
+            {[...Array(totalPages)].map((_, index) => (
+                <button
+                    key={index}
+                    className={`pagination-btn ${index === currentPage ? "active" : ""}`}
+                    onClick={() => setCurrentPage(index)}
+                >
+                    {index + 1}
+                </button>
+            ))}
+
+            <button
+                className="pagination-btn"
+                disabled={currentPage === totalPages - 1}
+                onClick={() => setCurrentPage(prev => prev + 1)}
+            >
+                »
+            </button>
+        </div>
+    );
+
 
     return (
         <>
@@ -148,7 +170,7 @@ const Home = () => {
                     {/* FILTER */}
                     <Col md={3}>
                         <div className="filter-box p-3 shadow-sm">
-                            <h5 className="fw-bold mb-3" style={{ marginLeft: "5px" }}>LỌC</h5>
+                            <h5 className="fw-bold mb-3">LỌC</h5>
 
                             <Accordion alwaysOpen>
                                 {/* Loại sản phẩm */}
@@ -235,45 +257,47 @@ const Home = () => {
                         {loading ? (
                             <MySpinner animation="border" />
                         ) : (
-                            <Row>
-                                {products.map((p) => (
-                                    <Col key={p.id} md={4} className="mb-4">
-                                        <Card
-                                            className="h-100 shadow-sm card-custom"
-                                            onClick={() => nav(`/productdetail/${p.id}`)}
-                                            style={{ cursor: "pointer" }}
-                                        >
-                                            <Card.Img
-                                                variant="top"
-                                                src={p.mainImageUrl}
-                                                style={{ height: "250px", objectFit: "cover" }}
-                                            />
-                                            <Card.Body className="d-flex flex-column">
-                                                <Card.Title style={{ fontSize: "16px", fontWeight: "bold", minHeight: "48px" }}>
-                                                    {p.name}
-                                                </Card.Title>
-                                                <Card.Text className="price" style={{ fontWeight: "bold" }}>
-                                                    {p.price.toLocaleString()}₫
-                                                </Card.Text>
-                                                <Button
-                                                    className="btn-add-cart mt-auto"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        addToCart(p.id);
-                                                    }}
-                                                >
-                                                    Thêm vào giỏ hàng
-                                                </Button>
-                                            </Card.Body>
-                                        </Card>
-                                    </Col>
-                                ))}
-                            </Row>
+                            <>
+                                <Row className={`fade-container ${animate ? "show" : ""}`}>
+                                    {products.map((p) => (
+                                        <Col key={p.id} md={4} className="mb-4">
+                                            <Card
+                                                className="h-100 shadow-sm card-custom"
+                                                onClick={() => nav(`/productdetail/${p.id}`)}
+                                                style={{ cursor: "pointer" }}
+                                            >
+                                                <Card.Img
+                                                    variant="top"
+                                                    src={p.mainImageUrl}
+                                                    style={{ height: "250px", objectFit: "cover" }}
+                                                />
+                                                <Card.Body className="d-flex flex-column">
+                                                    <Card.Title style={{ fontSize: "16px", fontWeight: "bold", minHeight: "48px" }}>
+                                                        {p.name}
+                                                    </Card.Title>
+                                                    <Card.Text className="price" style={{ fontWeight: "bold" }}>
+                                                        {p.price.toLocaleString()}₫
+                                                    </Card.Text>
+                                                    <Button
+                                                        className="btn-add-cart mt-auto"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            addToCart(p.id);
+                                                        }}
+                                                    >
+                                                        Thêm vào giỏ hàng
+                                                    </Button>
+                                                </Card.Body>
+                                            </Card>
+                                        </Col>
+                                    ))}
+                                </Row>
+                                {renderPagination()}
+                            </>
                         )}
                     </Col>
                 </Row>
             </div>
-
         </>
     );
 };

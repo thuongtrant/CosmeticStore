@@ -89,6 +89,9 @@ const Header = () => {
                 </Navbar.Brand>
 
                 <Nav className="mx-auto">
+                    <NavLink to="/homepage" className="nav-link-custom">
+                        Trang chủ
+                    </NavLink>
                     <NavLink to="/home" className="nav-link-custom">
                         Sản phẩm
                     </NavLink>

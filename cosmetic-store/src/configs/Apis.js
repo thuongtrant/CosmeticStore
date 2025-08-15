@@ -8,8 +8,11 @@ export const endpoints = {
     'login': '/api/auth/signin',
     'my-profile': '/api/secure/user/my-profile',
 
-    'listProduct': '/api/products/list',
+    // 'listProduct': '/api/products/list',
     'productDetail': productId => `/api/products/${productId}/detail`,
+    // 'productsByType': (type, limit) => `/api/products/by-type?productType=${type}&limit=${limit}`,
+    'productsAllPaged': (page, size) => `/api/products/paged?page=${page}&size=${size}`,
+    'productsByTypePaged': (type, page, size) => `/api/products/by-type/paged?productType=${type}&page=${page}&size=${size}`,
 
     'addToCart': '/api/cart/add',
     'cartCount': '/api/cart/count',
@@ -26,7 +29,9 @@ export const endpoints = {
 
     'checkout': '/api/payment/checkout',
     'orders' : 'api/payment/orders',
-    'orderDetail' :orderNumber => `/api/payment/order/${orderNumber}`
+    'orderDetail' :orderNumber => `/api/payment/order/${orderNumber}`,
+    'paymentMethods': '/api/payment/methods',
+
 };
 export const authApis = () => {
     const token = cookie.load('token');
