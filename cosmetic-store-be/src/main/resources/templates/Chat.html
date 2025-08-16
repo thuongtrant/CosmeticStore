@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<th:block th:replace="~{base :: layout(~{::title}, ~{::content})}">
+    <title>Chat Hỗ trợ khách hàng - BeautyForYou Admin</title>
+
+    <content>
+        <div class="main-content">
+            <div class="container-fluid">
+                <div class="row mb-3">
+                    <div class="col">
+                        <h2 class="page-title">
+                            <i class="fas fa-comments me-2"></i>Chat Hỗ trợ khách hàng
+                        </h2>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Danh sách phòng chat -->
+                    <div class="col-md-4">
+                        <div class="management-card">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-users me-2"></i>Danh sách khách hàng
+                                </h5>
+                                <span id="totalRooms" class="badge bg-secondary">0</span>
+                            </div>
+                            <div class="chat-rooms-container" style="max-height: 600px; overflow-y: auto;">
+                                <div id="chatRoomsList" class="list-group list-group-flush">
+                                    <div class="text-center text-muted p-4">
+                                        <i class="fas fa-spinner fa-spin me-2"></i>Đang tải...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Khung chat -->
+                    <div class="col-md-8">
+                        <div class="management-card">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 id="chatTitle" class="mb-0">
+                                    <i class="fas fa-comment-dots me-2"></i>Chọn một khách hàng để bắt đầu chat
+                                </h5>
+                                <div class="d-flex align-items-center">
+                                    <span id="onlineStatus" class="badge bg-success me-2" style="display: none;">
+                                        <i class="fas fa-circle me-1"></i>Online
+                                    </span>
+                                    <button id="refreshBtn" class="btn btn-outline-pink btn-sm me-2" onclick="refreshChatData()">
+                                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="chat-container bg-light rounded p-3" id="messagesContainer" style="height: 450px; overflow-y: auto;">
+                                <div class="text-center text-muted h-100 d-flex align-items-center justify-content-center">
+                                    <div>
+                                        <i class="fas fa-comments fa-3x mb-3" style="color: var(--primary-pink);"></i>
+                                        <p class="mb-0">Chọn một cuộc trò chuyện để bắt đầu</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form id="messageForm" class="mt-3" style="display: none;">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="messageInput"
+                                           placeholder="Nhập tin nhắn..." disabled>
+                                    <button class="btn btn-pink" type="submit" id="sendButton" disabled>
+                                        <i class="fas fa-paper-plane me-1"></i>Gửi
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom styles for chat -->
+        <style>
+            .chat-room {
+                cursor: pointer;
+                transition: all 0.3s ease;
+                border: none !important;
+                border-radius: 10px !important;
+                margin-bottom: 5px;
+            }
+
+            .chat-room:hover {
+                background-color: var(--light-pink) !important;
+                transform: translateX(5px);
+            }
+
+            .chat-room.active {
+                background: linear-gradient(135deg, var(--primary-pink) 0%, var(--dark-pink) 100%) !important;
+                color: white !important;
+            }
+
+            .chat-room.active .text-muted {
+                color: rgba(255, 255, 255, 0.8) !important;
+            }
+
+            .message-bubble {
+                max-width: 70%;
+                word-wrap: break-word;
+                border-radius: 15px;
+                padding: 10px 15px;
+                margin: 5px 0;
+            }
+
+            .admin-message {
+                background: linear-gradient(135deg, var(--primary-pink) 0%, var(--dark-pink) 100%);
+                color: white;
+                margin-left: auto;
+            }
+
+            .customer-message {
+                background-color: var(--white);
+                color: var(--text-dark);
+                border: 2px solid rgba(224, 183, 179, 0.3);
+            }
+
+            .unread-badge {
+                background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+                color: white;
+                font-size: 0.7rem;
+                padding: 0.3rem 0.6rem;
+                border-radius: 12px;
+            }
+
+            .chat-container {
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                border: 2px solid rgba(224, 183, 179, 0.2);
+            }
+
+            .chat-rooms-container::-webkit-scrollbar,
+            .chat-container::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .chat-rooms-container::-webkit-scrollbar-track,
+            .chat-container::-webkit-scrollbar-track {
+                background: var(--light-gray);
+                border-radius: 10px;
+            }
+
+            .chat-rooms-container::-webkit-scrollbar-thumb,
+            .chat-container::-webkit-scrollbar-thumb {
+                background: var(--primary-pink);
+                border-radius: 10px;
+            }
+
+            .message-time {
+                font-size: 0.7rem;
+                opacity: 0.7;
+            }
+        </style>
+
+        <!-- Firebase Scripts - Match React version -->
+        <script type="module">
+            // Import Firebase v9+ modular SDK to match React frontend
+            import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+            import {
+                getFirestore,
+                collection,
+                doc,
+                addDoc,
+                onSnapshot,
+                orderBy,
+                query,
+                updateDoc,
+                serverTimestamp
+            } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+
+            // Firebase configuration - Use real config from backend
+            const firebaseConfig = {
+                apiKey: /*[[${@environment.getProperty('firebase.api-key')}]]*/ "AIzaSyC5Aq2sd8hb7xOTexbNmt5axfjYyt5JRWM",
+                authDomain: /*[[${@environment.getProperty('firebase.auth-domain')}]]*/ "cosmetic-store-9376c.firebaseapp.com",
+                projectId: /*[[${@environment.getProperty('firebase.project-id')}]]*/ "cosmetic-store-9376c",
+                storageBucket: /*[[${@environment.getProperty('firebase.storage-bucket')}]]*/ "cosmetic-store-9376c.firebasestorage.app",
+                messagingSenderId: /*[[${@environment.getProperty('firebase.messaging-sender-id')}]]*/ "362396733488",
+                appId: /*[[${@environment.getProperty('firebase.app-id')}]]*/ "1:362396733488:web:8fd74538bac1436bf81df5"
+            };
+
+            console.log('Admin Chat - Firebase Config:', firebaseConfig);
+
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+
+            let currentChatRoomId = null;
+            let messagesUnsubscribe = null;
+            let chatRoomsUnsubscribe = null;
+
+            // Load danh sách phòng chat
+            function loadChatRooms() {
+                console.log('Loading chat rooms...');
+                if (chatRoomsUnsubscribe) {
+                    chatRoomsUnsubscribe();
+                }
+
+                const chatRoomsRef = collection(db, 'chatRooms');
+                const q = query(chatRoomsRef, orderBy('lastMessageTime', 'desc'));
+
+                chatRoomsUnsubscribe = onSnapshot(q, (snapshot) => {
+                    console.log('Chat rooms snapshot received:', snapshot.size, 'rooms');
+                    const chatRoomsList = document.getElementById('chatRoomsList');
+                    const totalRooms = document.getElementById('totalRooms');
+
+                    chatRoomsList.innerHTML = '';
+                    totalRooms.textContent = snapshot.size;
+
+                    if (snapshot.empty) {
+                        chatRoomsList.innerHTML = `
+                            <div class="text-center text-muted p-4">
+                                <i class="fas fa-inbox fa-3x mb-3" style="color: var(--primary-pink);"></i>
+                                <p class="mb-0">Chưa có cuộc trò chuyện nào</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    snapshot.forEach((doc) => {
+                        const chatRoom = { id: doc.id, ...doc.data() };
+                        console.log('Chat room data:', chatRoom);
+                        const chatRoomElement = createChatRoomElement(chatRoom);
+                        chatRoomsList.appendChild(chatRoomElement);
+                    });
+                }, (error) => {
+                    console.error('Error loading chat rooms:', error);
+                    const chatRoomsList = document.getElementById('chatRoomsList');
+                    chatRoomsList.innerHTML = `
+                        <div class="text-center text-danger p-4">
+                            <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                            <p class="mb-0">Lỗi khi tải danh sách chat: ${error.message}</p>
+                        </div>
+                    `;
+                });
+            }
+
+            // Tạo element cho chat room
+            function createChatRoomElement(chatRoom) {
+                const div = document.createElement('div');
+                div.className = `list-group-item chat-room ${chatRoom.id === currentChatRoomId ? 'active' : ''}`;
+                div.onclick = () => selectChatRoom(chatRoom.id, chatRoom.customerName);
+
+                const unreadBadge = chatRoom.unreadCount > 0
+                    ? `<span class="badge unread-badge">${chatRoom.unreadCount}</span>`
+                    : '';
+
+                const lastMessageTime = chatRoom.lastMessageTime ?
+                    formatTime(chatRoom.lastMessageTime.toDate()) : '';
+
+                div.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-1 fw-bold">
+                                    <i class="fas fa-user me-1"></i>${chatRoom.customerName || 'Khách hàng'}
+                                </h6>
+                                ${unreadBadge}
+                            </div>
+                            <p class="mb-1 text-truncate" style="max-width: 200px; font-size: 0.9rem;">
+                                ${chatRoom.lastMessage || 'Chưa có tin nhắn'}
+                            </p>
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>${lastMessageTime}
+                            </small>
+                        </div>
+                    </div>
+                `;
+
+                return div;
+            }
+
+            // Chọn phòng chat
+            function selectChatRoom(chatRoomId, customerName) {
+                console.log('Selecting chat room:', chatRoomId, customerName);
+                currentChatRoomId = chatRoomId;
+
+                // Update UI
+                document.getElementById('chatTitle').innerHTML = `
+                    <i class="fas fa-comment-dots me-2"></i>Chat với ${customerName}
+                `;
+                document.getElementById('messageForm').style.display = 'block';
+                document.getElementById('messageInput').disabled = false;
+                document.getElementById('sendButton').disabled = false;
+                document.getElementById('onlineStatus').style.display = 'inline-block';
+
+                // Update active chat room
+                document.querySelectorAll('.chat-room').forEach(room => {
+                    room.classList.remove('active');
+                });
+                event.currentTarget.classList.add('active');
+
+                // Mark as read
+                const chatRoomRef = doc(db, 'chatRooms', chatRoomId);
+                updateDoc(chatRoomRef, {
+                    unreadCount: 0
+                }).catch(error => console.error('Error marking as read:', error));
+
+                // Load messages
+                loadMessages(chatRoomId);
+            }
+
+            // Load tin nhắn
+            function loadMessages(chatRoomId) {
+                console.log('Loading messages for room:', chatRoomId);
+                if (messagesUnsubscribe) {
+                    messagesUnsubscribe();
+                }
+
+                const messagesContainer = document.getElementById('messagesContainer');
+                messagesContainer.innerHTML = `
+                    <div class="text-center text-muted p-4">
+                        <i class="fas fa-spinner fa-spin me-2"></i>Đang tải tin nhắn...
+                    </div>
+                `;
+
+                const messagesRef = collection(db, 'chatRooms', chatRoomId, 'messages');
+                const q = query(messagesRef, orderBy('timestamp', 'asc'));
+
+                messagesUnsubscribe = onSnapshot(q, (snapshot) => {
+                    console.log('Messages snapshot received:', snapshot.size, 'messages');
+                    messagesContainer.innerHTML = '';
+
+                    if (snapshot.empty) {
+                        messagesContainer.innerHTML = `
+                            <div class="text-center text-muted h-100 d-flex align-items-center justify-content-center">
+                                <div>
+                                    <i class="fas fa-comment-slash fa-2x mb-2" style="color: var(--primary-pink);"></i>
+                                    <p class="mb-0">Chưa có tin nhắn nào</p>
+                                </div>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    snapshot.forEach((doc) => {
+                        const message = { id: doc.id, ...doc.data() };
+                        console.log('Message data:', message);
+                        const messageElement = createMessageElement(message);
+                        messagesContainer.appendChild(messageElement);
+                    });
+
+                    // Scroll to bottom
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }, (error) => {
+                    console.error('Error loading messages:', error);
+                    messagesContainer.innerHTML = `
+                        <div class="text-center text-danger p-4">
+                            <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                            <p class="mb-0">Lỗi khi tải tin nhắn: ${error.message}</p>
+                        </div>
+                    `;
+                });
+            }
+
+            // Tạo element cho tin nhắn
+            function createMessageElement(message) {
+                const div = document.createElement('div');
+                div.className = `mb-3 ${message.isAdmin ? 'text-end' : 'text-start'}`;
+
+                const messageTime = message.timestamp ?
+                    formatTime(message.timestamp.toDate()) : '';
+
+                div.innerHTML = `
+                    <div class="d-inline-block message-bubble ${
+                        message.isAdmin ? 'admin-message' : 'customer-message'
+                    }">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="fw-bold">
+                                ${message.isAdmin ?
+                                    '<i class="fas fa-user-shield me-1"></i>Admin' :
+                                    `<i class="fas fa-user me-1"></i>${message.senderName || 'Khách hàng'}`
+                                }
+                            </small>
+                        </div>
+                        <div class="message-content">${message.content}</div>
+                        <small class="message-time d-block text-end mt-1">
+                            <i class="fas fa-clock me-1"></i>${messageTime}
+                        </small>
+                    </div>
+                `;
+
+                return div;
+            }
+
+            // Gửi tin nhắn
+            async function sendMessage(e) {
+                e.preventDefault();
+
+                const messageInput = document.getElementById('messageInput');
+                const sendButton = document.getElementById('sendButton');
+                const content = messageInput.value.trim();
+
+                if (!content || !currentChatRoomId) return;
+
+                // Disable form while sending
+                messageInput.disabled = true;
+                sendButton.disabled = true;
+                sendButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang gửi...';
+
+                try {
+                    console.log('Sending admin message:', content);
+
+                    // Add message
+                    const messagesRef = collection(db, 'chatRooms', currentChatRoomId, 'messages');
+                    await addDoc(messagesRef, {
+                        content: content,
+                        senderId: 'admin',
+                        senderName: 'Admin',
+                        isAdmin: true,
+                        timestamp: serverTimestamp()
+                    });
+
+                    // Update chat room
+                    const chatRoomRef = doc(db, 'chatRooms', currentChatRoomId);
+                    await updateDoc(chatRoomRef, {
+                        lastMessage: content,
+                        lastMessageTime: serverTimestamp(),
+                        unreadCount: 1
+                    });
+
+                    console.log('Admin message sent successfully');
+                    messageInput.value = '';
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    alert('Lỗi khi gửi tin nhắn: ' + error.message);
+                } finally {
+                    // Re-enable form
+                    messageInput.disabled = false;
+                    sendButton.disabled = false;
+                    sendButton.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Gửi';
+                    messageInput.focus();
+                }
+            }
+
+            // Refresh chat data
+            function refreshChatData() {
+                console.log('Refreshing chat data...');
+                loadChatRooms();
+                if (currentChatRoomId) {
+                    loadMessages(currentChatRoomId);
+                }
+            }
+
+            // Format time
+            function formatTime(date) {
+                return new Intl.DateTimeFormat('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    day: '2-digit',
+                    month: '2-digit'
+                }).format(date);
+            }
+
+            // Initialize when page loads
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('Admin chat page loaded');
+
+                // Setup form handler
+                const messageForm = document.getElementById('messageForm');
+                if (messageForm) {
+                    messageForm.addEventListener('submit', sendMessage);
+                }
+
+                // Setup Enter key handler
+                const messageInput = document.getElementById('messageInput');
+                if (messageInput) {
+                    messageInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            sendMessage(e);
+                        }
+                    });
+                }
+
+                // Make functions global for buttons
+                window.refreshChatData = refreshChatData;
+                window.selectChatRoom = selectChatRoom;
+
+                // Load initial data
+                loadChatRooms();
+
+                // Auto-refresh every 30 seconds
+                setInterval(() => {
+                    if (!messagesUnsubscribe) {
+                        loadChatRooms();
+                    }
+                }, 30000);
+            });
+
+            // Cleanup when page unloads
+            window.addEventListener('beforeunload', () => {
+                if (messagesUnsubscribe) messagesUnsubscribe();
+                if (chatRoomsUnsubscribe) chatRoomsUnsubscribe();
+            });
+        </script>
+    </content>
+</th:block>
+
+</html>
