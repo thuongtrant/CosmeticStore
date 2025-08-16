@@ -6,7 +6,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Register from "./components/Register";
 import Login from "./components/Login";
 import { MyDispatchContext, MyUserContext } from "./configs/MyContexts";
-import { useReducer, useEffect } from "react";
+import { useReducer, useEffect, useContext } from "react";
 import MyUserReducer from "./reducers/MyUserReducer";
 import { authApis, endpoints } from "./configs/Apis";
 import cookie from "react-cookies";
@@ -19,8 +19,10 @@ import ShippingAddress  from "./components/Customer/ShippingAddress";
 import OrderDetail from "./components/Customer/OrderDetail";
 import Orders from "./components/Customer/Orders";
 import HomePage from "./components/HomePage";
+import Chat from "./components/Customer/Chat";
 function AppLayout() {
   const location = useLocation();
+  const user = useContext(MyUserContext);
 
   // Không hiển thị header/footer nếu ở login hoặc register
   const hideHeaderFooter = ["/login", "/register"].includes(location.pathname);
@@ -42,6 +44,12 @@ function AppLayout() {
         <Route path="/homepage" element={<HomePage />}/>
       </Routes>
       {!hideHeaderFooter && <Footer />}
+      {user && !hideHeaderFooter && (
+        <Chat 
+          customerId={user.id} 
+          customerName={user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email || `Khách hàng ${user.id}`} 
+        />
+      )}
     </>
   );
 }
