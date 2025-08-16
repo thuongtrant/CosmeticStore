@@ -1,5 +1,6 @@
-package com.ttt.CosmeticStore.validation;
+package com.ttt.CosmeticStore.validation.impl;
 
+import com.ttt.CosmeticStore.validation.StrongPassword;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import java.util.regex.Pattern;

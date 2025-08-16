@@ -1,5 +1,6 @@
 package com.ttt.CosmeticStore.validation;
 
+import com.ttt.CosmeticStore.validation.impl.StrongPasswordValidator;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 import java.lang.annotation.*;
