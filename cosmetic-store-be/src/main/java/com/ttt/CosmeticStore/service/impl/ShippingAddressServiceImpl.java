@@ -33,9 +33,6 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
     @Transactional
     public ShippingAddressResponse createAddress(User user, ShippingAddressRequest request) {
         try {
-            // Validate input
-            validateAddressRequest(request);
-
             // Nếu đây là địa chỉ mặc định, bỏ mặc định của các địa chỉ khác
             if (request.getIsDefault() != null && request.getIsDefault()) {
                 shippingAddressRepository.clearDefaultForUser(user);
@@ -118,18 +115,6 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ giao hàng"));
     }
 
-
-    private void validateAddressRequest(ShippingAddressRequest request) {
-        if (request.getRecipientName() == null || request.getRecipientName().trim().isEmpty()) {
-            throw new RuntimeException("Tên người nhận không được để trống");
-        }
-        if (request.getPhoneNumber() == null || request.getPhoneNumber().trim().isEmpty()) {
-            throw new RuntimeException("Số điện thoại không được để trống");
-        }
-        if (request.getAddressLine() == null || request.getAddressLine().trim().isEmpty()) {
-            throw new RuntimeException("Địa chỉ không được để trống");
-        }
-    }
 
     private void validateOwnership(ShippingAddress address, User user) {
         if (!address.getUser().getId().equals(user.getId())) {
