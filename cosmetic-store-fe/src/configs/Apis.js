@@ -9,11 +9,10 @@ export const endpoints = {
     'my-profile': '/api/secure/user/my-profile',
 
     // 'listProduct': '/api/products/list',
-    'productDetail': productId => `/api/products/${productId}/detail`,
     // 'productsByType': (type, limit) => `/api/products/by-type?productType=${type}&limit=${limit}`,
-    'productsByType': (type, limit) => `/api/products/by-type?productType=${type}&limit=${limit}`,
+    // 'productsByType': (type, limit) => `/api/products/by-type?productType=${type}&limit=${limit}`,
 
-    // API phân trang mới
+    'productDetail': productId => `/api/products/${productId}/detail`,
     'productsAllPaged': (page, size) => `/api/products/paged?page=${page}&size=${size}`,
     'productsByTypePaged': (type, page, size) => `/api/products/by-type/paged?productType=${type}&page=${page}&size=${size}`,
 
@@ -31,8 +30,8 @@ export const endpoints = {
     'defaultAddress': '/api/shipping-address/default ',
 
     'checkout': '/api/payment/checkout',
-    'orders' : 'api/payment/orders',
-    'orderDetail' :orderNumber => `/api/payment/order/${orderNumber}`,
+    'orders': 'api/payment/orders',
+    'orderDetail': orderNumber => `/api/payment/order/${orderNumber}`,
     'paymentMethods': '/api/payment/methods',
 
 };

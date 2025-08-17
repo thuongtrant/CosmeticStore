@@ -7,7 +7,7 @@ import '../styles/cardProduct.css';
 import "../styles/filter.css";
 import "../styles/pagination.css"; // dùng chung style
 import { CartDispatchContext } from "../configs/CartContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import qs from "qs";
 import FirstHeader from "./layout/FirstHeader";
 
@@ -28,6 +28,9 @@ const Home = () => {
     const [minPrice, setMinPrice] = useState("");
     const [maxPrice, setMaxPrice] = useState("");
     const [keyword, setKeyword] = useState("");
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const searchKeyword = queryParams.get("kw");
 
     const [loading, setLoading] = useState(true);
     const [animate, setAnimate] = useState(false);
@@ -59,11 +62,18 @@ const Home = () => {
             setLoading(true);
             setAnimate(false);
             try {
+                if(searchKeyword){
+                    let res = await authApis().get(endpoints["search"], {
+                        params: {keyword:searchKeyword, page:currentPage,size:9}
+                    });
+                    setProducts(res.data.products || []);
+                    setTotalPages(res.data.totalPages || 1);
+                } else {
                 let res = await authApis().get(endpoints['productsAllPaged'](currentPage, 9));
                 if (res.data?.products) {
                     setProducts(res.data.products);
                     setTotalPages(res.data.totalPages);
-                }
+                }}
                 setTimeout(() => setAnimate(true), 50); // trigger fade-in
             } catch (err) {
                 console.error(err);
@@ -72,7 +82,7 @@ const Home = () => {
             }
         };
         loadProducts();
-    }, [currentPage]);
+    }, [searchKeyword, currentPage]);
 
     // Toggle checkbox
     const toggleSelection = (value, setState, state) => {

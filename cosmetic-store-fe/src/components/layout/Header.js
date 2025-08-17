@@ -60,8 +60,8 @@
 //     );
 // }
 // export default Header;
-import { useContext } from "react";
-import { Navbar, Container, Nav, Button, Dropdown, Badge } from "react-bootstrap";
+import { useContext, useState } from "react";
+import { Navbar, Container, Nav, Button, Dropdown, Badge, Form } from "react-bootstrap";
 import { MyUserContext, MyDispatchContext } from "../../configs/MyContexts";
 import { Link, useNavigate } from "react-router-dom";
 import { FaSearch, FaUser, FaShoppingBag } from "react-icons/fa";
@@ -75,10 +75,20 @@ const Header = () => {
     const dispatch = useContext(MyDispatchContext);
     const cartCount = useContext(CartContext);
     const nav = useNavigate();
-
+    const [kw,setKw]=useState("");
+    const [showSearch, setShowSearch] = useState(false)
+    
     const logout = () => {
         dispatch({ type: "logout" });
         nav("/login");
+    };
+
+    const searchKw =(e) =>{
+        e.preventDefault();
+        if (kw.trim()) {
+            nav(`/home?kw=${encodeURIComponent(kw.trim())}`);
+            setKw("");
+        }
     };
 
     return (
@@ -105,11 +115,49 @@ const Header = () => {
 
 
                 <div className="d-flex align-items-center">
-                    <FaSearch
-                        className="mx-3"
-                        style={{ cursor: "pointer" }}
-                        title="Tìm kiếm"
-                    />
+                    {/* ICON SEARCH */}
+                    <div style={{ position: "relative" }}>
+                        <FaSearch
+                            className="mx-3"
+                            style={{ cursor: "pointer" }}
+                            title="Tìm kiếm"
+                            onClick={() => setShowSearch(!showSearch)}
+                        />
+                        {showSearch && (
+                            <Form
+                                onSubmit={searchKw}
+                                className="position-absolute d-flex"
+                                style={{
+                                    top: "40px",
+                                    right: "0",
+                                    background: "white",
+                                    padding: "8px",
+                                    borderRadius: "8px",
+                                    boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                                    zIndex: 1000,
+                                    minWidth: "220px"
+                                }}
+                            >
+                                <Form.Control
+                                    type="text"
+                                    placeholder="Nhập từ khóa..."
+                                    value={kw}
+                                    onChange={(e) => setKw(e.target.value)}
+                                    style={{ borderColor: "#E0B7B3" }}
+                                />
+                                <Button
+                                    type="submit"
+                                    style={{
+                                        backgroundColor: "#E0B7B3",
+                                        borderColor: "#E0B7B3",
+                                        marginLeft: "6px"
+                                    }}
+                                >
+                                    <FaSearch />
+                                </Button>
+                            </Form>
+                        )}
+                    </div>
 
                     {user ? (
                         <Dropdown align="end">

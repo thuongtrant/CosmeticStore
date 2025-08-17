@@ -193,6 +193,34 @@ const Login = () => {
         { label: "Mật khẩu", type: "password", field: "password" }
     ];
 
+    // Kiểm tra OAuth2 errors từ URL parameters
+    React.useEffect(() => {
+        const oauthError = q.get('error');
+        const oauthMessage = q.get('message');
+
+        if (oauthError) {
+            let errorMessage = "";
+            switch(oauthError) {
+                case 'oauth2_failed':
+                    errorMessage = "Đăng nhập OAuth2 thất bại: " + (oauthMessage || "Vui lòng thử lại");
+                    break;
+                case 'email_required':
+                    errorMessage = "Email không có sẵn từ nhà cung cấp. Vui lòng sử dụng phương thức đăng nhập khác.";
+                    break;
+                case 'no_token':
+                    errorMessage = "Không nhận được token xác thực. Vui lòng thử lại.";
+                    break;
+                case 'callback_failed':
+                    errorMessage = "Xử lý đăng nhập thất bại. Vui lòng thử lại.";
+                    break;
+                default:
+                    errorMessage = "Đăng nhập thất bại. Vui lòng thử lại.";
+            }
+            setMsg(errorMessage);
+            setAlertType("danger");
+        }
+    }, [q]);
+
     const setState = (value, field) => {
         setUser({ ...user, [field]: value });
         // Xóa error khi user bắt đầu nhập
@@ -311,8 +339,8 @@ const Login = () => {
             {/* Form login */}
             <div
                 style={{
-                    width: "400px",
-                    height: "500px",
+                    width: "500px",
+                    height: "600px",
                     backgroundColor: "white",
                     borderRadius: "12px",
                     boxShadow: "0 4px 25px rgba(0,0,0,0.15)",
@@ -392,6 +420,67 @@ const Login = () => {
                         {loading ? "Đang đăng nhập..." : "Đăng nhập"}
                     </Button>
                 </Form>
+
+                {/* Divider */}
+                <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    margin: "20px 0",
+                    color: "#999"
+                }}>
+                    <hr style={{ flex: 1, border: "none", height: "1px", backgroundColor: "#ddd" }} />
+                    <span style={{ padding: "0 15px", fontSize: "14px" }}>hoặc</span>
+                    <hr style={{ flex: 1, border: "none", height: "1px", backgroundColor: "#ddd" }} />
+                </div>
+
+                {/* OAuth2 Login Buttons */}
+                <div style={{ marginBottom: "20px" }}>
+                    {/* Google Login Button */}
+                    <Button
+                        variant="outline-secondary"
+                        className="w-100 mb-2"
+                        style={{
+                            height: "45px",
+                            border: "1px solid #ddd",
+                            backgroundColor: "#fff",
+                            color: "#333",
+                            fontWeight: "500",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "10px"
+                        }}
+                        onClick={() => window.location.href = "http://localhost:8080/oauth2/authorization/google"}
+                    >
+                        <img
+                            src="https://developers.google.com/identity/images/g-logo.png"
+                            alt="Google"
+                            style={{ width: "18px", height: "18px" }}
+                        />
+                        Đăng nhập bằng Google
+                    </Button>
+
+                    {/* Facebook Login Button */}
+                    <Button
+                        variant="outline-primary"
+                        className="w-100"
+                        style={{
+                            height: "45px",
+                            backgroundColor: "#1877f2",
+                            border: "1px solid #1877f2",
+                            color: "#fff",
+                            fontWeight: "500",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "10px"
+                        }}
+                        onClick={() => window.location.href = "http://localhost:8080/oauth2/authorization/facebook"}
+                    >
+                        <i className="fab fa-facebook-f" style={{ fontSize: "18px" }}></i>
+                        Đăng nhập bằng Facebook
+                    </Button>
+                </div>
 
                 <div
                     style={{
