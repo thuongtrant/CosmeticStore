@@ -44,7 +44,7 @@ public class WebSecurityConfig {
     };
 
     private static final String[] PUBLIC_API_ENDPOINTS = {
-            "/api/auth/**", "/api/test/public"
+            "/api/auth/**", "/api/test/public", "/oauth2/**", "/login/oauth2/**"
     };
 
     private static final String[] ADMIN_WEB_ENDPOINTS = {
@@ -70,11 +70,18 @@ public class WebSecurityConfig {
 
     private final UserServiceImpl userDetailsService;
     private final AuthEntryPointJwt unauthorizedHandler;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     @Autowired
-    public WebSecurityConfig(UserServiceImpl userDetailsService, AuthEntryPointJwt unauthorizedHandler) {
+    public WebSecurityConfig(UserServiceImpl userDetailsService,
+                           AuthEntryPointJwt unauthorizedHandler,
+                           OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
+                           OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler) {
         this.userDetailsService = userDetailsService;
         this.unauthorizedHandler = unauthorizedHandler;
+        this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
+        this.oAuth2AuthenticationFailureHandler = oAuth2AuthenticationFailureHandler;
     }
 
 
@@ -223,6 +230,14 @@ public class WebSecurityConfig {
                         .rememberMeParameter("remember-me")
                         .tokenValiditySeconds(2592000) // 30 days
                         .rememberMeCookieName("remember-me")
+                )
+
+                // OAuth2 Login Configuration
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
+                        .permitAll()
                 )
 
                 // Add filters and providers
