@@ -174,12 +174,13 @@
 
             // Firebase configuration - Use real config from backend
             const firebaseConfig = {
-                apiKey: /*[[${@environment.getProperty('firebase.api-key')}]]*/ "AIzaSyC5Aq2sd8hb7xOTexbNmt5axfjYyt5JRWM",
-                authDomain: /*[[${@environment.getProperty('firebase.auth-domain')}]]*/ "cosmetic-store-9376c.firebaseapp.com",
-                projectId: /*[[${@environment.getProperty('firebase.project-id')}]]*/ "cosmetic-store-9376c",
-                storageBucket: /*[[${@environment.getProperty('firebase.storage-bucket')}]]*/ "cosmetic-store-9376c.firebasestorage.app",
-                messagingSenderId: /*[[${@environment.getProperty('firebase.messaging-sender-id')}]]*/ "362396733488",
-                appId: /*[[${@environment.getProperty('firebase.app-id')}]]*/ "1:362396733488:web:8fd74538bac1436bf81df5"
+                apiKey: /*[[${@environment.getProperty('firebase.api-key')}]]*/ "AIzaSyAMcbWMp6eYnM0s86I6FaicXCi_JdtsmwQ",
+                authDomain: /*[[${@environment.getProperty('firebase.auth-domain')}]]*/ "cosmeticstore-89bd8.firebaseapp.com",
+                projectId: /*[[${@environment.getProperty('firebase.project-id')}]]*/ "cosmeticstore-89bd8",
+                storageBucket: /*[[${@environment.getProperty('firebase.storage-bucket')}]]*/ "cosmeticstore-89bd8.firebasestorage.app",
+                messagingSenderId: /*[[${@environment.getProperty('firebase.messaging-sender-id')}]]*/ "628570756539",
+                appId: /*[[${@environment.getProperty('firebase.app-id')}]]*/ "1:628570756539:web:4ec4315bf9d048c2e8209e",
+                measurementId: /*[[${@environment.getProperty('firebase.measurement-id')}]]*/ "G-4KDS6TTTJX"
             };
 
             console.log('Admin Chat - Firebase Config:', firebaseConfig);
@@ -258,7 +259,6 @@
                                 <h6 class="mb-1 fw-bold">
                                     <i class="fas fa-user me-1"></i>${chatRoom.customerName || 'Khách hàng'}
                                 </h6>
-                                ${unreadBadge}
                             </div>
                             <p class="mb-1 text-truncate" style="max-width: 200px; font-size: 0.9rem;">
                                 ${chatRoom.lastMessage || 'Chưa có tin nhắn'}
@@ -386,7 +386,6 @@
                 return div;
             }
 
-            // Gửi tin nhắn
             async function sendMessage(e) {
                 e.preventDefault();
 

@@ -9,7 +9,9 @@ public class CheckoutRequest {
     private ShippingAddressRequest newShippingAddress;
     private String note;
     private String paymentMethod;
+    private String momoRequestType;
     private List<CheckoutItem> items;
+    private boolean preCheckout = false;
 
     @Data
     public static class CheckoutItem {

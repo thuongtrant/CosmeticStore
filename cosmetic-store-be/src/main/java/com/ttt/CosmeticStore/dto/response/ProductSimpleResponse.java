@@ -13,7 +13,6 @@ public class ProductSimpleResponse {
     private Long id;
     private String name;
     private BigDecimal price;
-    private String categoryName;
     private Boolean isBestSeller;
     private Boolean isNew;
     private String mainImageUrl;

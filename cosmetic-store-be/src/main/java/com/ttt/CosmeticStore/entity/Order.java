@@ -1,9 +1,7 @@
 package com.ttt.CosmeticStore.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -11,10 +9,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "orders")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Order {
@@ -31,6 +31,13 @@ public class Order {
 
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
+
+//    @Column(name = "shipping_fee", nullable = false, precision = 10, scale = 2)
+//    private BigDecimal shippingFee = BigDecimal.ZERO;
+
+//    @Enumerated(EnumType.STRING)
+////    @Column(name = "payment_status", nullable = false, length = 20)
+//    private PaymentStatus paymentStatus;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -59,5 +66,18 @@ public class Order {
 
     public enum OrderStatus {
         PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED
+    }
+    public enum PaymentStatus { PENDING_PAYMENT, PAID, FAILED, CANCELED }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Order)) return false;
+        Order order = (Order) o;
+        return id != null && Objects.equals(id, order.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

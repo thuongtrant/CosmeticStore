@@ -15,202 +15,306 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/payment")
-@CrossOrigin(origins = "*")
-@Slf4j
 public class PaymentController {
 
     @Autowired
     private OrderService orderService;
 
     @Autowired
+    private MoMoService moMoService;
+
+    @Autowired
     private UserService userService;
 
+    @Autowired
+    private com.ttt.CosmeticStore.config.MoMoConfig moMoConfig;
+
+    // Session storage
+    private final Map<String, CheckoutRequest> checkoutSessions = new ConcurrentHashMap<>();
+    private final Map<String, String> sessionUsers = new ConcurrentHashMap<>();
+    private final Map<String, String> completedOrders = new ConcurrentHashMap<>();
+
     @PostMapping("/checkout")
-    public ResponseEntity<?> checkout(
-            @RequestBody CheckoutRequest request,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<?> checkout(@RequestBody CheckoutRequest request,
+                                      @AuthenticationPrincipal UserDetails userDetails) {
         try {
             User user = userService.findByUsername(userDetails.getUsername());
-            OrderResponse order = orderService.createOrder(user, request);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Đặt hàng thành công");
-            response.put("order", order);
-
-            return ResponseEntity.ok(response);
+            if ("MOMO".equals(request.getPaymentMethod())) {
+                return processMoMoPayment(request, user);
+            } else {
+                return processCODPayment(request, user);
+            }
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "Đặt hàng thất bại: " + e.getMessage());
-
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
-//    @PostMapping("/process/{orderNumber}")
-//    public ResponseEntity<?> processPayment(
-//            @PathVariable String orderNumber,
-//            @RequestParam String paymentMethod) {
-//        try {
-//            OrderResponse order = orderService.processPayment(orderNumber, paymentMethod);
-//
-//            Map<String, Object> response = new HashMap<>();
-//            if ("COMPLETED".equals(order.getPayment().getStatus())) {
-//                response.put("success", true);
-//                response.put("message", "Thanh toán thành công");
-//            } else {
-//                response.put("success", false);
-//                response.put("message", "Thanh toán thất bại");
-//            }
-//            response.put("order", order);
-//
-//            return ResponseEntity.ok(response);
-//        } catch (Exception e) {
-//            Map<String, Object> response = new HashMap<>();
-//            response.put("success", false);
-//            response.put("message", "Xử lý thanh toán thất bại: " + e.getMessage());
-//
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-//        }
-//    }
+    private ResponseEntity<?> processMoMoPayment(CheckoutRequest request, User user) throws Exception {
+        BigDecimal tempTotal = orderService.calculateTotalAmount(request);
+        long amount = tempTotal.longValue();
 
-    @Autowired
-    private MoMoService moMoService;
-
-    @PostMapping("/process/{orderNumber}")
-    public ResponseEntity<?> processPayment(
-            @PathVariable String orderNumber,
-            @RequestParam String paymentMethod) {
-        try {
-            // Nếu là thanh toán MoMo, tạo URL thanh toán
-            if ("MOMO".equals(paymentMethod)) {
-                OrderResponse order = orderService.getOrderByNumber(orderNumber);
-
-                MoMoResponse momoResponse = moMoService.createPayment(
-                        orderNumber,
-                        order.getTotalAmount().longValue(),
-                        "Thanh toán đơn hàng " + orderNumber
-                );
-
-                Map<String, Object> response = new HashMap<>();
-                if (momoResponse.getResultCode() == 0) {
-                    response.put("success", true);
-                    response.put("message", "Tạo liên kết thanh toán MoMo thành công");
-                    response.put("payUrl", momoResponse.getPayUrl());
-                    response.put("qrCodeUrl", momoResponse.getQrCodeUrl());
-                    response.put("deeplink", momoResponse.getDeeplink());
-                } else {
-                    response.put("success", false);
-                    response.put("message", "Tạo thanh toán MoMo thất bại: " + momoResponse.getMessage());
-                }
-                response.put("order", order);
-
-                return ResponseEntity.ok(response);
-            } else {
-                // Xử lý các phương thức thanh toán khác
-                OrderResponse order = orderService.processPayment(orderNumber, paymentMethod);
-
-                Map<String, Object> response = new HashMap<>();
-                if ("COMPLETED".equals(order.getPayment().getStatus())) {
-                    response.put("success", true);
-                    response.put("message", "Thanh toán thành công");
-                } else {
-                    response.put("success", false);
-                    response.put("message", "Thanh toán thất bại");
-                }
-                response.put("order", order);
-
-                return ResponseEntity.ok(response);
-            }
-        } catch (Exception e) {
+        // Validate amount
+        if (amount < 10000 || amount > 50000000) {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
-            response.put("message", "Xử lý thanh toán thất bại: " + e.getMessage());
-
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            response.put("message", amount < 10000 ?
+                    "Số tiền tối thiểu cho MoMo là 10,000đ" :
+                    "Số tiền tối đa cho MoMo là 50,000,000đ");
+            response.put("suggestCOD", true);
+            return ResponseEntity.badRequest().body(response);
         }
+
+        // Create session
+        String sessionId = "CHECKOUT_" + System.currentTimeMillis();
+        checkoutSessions.put(sessionId, request);
+        sessionUsers.put(sessionId, user.getUsername());
+
+        // Create MoMo payment
+        MoMoResponse momoResponse = moMoService.createPayment(
+                sessionId,
+                amount,
+                "Thanh toán đơn hàng",
+                request.getMomoRequestType() != null ? request.getMomoRequestType() : "captureWallet"
+        );
+
+        if (momoResponse == null) {
+            throw new RuntimeException("Không nhận được phản hồi từ MoMo");
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("sessionId", sessionId);
+
+        // Handle different response types
+        if (momoResponse.getPayUrl() != null) {
+            response.put("payUrl", momoResponse.getPayUrl());
+            response.put("message", "Đang chuyển đến trang thanh toán MoMo...");
+        } else if (momoResponse.getQrCodeUrl() != null) {
+            response.put("qrCodeUrl", momoResponse.getQrCodeUrl());
+            response.put("message", "Vui lòng quét mã QR để thanh toán");
+        } else if (momoResponse.getDeeplink() != null) {
+            response.put("deeplink", momoResponse.getDeeplink());
+            response.put("message", "Mở ứng dụng MoMo để thanh toán");
+        } else {
+            throw new RuntimeException("MoMo không trả về link thanh toán");
+        }
+
+        return ResponseEntity.ok(response);
     }
 
-    // Thêm endpoint xử lý callback từ MoMo
+    private ResponseEntity<?> processCODPayment(CheckoutRequest request, User user) throws Exception {
+        OrderResponse order = orderService.createOrder(user, request);
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Đặt hàng thành công");
+        response.put("order", order);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/momo/callback")
     public ResponseEntity<?> handleMoMoCallback(@RequestBody Map<String, Object> callbackData) {
         try {
-            String orderId = (String) callbackData.get("orderId");
-            Integer resultCode = (Integer) callbackData.get("resultCode");
-            String signature = (String) callbackData.get("signature");
+            String sessionId = String.valueOf(callbackData.get("orderId"));
+            Integer resultCode = parseResultCode(callbackData.get("resultCode"));
 
-            // Tạo raw data để verify signature
-            String rawData = "accessKey=" + callbackData.get("accessKey") +
-                    "&amount=" + callbackData.get("amount") +
-                    "&extraData=" + callbackData.get("extraData") +
-                    "&message=" + callbackData.get("message") +
-                    "&orderId=" + orderId +
-                    "&orderInfo=" + callbackData.get("orderInfo") +
-                    "&orderType=" + callbackData.get("orderType") +
-                    "&partnerCode=" + callbackData.get("partnerCode") +
-                    "&payType=" + callbackData.get("payType") +
-                    "&requestId=" + callbackData.get("requestId") +
-                    "&responseTime=" + callbackData.get("responseTime") +
-                    "&resultCode=" + resultCode +
-                    "&transId=" + callbackData.get("transId");
-
-            // Verify signature
-            if (!moMoService.verifySignature(signature, rawData)) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Invalid signature"));
+            // Process successful payment
+            if (resultCode == 0 && sessionId != null && sessionId.startsWith("CHECKOUT_")) {
+                processSuccessfulPayment(sessionId, callbackData);
+            } else if (resultCode != 0) {
+                // Clean up failed session
+                cleanupSession(sessionId);
             }
 
-            // Cập nhật trạng thái thanh toán
-            if (resultCode == 0) {
-                // Thanh toán thành công
-                orderService.updatePaymentStatus(orderId, "COMPLETED", (String) callbackData.get("transId"));
-            } else {
-                // Thanh toán thất bại
-                orderService.updatePaymentStatus(orderId, "FAILED", null);
-            }
-
-            return ResponseEntity.ok().build();
-
+            return ResponseEntity.ok(Map.of("resultCode", 0, "message", "IPN received"));
         } catch (Exception e) {
-            log.error("Lỗi xử lý callback MoMo: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.ok(Map.of("resultCode", 0, "message", "IPN received with error"));
         }
     }
 
-    // Endpoint xử lý khi user quay lại từ MoMo
-    @GetMapping("/momo/return")
-    public ResponseEntity<?> handleMoMoReturn(
-            @RequestParam String orderId,
-            @RequestParam Integer resultCode,
-            @RequestParam(required = false) String message) {
+    private Integer parseResultCode(Object resultCodeObj) {
+        if (resultCodeObj == null) return -1;
         try {
-            Map<String, Object> response = new HashMap<>();
-
-            if (resultCode == 0) {
-                OrderResponse order = orderService.getOrderByNumber(orderId);
-                response.put("success", true);
-                response.put("message", "Thanh toán MoMo thành công");
-                response.put("order", order);
+            if (resultCodeObj instanceof Number) {
+                return ((Number) resultCodeObj).intValue();
             } else {
-                response.put("success", false);
-                response.put("message", "Thanh toán MoMo thất bại: " + message);
+                return Integer.parseInt(String.valueOf(resultCodeObj));
+            }
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
+    private void processSuccessfulPayment(String sessionId, Map<String, Object> callbackData) {
+        if (completedOrders.containsKey(sessionId)) {
+            return; // Already processed
+        }
+
+        CheckoutRequest checkoutRequest = checkoutSessions.get(sessionId);
+        String username = sessionUsers.get(sessionId);
+
+        if (checkoutRequest != null && username != null) {
+            synchronized (sessionId.intern()) {
+                if (completedOrders.containsKey(sessionId)) {
+                    return; // Double-check
+                }
+
+                try {
+                    User user = userService.findByUsername(username);
+                    OrderResponse order = orderService.createOrder(user, checkoutRequest);
+
+                    // Update payment status
+                    String transId = String.valueOf(callbackData.get("transId"));
+                    try {
+                        orderService.updatePaymentStatus(order.getOrderNumber(), "COMPLETED", transId);
+                    } catch (Exception e) {
+                        log.error("Failed to update payment status: ", e);
+                    }
+
+                    // Save completed order
+                    completedOrders.put(sessionId, order.getOrderNumber());
+
+                    // Cleanup
+                    checkoutSessions.remove(sessionId);
+                    sessionUsers.remove(sessionId);
+                } catch (Exception e) {
+                    log.error("Error creating order: ", e);
+                }
+            }
+        }
+    }
+
+    private void cleanupSession(String sessionId) {
+        if (sessionId != null && sessionId.startsWith("CHECKOUT_")) {
+            checkoutSessions.remove(sessionId);
+            sessionUsers.remove(sessionId);
+        }
+    }
+
+    @GetMapping("/momo/return")
+    public ResponseEntity<?> handleMoMoReturn(@RequestParam String orderId,
+                                              @RequestParam Integer resultCode,
+                                              @RequestParam(required = false) String message) {
+        try {
+            if (resultCode != 0) {
+                cleanupSession(orderId);
+                return ResponseEntity.ok(Map.of(
+                        "success", false,
+                        "status", "FAILED",
+                        "message", "Thanh toán thất bại: " + (message != null ? message : "Unknown error"),
+                        "redirectToCheckout", true
+                ));
             }
 
-            return ResponseEntity.ok(response);
+            if (orderId.startsWith("CHECKOUT_")) {
+                return handleCheckoutReturn(orderId);
+            }
 
+            // Direct order lookup
+            OrderResponse order = orderService.getOrderByNumber(orderId);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "status", "COMPLETED",
+                    "message", "Thanh toán thành công",
+                    "order", order
+            ));
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Xử lý kết quả thanh toán thất bại: " + e.getMessage());
-
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "success", false,
+                    "status", "ERROR",
+                    "message", "Lỗi xử lý kết quả thanh toán"
+            ));
         }
+    }
+
+    private ResponseEntity<?> handleCheckoutReturn(String orderId) throws InterruptedException {
+        String orderNumber = completedOrders.get(orderId);
+
+        if (orderNumber != null) {
+            OrderResponse order = orderService.getOrderByNumber(orderNumber);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "status", "COMPLETED",
+                    "message", "Thanh toán thành công",
+                    "order", order
+            ));
+        }
+
+        // Wait for IPN processing
+        for (int i = 0; i < 20; i++) {
+            Thread.sleep(500);
+            orderNumber = completedOrders.get(orderId);
+            if (orderNumber != null) {
+                OrderResponse order = orderService.getOrderByNumber(orderNumber);
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "status", "COMPLETED",
+                        "message", "Thanh toán thành công",
+                        "order", order
+                ));
+            }
+        }
+
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of(
+                "success", false,
+                "status", "PENDING",
+                "message", "Đang xử lý thanh toán. Vui lòng đợi...",
+                "sessionId", orderId,
+                "pending", true
+        ));
+    }
+
+    @GetMapping("/momo/check-order/{sessionId}")
+    public ResponseEntity<?> checkOrder(@PathVariable String sessionId) {
+        if (!sessionId.startsWith("CHECKOUT_")) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "status", "INVALID_SESSION",
+                    "message", "Session không hợp lệ"
+            ));
+        }
+
+        String orderNumber = completedOrders.get(sessionId);
+        if (orderNumber != null) {
+            try {
+                OrderResponse order = orderService.getOrderByNumber(orderNumber);
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "status", "COMPLETED",
+                        "order", order,
+                        "message", "Đơn hàng đã được tạo"
+                ));
+            } catch (Exception e) {
+                log.error("Error getting order details: ", e);
+            }
+        }
+
+        if (checkoutSessions.containsKey(sessionId)) {
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of(
+                    "success", false,
+                    "status", "PENDING",
+                    "message", "Đang chờ xác nhận từ MoMo..."
+            ));
+        }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                "success", false,
+                "status", "NOT_FOUND",
+                "message", "Session không tồn tại hoặc đã hết hạn"
+        ));
     }
 
     @GetMapping("/orders")
@@ -218,18 +322,12 @@ public class PaymentController {
         try {
             User user = userService.findByUsername(userDetails.getUsername());
             List<OrderResponse> orders = orderService.getUserOrders(user);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("orders", orders);
-
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(Map.of("success", true, "orders", orders));
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Lấy danh sách đơn hàng thất bại: " + e.getMessage());
-
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "success", false,
+                    "message", "Lỗi lấy danh sách đơn hàng: " + e.getMessage()
+            ));
         }
     }
 
@@ -237,32 +335,23 @@ public class PaymentController {
     public ResponseEntity<?> getOrderDetails(@PathVariable String orderNumber) {
         try {
             OrderResponse order = orderService.getOrderByNumber(orderNumber);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("order", order);
-
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(Map.of("success", true, "order", order));
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Không tìm thấy đơn hàng: " + e.getMessage());
-
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "success", false,
+                    "message", "Không tìm thấy đơn hàng: " + e.getMessage()
+            ));
         }
     }
 
     @GetMapping("/methods")
     public ResponseEntity<?> getPaymentMethods() {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("methods", List.of(
-            Map.of("id", "COD", "name", "COD", "description", "Thanh toán khi nhận hàng"),
-//            Map.of("id", "BANK_TRANSFER", "name", "Chuyển khoản ngân hàng", "description", "Chuyển khoản qua tài khoản ngân hàng"),
-            Map.of("id", "MOMO", "name", "Ví MoMo", "description", "Thanh toán qua ví điện tử MoMo")
-//            Map.of("id", "VNPAY", "name", "VNPay", "description", "Thanh toán qua cổng VNPay")
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "methods", List.of(
+                        Map.of("id", "COD", "name", "COD", "description", "Thanh toán khi nhận hàng"),
+                        Map.of("id", "MOMO", "name", "Ví MoMo", "description", "Thanh toán qua ví điện tử MoMo")
+                )
         ));
-
-        return ResponseEntity.ok(response);
     }
 }

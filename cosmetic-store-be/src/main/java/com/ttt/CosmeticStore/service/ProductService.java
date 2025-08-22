@@ -17,7 +17,7 @@ public interface ProductService {
     ProductResponse createProduct(ProductRequest request);
     ProductResponse updateProduct(Long id, ProductRequest request);
     void deleteProduct(Long id);
-    PagedProductResponse searchProducts(ProductSearchRequest searchRequest);
     List<ProductSimpleResponse> getProductsByType(String type, int limit);
+    PagedProductResponse searchProducts(ProductSearchRequest searchRequest);
     PagedSimpleProductResponse getProductsByTypePaged(String type, int page, int size);
 }

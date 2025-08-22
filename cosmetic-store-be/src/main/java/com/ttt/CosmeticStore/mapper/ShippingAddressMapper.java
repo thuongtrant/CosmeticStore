@@ -82,4 +82,19 @@ public class ShippingAddressMapper {
 
         return existingAddress;
     }
+
+    public ShippingAddressRequest toRequest(ShippingAddress address) {
+        if (address == null) return null;
+        ShippingAddressRequest req = new ShippingAddressRequest();
+        req.setRecipientName(address.getRecipientName());
+        req.setPhoneNumber(address.getPhoneNumber());
+        req.setAddressLine(address.getAddressLine());
+        req.setWard(address.getWard());
+        req.setDistrict(address.getDistrict());
+        req.setProvince(address.getProvince());
+        req.setPostalCode(address.getPostalCode());
+        req.setIsDefault(address.getIsDefault());
+        req.setLabel(address.getLabel());
+        return req;
+    }
 }

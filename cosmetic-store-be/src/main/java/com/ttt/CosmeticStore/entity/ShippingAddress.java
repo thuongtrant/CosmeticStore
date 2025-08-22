@@ -50,6 +50,15 @@ public class ShippingAddress {
     @Column(name = "label")
     private String label; // Nhà riêng, Văn phòng, v.v.
 
+    @Column(name = "province_code", length = 10)
+    private String provinceCode;
+
+    @Column(name = "district_code", length = 10)
+    private String districtCode;
+
+    @Column(name = "ward_code", length = 10)
+    private String wardCode;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

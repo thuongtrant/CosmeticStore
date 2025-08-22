@@ -44,7 +44,10 @@ public class WebSecurityConfig {
     };
 
     private static final String[] PUBLIC_API_ENDPOINTS = {
-            "/api/auth/**", "/api/test/public", "/oauth2/**", "/login/oauth2/**"
+            "/api/auth/**", "/api/test/public", "/oauth2/**", "/login/oauth2/**",
+            "/api/payment/momo/callback",
+            "/api/payment/momo/return",
+            "/api/payment/momo/check-order/**"
     };
 
     private static final String[] ADMIN_WEB_ENDPOINTS = {

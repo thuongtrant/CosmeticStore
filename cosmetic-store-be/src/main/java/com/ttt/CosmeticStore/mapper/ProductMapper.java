@@ -76,7 +76,7 @@ public class ProductMapper {
         simple.setId(productResponse.getId());
         simple.setName(productResponse.getName());
         simple.setPrice(productResponse.getPrice());
-        simple.setCategoryName(productResponse.getCategoryName());
+//        simple.setCategoryName(productResponse.getCategoryName());
         simple.setIsBestSeller(productResponse.getIsBestSeller());
         simple.setIsNew(productResponse.getIsNew());
 
@@ -99,9 +99,9 @@ public class ProductMapper {
         simple.setIsNew(product.getIsNew());
 
         // Set category name
-        if (product.getCategory() != null) {
-            simple.setCategoryName(product.getCategory().getName());
-        }
+//        if (product.getCategory() != null) {
+//            simple.setCategoryName(product.getCategory().getName());
+//        }
 
         // Use mainImageUrl directly from Product entity
         simple.setMainImageUrl(product.getMainImageUrl());
