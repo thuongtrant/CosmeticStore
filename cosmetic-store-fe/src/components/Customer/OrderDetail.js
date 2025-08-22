@@ -97,9 +97,24 @@ const OrderDetail = () => {
                 <Col md={6}>
                     <Card className="p-3 shadow-sm">
                         <h5 className="mb-3" style={{ color: "#E0B7B3" }}>Thông tin thanh toán</h5>
-                        <p><strong>Phương thức:</strong> {order.payment?.paymentMethod}</p>
+                        <div className="d-flex align-items-center mb-2">
+                            <strong>Phương thức:</strong>
+                            {order.payment?.paymentMethod === "MOMO" && (
+                                <Image
+                                    src="/images/momo-logo.png"
+                                    alt="MoMo"
+                                    width="25"
+                                    height="25"
+                                    className="ms-2 me-1"
+                                    onError={(e) => {
+                                        e.target.style.display = 'none';
+                                    }}
+                                />
+                            )}
+                            <span className="ms-1">{order.payment?.paymentMethod}</span>
+                        </div>
                         <p><strong>Số tiền:</strong> {order.payment?.amount.toLocaleString()} ₫</p>
-                        <p><strong>Ngày thanh toán:</strong> {order.payment?.paymentDate || "Chưa thanh toán"}</p>
+                        <p><strong>Phí giao hàng:</strong>  0₫</p>
                     </Card>
                 </Col>
             </Row>
@@ -137,7 +152,7 @@ const OrderDetail = () => {
             {/* Tổng cộng */}
             <div className="text-end mt-4">
                 <h4 style={{ fontWeight: "bold", color: "#E0B7B3" }}>
-                    Tổng cộng: {order.totalAmount.toLocaleString()} ₫
+                    Tổng cộng: {((order.totalAmount || 0) + (order.shippingFee || 0)).toLocaleString()} ₫
                 </h4>
             </div>
         </div>

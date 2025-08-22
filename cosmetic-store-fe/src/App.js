@@ -23,6 +23,7 @@ import HomePage from "./components/HomePage";
 import Chat from "./components/Customer/Chat";
 import Profile from "./components/Profile";
 import AboutBFY from "./components/Customer/AboutBFY";
+import MoMoReturn from "./components/Customer/MoMoReturn";
 
 function AppLayout() {
   const location = useLocation();
@@ -49,6 +50,7 @@ function AppLayout() {
         <Route path="/orders" element={<Orders />} />
         <Route path="/homepage" element={<HomePage />}/>
         <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
+        <Route path="/payment/momo/return" element={<MoMoReturn />} />
       </Routes>
       {!hideHeaderFooter && <Footer />}
       {user && !hideHeaderFooter && (

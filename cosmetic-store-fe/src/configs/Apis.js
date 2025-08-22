@@ -27,13 +27,14 @@ export const endpoints = {
     'search': '/api/products/search',
 
     'shippingAddress': '/api/shipping-address',
-    'defaultAddress': '/api/shipping-address/default ',
+    'defaultAddress': '/api/shipping-address/default',
 
     'checkout': '/api/payment/checkout',
-    'orders': 'api/payment/orders',
+    'checkoutSid':sid=> `/api/payment/momo/check-order/${sid}`,
+    'processPayment': orderNumber => `/api/payment/process/${orderNumber}`,
+    'orders': '/api/payment/orders',
     'orderDetail': orderNumber => `/api/payment/order/${orderNumber}`,
     'paymentMethods': '/api/payment/methods',
-
 };
 export const authApis = () => {
     const token = cookie.load('token');

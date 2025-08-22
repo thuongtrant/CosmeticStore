@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { authApis, endpoints } from "../../configs/Apis";
 import MySpinner from "../layout/MySpinner";
-import { Table, Button } from "react-bootstrap";
+import { Table, Button, Badge, Image } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 
 const Orders = () => {
@@ -50,7 +50,7 @@ const Orders = () => {
                         {orders.map((o) => (
                             <tr key={o.id}>
                                 <td>{o.orderNumber}</td>
-                                <td>{new Date(o.createdAt).toLocaleString()}</td>
+                                <td>{new Date(o.createdAt).toLocaleString('vi-VN')}</td>
                                 <td>{o.totalAmount.toLocaleString()} ₫</td>
                                 <td>{o.status}</td>
                                 <td>

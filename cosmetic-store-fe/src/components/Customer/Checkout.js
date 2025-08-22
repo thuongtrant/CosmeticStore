@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from "react";
 import { authApis, endpoints } from "../../configs/Apis";
-import { Row, Col, Table, Button, Image, Form } from "react-bootstrap";
+import { Row, Col, Table, Button, Image, Form, Alert, Modal } from "react-bootstrap";
 import MySpinner from "../layout/MySpinner";
 import { useNavigate } from "react-router-dom";
 
@@ -11,7 +12,9 @@ const Checkout = () => {
     const [paymentMethods, setPaymentMethods] = useState([]);
     const [paymentMethod, setPaymentMethod] = useState("COD");
     const [loading, setLoading] = useState(true);
+    const [processing, setProcessing] = useState(false);
     const nav = useNavigate();
+    const [momoPaymentType, setMomoPaymentType] = useState("captureWallet");
 
     const loadData = async () => {
         try {
@@ -35,7 +38,6 @@ const Checkout = () => {
             setLoading(false);
         }
     };
-
     const handleCheckout = async () => {
         if (!address) {
             alert("Vui lòng thêm địa chỉ giao hàng trước khi đặt hàng!");
@@ -43,28 +45,108 @@ const Checkout = () => {
         }
 
         try {
-            let payload = {
+            setProcessing(true);
+
+            const payload = {
                 shippingAddressId: address.id,
                 note: note,
                 paymentMethod: paymentMethod,
+                momoRequestType: momoPaymentType,
                 items: cart.cartItems.map(item => ({
                     productId: item.productId,
                     quantity: item.quantity
                 }))
             };
 
-            let res = await authApis().post(endpoints["checkout"], payload);
+            console.log("Payload gửi đi:", payload);
+
+            const res = await authApis().post(endpoints["checkout"], payload);
+
             if (res.data?.success) {
-                alert("✅ Đặt hàng thành công! Mã đơn: " + res.data.order.orderNumber);
-                nav("/orderDetail/" + res.data.order.orderNumber);
+                if (paymentMethod === "MOMO") {
+                    // MoMo: kiểm tra có payUrl không
+                    if (res.data.payUrl) {
+                        localStorage.setItem("momoSessionId", res.data.sessionId);
+                        window.location.href = res.data.payUrl;
+                        return;
+                    } else {
+                        alert("❌ Không nhận được link thanh toán MoMo");
+                        return;
+                    }
+                } else {
+                    // COD: kiểm tra có order không
+                    if (res.data.order && res.data.order.orderNumber) {
+                        const orderNumber = res.data.order.orderNumber;
+                        alert("✅ Đặt hàng thành công! Mã đơn: " + orderNumber);
+                        nav("/orderDetail/" + orderNumber);
+                    } else {
+                        alert("❌ Đặt hàng thành công nhưng không nhận được mã đơn");
+                    }
+                }
             } else {
-                alert("❌ Đặt hàng thất bại!");
+                // Xử lý lỗi
+                if (res.data?.suggestCOD) {
+                    const confirmCOD = window.confirm(
+                        res.data.message + " Bạn có muốn chuyển sang thanh toán COD không?"
+                    );
+                    if (confirmCOD) {
+                        setPaymentMethod("COD");
+                        return;
+                    }
+                }
+
+                alert("❌ " + (res.data?.message || "Đặt hàng thất bại!"));
             }
         } catch (err) {
-            console.error("Lỗi thanh toán:", err);
-            alert("❌ Lỗi khi đặt hàng!");
+            console.error("Lỗi chi tiết:", err.response?.data || err.message);
+
+            if (err.response?.data?.suggestCOD) {
+                const confirmCOD = window.confirm(
+                    err.response.data.message + " Bạn có muốn chuyển sang thanh toán COD không?"
+                );
+                if (confirmCOD) {
+                    setPaymentMethod("COD");
+                    return;
+                }
+            }
+
+            alert("❌ Lỗi khi đặt hàng: " + (err.response?.data?.message || err.message));
+        } finally {
+            setProcessing(false);
         }
     };
+
+
+    const processMoMoPayment = async (orderNumber) => {
+        try {
+            const paymentRes = await authApis().post(
+                endpoints["processPayment"](orderNumber) +
+                `?paymentMethod=MOMO&requestType=${momoPaymentType}`
+            );
+
+            if (paymentRes.data?.success && paymentRes.data.payUrl) {
+                window.location.href = paymentRes.data.payUrl;
+            } else {
+                alert("❌ Không thể tạo liên kết thanh toán MoMo: " + paymentRes.data?.message);
+            }
+        } catch (err) {
+            console.error("Lỗi tạo thanh toán MoMo:", err);
+            alert("❌ Lỗi khi tạo thanh toán MoMo!");
+        }
+    };
+
+    const processOtherPayment = async (orderNumber) => {
+        try {
+            await authApis().post(
+                endpoints["processPayment"](orderNumber) + `?paymentMethod=${paymentMethod}`
+            );
+        } catch (err) {
+            console.error("Lỗi xử lý thanh toán:", err);
+            throw err;
+        }
+    };
+
+
 
     useEffect(() => {
         loadData();
@@ -168,13 +250,32 @@ const Checkout = () => {
                                 ))}
                             </Form.Select>
                         </Form.Group>
+                        {paymentMethod === "MOMO" && (
+                            <Form.Group className="mt-3">
+                                <Form.Label>Loại thanh toán MoMo</Form.Label>
+                                <Form.Select
+                                    value={momoPaymentType}
+                                    onChange={(e) => setMomoPaymentType(e.target.value)}
+                                >
+                                    <option value="captureWallet">Ví MoMo (QR Code)</option>
+                                    <option value="payWithATM">Thẻ ATM/Visa/Master</option>
+                                </Form.Select>
+                            </Form.Group>
+                        )}
 
                         <hr style={{ borderTop: "2px solid #eabbb7" }} />
                         <div className="d-flex justify-content-between">
-                            <span style={{ fontWeight: "bold" }}>Tổng tiền</span>
+                            <span style={{ fontWeight: "bold" }}>Tổng tiền sản phẩm</span>
                             <span style={{ fontWeight: "bold" }}>
                                 {cart?.totalAmount?.toLocaleString()} ₫
                             </span>
+                        </div>
+                        <div className="d-flex justify-content-between mt-2">
+                            <span>Miễn phí giao hàng</span>
+                        </div>
+                        <div className="d-flex justify-content-between mt-2" style={{ fontWeight: "bold", color: "#E0B7B3" }}>
+                            <span>Tổng thanh toán</span>
+                            <span>{((cart?.totalAmount || 0)).toLocaleString()} ₫</span>
                         </div>
 
                         <Button
@@ -188,8 +289,16 @@ const Checkout = () => {
                                 marginTop: "15px"
                             }}
                             onClick={handleCheckout}
+                            disabled={processing}
                         >
-                            XÁC NHẬN ĐẶT HÀNG
+                            {processing ? (
+                                <>
+                                    <MySpinner size="sm" className="me-2" />
+                                    {paymentMethod === "MOMO" ? "Đang tạo liên kết thanh toán..." : "Đang xử lý..."}
+                                </>
+                            ) : (
+                                paymentMethod === "MOMO" ? "THANH TOÁN QUA MOMO" : "XÁC NHẬN ĐẶT HÀNG"
+                            )}
                         </Button>
                     </div>
                 </Col>
