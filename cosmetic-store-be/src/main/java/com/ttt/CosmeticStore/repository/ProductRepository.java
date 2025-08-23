@@ -44,15 +44,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("isNew") Boolean isNew,
             Pageable pageable);
 
-    // Lấy sản phẩm mới nhất
-    List<Product> findTop8ByIsNewTrueOrderByIdDesc();
-
-    // Lấy sản phẩm bán chạy
-    List<Product> findTop8ByIsBestSellerTrueOrderByIdDesc();
-
-    // Phân trang cho sản phẩm mới nhất
     Page<Product> findByIsNewTrue(Pageable pageable);
 
-    // Phân trang cho sản phẩm bán chạy
     Page<Product> findByIsBestSellerTrue(Pageable pageable);
 }

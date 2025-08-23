@@ -22,19 +22,12 @@ public class ApiCartController {
 
     @PostMapping("/add")
     public ResponseEntity<CartResponse> addToCart(@Valid @RequestBody AddToCartRequest request) {
-        System.out.println("🛒 ApiCartController - addToCart called");
-        System.out.println("📦 Request: productId=" + request.getProductId() + ", quantity=" + request.getQuantity());
 
         try {
             Long userId = getCurrentUserId();
-            System.out.println("👤 Current userId: " + userId);
-
             CartResponse response = cartService.addToCart(userId, request);
-            System.out.println("✅ Cart service successful, returning response");
-
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            System.out.println("🚨 Error in addToCart: " + e.getMessage());
             e.printStackTrace();
             throw e;
         }

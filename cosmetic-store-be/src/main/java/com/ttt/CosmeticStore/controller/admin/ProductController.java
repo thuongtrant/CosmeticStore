@@ -49,12 +49,8 @@ public class ProductController {
                                 @RequestParam(value = "imageFiles", required = false) MultipartFile[] imageFiles,
                                 Model model) {
         try {
-            // upload main image
-//            if (mainImageFile != null && !mainImageFile.isEmpty()) {
                 String mainImageUrl = cloudinaryService.uploadImage(mainImageFile);
                 request.setMainImage(mainImageUrl);
-//            }
-            // upload images phụ
             List<String> imageUrls = new ArrayList<>();
             if (imageFiles != null) {
                 for (MultipartFile image : imageFiles) {

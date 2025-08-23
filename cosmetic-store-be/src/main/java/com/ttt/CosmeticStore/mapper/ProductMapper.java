@@ -1,8 +1,6 @@
 package com.ttt.CosmeticStore.mapper;
 
 import com.ttt.CosmeticStore.dto.request.ProductRequest;
-import com.ttt.CosmeticStore.dto.response.ProductDetailResponse;
-import com.ttt.CosmeticStore.dto.response.ProductDetailResponse;
 import com.ttt.CosmeticStore.dto.response.ProductResponse;
 import com.ttt.CosmeticStore.dto.response.ProductSimpleResponse;
 import com.ttt.CosmeticStore.entity.Product;
@@ -67,26 +65,7 @@ public class ProductMapper {
         return response;
     }
 
-    public ProductSimpleResponse toSimpleResponse(ProductResponse productResponse) {
-        if (productResponse == null) {
-            return null;
-        }
-
-        ProductSimpleResponse simple = new ProductSimpleResponse();
-        simple.setId(productResponse.getId());
-        simple.setName(productResponse.getName());
-        simple.setPrice(productResponse.getPrice());
-//        simple.setCategoryName(productResponse.getCategoryName());
-        simple.setIsBestSeller(productResponse.getIsBestSeller());
-        simple.setIsNew(productResponse.getIsNew());
-
-        // Use mainImage directly from ProductResponse
-        simple.setMainImageUrl(productResponse.getMainImage());
-
-        return simple;
-    }
-
-    public ProductSimpleResponse convertToSimpleResponse(Product product) {
+    public ProductSimpleResponse toSimpleResponse(Product product) {
         if (product == null) {
             return null;
         }
@@ -97,13 +76,6 @@ public class ProductMapper {
         simple.setPrice(product.getPrice());
         simple.setIsBestSeller(product.getIsBestSeller());
         simple.setIsNew(product.getIsNew());
-
-        // Set category name
-//        if (product.getCategory() != null) {
-//            simple.setCategoryName(product.getCategory().getName());
-//        }
-
-        // Use mainImageUrl directly from Product entity
         simple.setMainImageUrl(product.getMainImageUrl());
 
         return simple;
@@ -148,64 +120,4 @@ public class ProductMapper {
         }
     }
 
-    public ProductDetailResponse toDetailResponse(Product product) {
-        if (product == null) {
-            return null;
-        }
-
-        ProductDetailResponse detail = new ProductDetailResponse();
-
-        // Basic product information
-        detail.setId(product.getId());
-        detail.setName(product.getName());
-        detail.setPrice(product.getPrice());
-        detail.setDescription(product.getDescription());
-        detail.setType(product.getType());
-        detail.setBenefits(product.getBenefits());
-        detail.setHowToUse(product.getHowToUse());
-        detail.setInventory(product.getInventory());
-        detail.setIsBestSeller(product.getIsBestSeller());
-        detail.setIsNew(product.getIsNew());
-        detail.setMainImageUrl(product.getMainImageUrl());
-
-        // Category information
-        if (product.getCategory() != null) {
-            detail.setCategoryId(product.getCategory().getId());
-            detail.setCategoryName(product.getCategory().getName());
-        }
-
-        // Images information
-        if (product.getImages() != null) {
-            detail.setImages(product.getImages().stream()
-                    .map(image -> new ProductDetailResponse.ImageResponse(
-                            image.getId(),
-                            image.getImageUrl(),
-                            image.getName(),
-                            image.getType()
-                    ))
-                    .collect(Collectors.toList()));
-        }
-
-        // Ingredients information
-        if (product.getIngredients() != null) {
-            detail.setIngredients(product.getIngredients().stream()
-                    .map(ingredient -> new ProductDetailResponse.IngredientResponse(
-                            ingredient.getId(),
-                            ingredient.getName()
-                    ))
-                    .collect(Collectors.toList()));
-        }
-
-        // Skin types information
-        if (product.getSkinTypes() != null) {
-            detail.setSkinTypes(product.getSkinTypes().stream()
-                    .map(skinType -> new ProductDetailResponse.SkinTypeResponse(
-                            skinType.getId(),
-                            skinType.getName()
-                    ))
-                    .collect(Collectors.toList()));
-        }
-
-        return detail;
-    }
 }

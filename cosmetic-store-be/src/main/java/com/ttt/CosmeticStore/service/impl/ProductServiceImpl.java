@@ -3,8 +3,8 @@ package com.ttt.CosmeticStore.service.impl;
 import com.ttt.CosmeticStore.dto.request.ProductRequest;
 import com.ttt.CosmeticStore.dto.request.ProductSearchRequest;
 import com.ttt.CosmeticStore.dto.response.PagedProductResponse;
-import com.ttt.CosmeticStore.dto.response.PagedSimpleProductResponse;
-import com.ttt.CosmeticStore.dto.response.ProductDetailResponse;
+//import com.ttt.CosmeticStore.dto.response.PagedSimpleProductResponse;
+//import com.ttt.CosmeticStore.dto.response.ProductDetailResponse;
 import com.ttt.CosmeticStore.dto.response.ProductResponse;
 import com.ttt.CosmeticStore.dto.response.ProductSimpleResponse;
 import com.ttt.CosmeticStore.entity.*;
@@ -50,13 +50,6 @@ public class ProductServiceImpl implements ProductService {
         return productMapper.toResponse(product);
     }
 
-    @Override
-    public ProductDetailResponse getProductDetailById(Long id) {
-        Product product = productRepository.findByIdWithDetails(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm với id " + id));
-        return productMapper.toDetailResponse(product);
-    }
-
 
     @Override
     public PagedProductResponse searchProducts(ProductSearchRequest searchRequest) {
@@ -99,7 +92,7 @@ public class ProductServiceImpl implements ProductService {
 
         // Convert sang DTO
         List<ProductSimpleResponse> products = productPage.getContent().stream()
-                .map(productMapper::convertToSimpleResponse)
+                .map(productMapper::toSimpleResponse)
                 .collect(Collectors.toList());
 
         // Tạo response
@@ -117,19 +110,19 @@ public class ProductServiceImpl implements ProductService {
 
 
     @Override
-    public PagedSimpleProductResponse getAllProductsPaged(int page, int size) {
+    public PagedProductResponse getAllProductsPaged(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Product> productPage = productRepository.findAll(pageable);
 
         List<ProductSimpleResponse> products = productPage.getContent().stream()
-                .map(productMapper::convertToSimpleResponse)
+                .map(productMapper::toSimpleResponse)
                 .collect(Collectors.toList());
 
         return createPagedSimpleResponse(products, productPage);
     }
 
     @Override
-    public PagedSimpleProductResponse getProductsByTypePaged(String type, int page, int size) {
+    public PagedProductResponse getProductsByTypePaged(String type, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Product> productPage;
 
@@ -147,14 +140,14 @@ public class ProductServiceImpl implements ProductService {
         }
 
         List<ProductSimpleResponse> products = productPage.getContent().stream()
-                .map(productMapper::convertToSimpleResponse)
+                .map(productMapper::toSimpleResponse)
                 .collect(Collectors.toList());
 
         return createPagedSimpleResponse(products, productPage);
     }
 
-    private PagedSimpleProductResponse createPagedSimpleResponse(List<ProductSimpleResponse> products, Page<Product> productPage) {
-        PagedSimpleProductResponse response = new PagedSimpleProductResponse();
+    private PagedProductResponse createPagedSimpleResponse(List<ProductSimpleResponse> products, Page<Product> productPage) {
+        PagedProductResponse response = new PagedProductResponse();
         response.setProducts(products);
         response.setCurrentPage(productPage.getNumber());
         response.setTotalPages(productPage.getTotalPages());
@@ -192,28 +185,6 @@ public class ProductServiceImpl implements ProductService {
         return PageRequest.of(searchRequest.getPage(), searchRequest.getSize(), sort);
     }
 
-    @Override
-    public List<ProductSimpleResponse> getProductsByType(String type, int limit) {
-        List<Product> products;
-
-        switch (type.toLowerCase()) {
-            case "new":
-            case "newest":
-                products = productRepository.findTop8ByIsNewTrueOrderByIdDesc();
-                break;
-            case "bestseller":
-            case "best-seller":
-                products = productRepository.findTop8ByIsBestSellerTrueOrderByIdDesc();
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid product type: " + type);
-        }
-
-        return products.stream()
-                .limit(limit)
-                .map(productMapper::convertToSimpleResponse)
-                .collect(Collectors.toList());
-    }
     @Override
     public ProductResponse createProduct(ProductRequest request) {
         Product product = productMapper.toEntity(request);
