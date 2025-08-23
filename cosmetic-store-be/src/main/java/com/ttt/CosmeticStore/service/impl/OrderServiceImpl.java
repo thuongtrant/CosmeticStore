@@ -42,9 +42,6 @@ public class OrderServiceImpl implements OrderService {
     private CartItemRepository cartItemRepository;
 
     @Autowired
-    private ShippingAddressRepository shippingAddressRepository;
-
-    @Autowired
     private ShippingAddressService shippingAddressService;
 
     @Autowired
@@ -135,40 +132,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
-    public OrderResponse processPayment(String orderNumber, String paymentMethod) {
-        Order order = orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        Payment payment = order.getPayment();
-
-        // Simulate payment processing
-        boolean paymentSuccess = simulatePaymentProcessing(payment.getAmount(), paymentMethod);
-
-        if (paymentSuccess) {
-            payment.setStatus(Payment.PaymentStatus.COMPLETED);
-            payment.setPaymentDate(LocalDateTime.now());
-            order.setStatus(Order.OrderStatus.CONFIRMED);
-        } else {
-            payment.setStatus(Payment.PaymentStatus.FAILED);
-            order.setStatus(Order.OrderStatus.CANCELLED);
-        }
-
-        paymentRepository.save(payment);
-        Order savedOrder = orderRepository.save(order);
-
-        return orderMapper.toOrderResponse(savedOrder);
-    }
-
-    @Override
     public List<OrderResponse> getUserOrders(User user) {
-        List<Order> orders = orderRepository.findByUserOrderByCreatedAtDesc(user);
+        List<Order> orders = orderRepository.findByUserWithDetailsOrderByCreatedAtDesc(user);
         return orderMapper.toOrderResponseList(orders);
     }
 
     @Override
     public OrderResponse getOrderByNumber(String orderNumber) {
-        Order order = orderRepository.findByOrderNumber(orderNumber)
+        Order order = orderRepository.findByOrderNumberWithDetails(orderNumber)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
         return orderMapper.toOrderResponse(order);
     }
@@ -181,18 +152,9 @@ public class OrderServiceImpl implements OrderService {
         return "TXN" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
     }
 
-    private boolean simulatePaymentProcessing(BigDecimal amount, String paymentMethod) {
-        // Giả lập xử lý thanh toán - trong thực tế sẽ tích hợp với payment gateway
-        try {
-            Thread.sleep(1000); // Simulate processing time
-            return Math.random() > 0.1; // 90% success rate
-        } catch (InterruptedException e) {
-            return false;
-        }
-    }
 
     private void clearUserCart(User user) {
-        Cart cart = cartRepository.findByUser(user).orElse(null);
+        Cart cart = cartRepository.findByUserId(user.getId()).orElse(null);
         if (cart != null) {
             cartItemRepository.deleteByCart(cart);
         }
@@ -201,7 +163,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public void updatePaymentStatus(String orderNumber, String status, String transactionId) {
-        Order order = orderRepository.findByOrderNumber(orderNumber)
+        Order order = orderRepository.findByOrderNumberWithDetails(orderNumber)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
         Payment payment = order.getPayment();

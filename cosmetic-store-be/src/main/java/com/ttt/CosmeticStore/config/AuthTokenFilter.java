@@ -135,7 +135,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         boolean shouldSkip = !path.startsWith("/api/") || path.startsWith("/api/auth/");
 
         if (shouldSkip) {
-            System.out.println("⏭️ Skipping JWT filter for: " + path);
+            System.out.println("Skipping JWT filter for: " + path);
         }
 
         return shouldSkip;
@@ -146,13 +146,13 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         try {
             String requestURI = request.getRequestURI();
-            System.out.println("🔍 JWT Filter - Processing API request: " + requestURI);
+            System.out.println("JWT Filter - Processing API request: " + requestURI);
 
             // Chỉ xử lý JWT cho API requests
             String jwt = parseJwt(request);
 
             if (jwt != null) {
-                System.out.println("🔑 JWT Token found");
+                System.out.println("JWT Token found");
 
                 if (jwtUtils.validateJwtToken(jwt)) {
                     String username = jwtUtils.getUserNameFromJwtToken(jwt);
@@ -167,18 +167,25 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    System.out.println("✅ JWT Authentication set for user: " + username);
-                    System.out.println("✅ Authorities: " + userDetails.getAuthorities());
+                    System.out.println("JWT Authentication set for user: " + username);
+                    System.out.println("Authorities: " + userDetails.getAuthorities());
                 } else {
-                    System.out.println("❌ JWT validation failed");
+                    SecurityContextHolder.clearContext();
+                    request.setAttribute("jwt.error", "Invalid or expired JWT token");
+
                 }
             } else {
-                System.out.println("⚠️ No JWT token found in request");
+                System.out.println("No JWT token found in request");
+                SecurityContextHolder.clearContext();
+
             }
 
         } catch (Exception e) {
             System.err.println("🚨 JWT Filter error: " + e.getMessage());
             logger.error("Cannot set user authentication: {}", e);
+            SecurityContextHolder.clearContext();
+            request.setAttribute("jwt.error", "JWT processing error: " + e.getMessage());
+
         }
 
         filterChain.doFilter(request, response);

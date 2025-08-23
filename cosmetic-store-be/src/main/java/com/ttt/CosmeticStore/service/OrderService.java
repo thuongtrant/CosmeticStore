@@ -13,8 +13,6 @@ public interface OrderService {
 
     OrderResponse createOrder(User user, CheckoutRequest request);
 
-    OrderResponse processPayment(String orderNumber, String paymentMethod);
-
     List<OrderResponse> getUserOrders(User user);
 
     OrderResponse getOrderByNumber(String orderNumber);

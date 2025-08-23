@@ -31,6 +31,9 @@ public class ShippingAddressMapper {
         response.setLabel(address.getLabel());
         response.setFullAddress(address.getFullAddress());
         response.setCreatedAt(address.getCreatedAt());
+        response.setProvinceCode(address.getProvinceCode());
+        response.setDistrictCode(address.getDistrictCode());
+        response.setWardCode(address.getWardCode());
         return response;
     }
 

@@ -8,10 +8,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.session.SessionRegistry;
@@ -25,6 +27,7 @@ import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
 import java.util.List;
 
@@ -44,10 +47,9 @@ public class WebSecurityConfig {
     };
 
     private static final String[] PUBLIC_API_ENDPOINTS = {
-            "/api/auth/**", "/api/test/public", "/oauth2/**", "/login/oauth2/**",
+            "/api/auth/**", "/oauth2/**", "/login/oauth2/**",
             "/api/payment/momo/callback",
             "/api/payment/momo/return",
-            "/api/payment/momo/check-order/**"
     };
 
     private static final String[] ADMIN_WEB_ENDPOINTS = {
@@ -55,7 +57,7 @@ public class WebSecurityConfig {
     };
 
     private static final String[] ADMIN_API_ENDPOINTS = {
-            "/api/admin/**", "/api/test/admin"
+            "/api/admin/**"
     };
 
     private static final String[] CUSTOMER_WEB_ENDPOINTS = {
@@ -63,12 +65,13 @@ public class WebSecurityConfig {
     };
 
     private static final String[] CUSTOMER_API_ENDPOINTS = {
-            "/api/customer/**", "/api/test/customer"
+            "/api/customer/**"
     };
 
     private static final String[] PROTECTED_API_ENDPOINTS = {
             "/api/products/**", "/api/categories/**", "/api/secure/**",
-            "/api/cart/**", "/api/test/protected","/api/shipping-addresses/**"
+            "/api/cart/**","/api/shipping-addresses/**","/api/payment/**"
+
     };
 
     private final UserServiceImpl userDetailsService;
@@ -132,8 +135,8 @@ public class WebSecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:3000","http://localhost:3001", "http://localhost:8080"));
-        config.setAllowedMethods(List.of("*"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "Accept"));
         config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
@@ -147,10 +150,19 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
+                .headers(headers -> headers
+                        .frameOptions(frameOptionsConfig -> frameOptionsConfig.deny())
+                        .contentTypeOptions(contentTypeOptionsConfig -> {})
+                        .xssProtection(xssConfig -> {})
+                        .httpStrictTransportSecurity(hstsConfig -> hstsConfig
+                                .maxAgeInSeconds(31536000)
+                                .includeSubDomains(true)
+                        )
+                )
                 // CORS & CSRF
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/**", "/admin/**")
+                        .ignoringRequestMatchers("/api/**")
                         .csrfTokenRepository(csrfTokenRepository())
                 )
 

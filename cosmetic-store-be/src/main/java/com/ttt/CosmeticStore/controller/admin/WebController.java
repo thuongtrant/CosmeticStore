@@ -1,5 +1,6 @@
 package com.ttt.CosmeticStore.controller.admin;
 
+import com.ttt.CosmeticStore.dto.request.LoginRequest;
 import com.ttt.CosmeticStore.dto.request.SignupRequest;
 import com.ttt.CosmeticStore.entity.Role;
 import com.ttt.CosmeticStore.entity.User;
@@ -35,7 +36,8 @@ public class WebController {
     }
 
     @GetMapping("/login")
-    public String login() {
+    public String login(Model model) {
+        model.addAttribute("loginRequest", new LoginRequest());
         return "login";
     }
 

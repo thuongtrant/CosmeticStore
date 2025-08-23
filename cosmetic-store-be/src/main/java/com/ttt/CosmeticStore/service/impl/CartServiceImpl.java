@@ -90,7 +90,7 @@ public class CartServiceImpl implements CartService {
 
             // Return updated cart
             System.out.println("🔍 Fetching updated cart with items...");
-            Cart updatedCart = cartRepository.findByUserIdWithItems(userId)
+            Cart updatedCart = cartRepository.findByUserId(userId)
                     .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giỏ hàng"));
             System.out.println("✅ Updated cart fetched with " +
                     (updatedCart.getCartItems() != null ? updatedCart.getCartItems().size() : 0) + " items");
@@ -112,7 +112,7 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional(readOnly = true)
     public CartResponse getCartByUserId(Long userId) {
-        Cart cart = cartRepository.findByUserIdWithItems(userId).orElse(null);
+        Cart cart = cartRepository.findByUserId(userId).orElse(null);
 
         if (cart == null) {
             // Create empty cart for user
@@ -147,7 +147,7 @@ public class CartServiceImpl implements CartService {
         cartItem.setQuantity(quantity);
         cartItemRepository.save(cartItem);
 
-        Cart updatedCart = cartRepository.findByUserIdWithItems(userId)
+        Cart updatedCart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giỏ h��ng"));
 
         return cartMapper.toCartResponse(updatedCart);

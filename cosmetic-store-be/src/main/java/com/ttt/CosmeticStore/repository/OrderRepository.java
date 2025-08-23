@@ -15,16 +15,24 @@ import java.util.Optional;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
-    List<Order> findByUserOrderByCreatedAtDesc(User user);
+    @Query("SELECT o FROM Order o " +
+            "LEFT JOIN FETCH o.orderItems oi " +
+            "LEFT JOIN FETCH oi.product p " +
+            "LEFT JOIN FETCH o.payment " +
+            "LEFT JOIN FETCH o.shippingAddress " +
+            "WHERE o.user = :user " +
+            "ORDER BY o.createdAt DESC")
+    List<Order> findByUserWithDetailsOrderByCreatedAtDesc(@Param("user") User user);
 
-    Optional<Order> findByOrderNumber(String orderNumber);
-
-    @Query("SELECT o FROM Order o WHERE o.user = :user AND o.status = :status")
-    List<Order> findByUserAndStatus(@Param("user") User user, @Param("status") Order.OrderStatus status);
+    @Query("SELECT o FROM Order o " +
+            "LEFT JOIN FETCH o.orderItems oi " +
+            "LEFT JOIN FETCH oi.product p " +
+            "LEFT JOIN FETCH o.payment " +
+            "LEFT JOIN FETCH o.shippingAddress " +
+            "WHERE o.orderNumber = :orderNumber")
+    Optional<Order> findByOrderNumberWithDetails(@Param("orderNumber") String orderNumber);
 
     Page<Order> findByStatus(Order.OrderStatus status, Pageable pageable);
-
-    long countByStatus(Order.OrderStatus status);
 
     // Tìm kiếm theo số đơn hàng
     Page<Order> findByOrderNumberContainingIgnoreCase(String orderNumber, Pageable pageable);
