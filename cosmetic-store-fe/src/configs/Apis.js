@@ -15,6 +15,7 @@ export const endpoints = {
     'productDetail': productId => `/api/products/${productId}/detail`,
     'productsAllPaged': (page, size) => `/api/products/paged?page=${page}&size=${size}`,
     'productsByTypePaged': (type, page, size) => `/api/products/by-type/paged?productType=${type}&page=${page}&size=${size}`,
+    'search': '/api/products/search',
 
     'addToCart': '/api/cart/add',
     'cartCount': '/api/cart/count',
@@ -24,7 +25,6 @@ export const endpoints = {
     'categories': '/api/filters/categories',
     'ingredients': '/api/filters/ingredients',
     'skin-types': '/api/filters/skin-types',
-    'search': '/api/products/search',
 
     'shippingAddress': '/api/shipping-address',
     'defaultAddress': '/api/shipping-address/default',
