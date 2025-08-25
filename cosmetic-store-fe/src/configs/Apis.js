@@ -9,13 +9,13 @@ export const endpoints = {
     'my-profile': '/api/secure/user/my-profile',
 
     // 'listProduct': '/api/products/list',
-    'productDetail': productId => `/api/products/${productId}/detail`,
     // 'productsByType': (type, limit) => `/api/products/by-type?productType=${type}&limit=${limit}`,
-    'productsByType': (type, limit) => `/api/products/by-type?productType=${type}&limit=${limit}`,
+    // 'productsByType': (type, limit) => `/api/products/by-type?productType=${type}&limit=${limit}`,
 
-    // API phân trang mới
+    'productDetail': productId => `/api/products/${productId}/detail`,
     'productsAllPaged': (page, size) => `/api/products/paged?page=${page}&size=${size}`,
     'productsByTypePaged': (type, page, size) => `/api/products/by-type/paged?productType=${type}&page=${page}&size=${size}`,
+    'search': '/api/products/search',
 
     'addToCart': '/api/cart/add',
     'cartCount': '/api/cart/count',
@@ -25,16 +25,16 @@ export const endpoints = {
     'categories': '/api/filters/categories',
     'ingredients': '/api/filters/ingredients',
     'skin-types': '/api/filters/skin-types',
-    'search': '/api/products/search',
 
     'shippingAddress': '/api/shipping-address',
-    'defaultAddress': '/api/shipping-address/default ',
+    'defaultAddress': '/api/shipping-address/default',
 
     'checkout': '/api/payment/checkout',
-    'orders' : 'api/payment/orders',
-    'orderDetail' :orderNumber => `/api/payment/order/${orderNumber}`,
+    'checkoutSid':sid=> `/api/payment/momo/check-order/${sid}`,
+    'processPayment': orderNumber => `/api/payment/process/${orderNumber}`,
+    'orders': '/api/payment/orders',
+    'orderDetail': orderNumber => `/api/payment/order/${orderNumber}`,
     'paymentMethods': '/api/payment/methods',
-
 };
 export const authApis = () => {
     const token = cookie.load('token');

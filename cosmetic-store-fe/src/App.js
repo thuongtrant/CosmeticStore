@@ -5,8 +5,9 @@ import Home from "./components/Home";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Register from "./components/Register";
 import Login from "./components/Login";
+import OAuth2Redirect from "./components/OAuth2Redirect";
 import { MyDispatchContext, MyUserContext } from "./configs/MyContexts";
-import { useReducer, useEffect } from "react";
+import { useReducer, useEffect, useContext } from "react";
 import MyUserReducer from "./reducers/MyUserReducer";
 import { authApis, endpoints } from "./configs/Apis";
 import cookie from "react-cookies";
@@ -19,11 +20,17 @@ import ShippingAddress  from "./components/Customer/ShippingAddress";
 import OrderDetail from "./components/Customer/OrderDetail";
 import Orders from "./components/Customer/Orders";
 import HomePage from "./components/HomePage";
+import Chat from "./components/Customer/Chat";
+import Profile from "./components/Profile";
+import AboutBFY from "./components/Customer/AboutBFY";
+import MoMoReturn from "./components/Customer/MoMoReturn";
+
 function AppLayout() {
   const location = useLocation();
+  const user = useContext(MyUserContext);
 
-  // Không hiển thị header/footer nếu ở login hoặc register
-  const hideHeaderFooter = ["/login", "/register"].includes(location.pathname);
+  // Không hiển thị header/footer nếu ở login, register hoặc OAuth2 redirect
+  const hideHeaderFooter = ["/login", "/register", "/oauth2/redirect"].includes(location.pathname);
 
   return (
     <>
@@ -32,6 +39,8 @@ function AppLayout() {
         <Route path="/register" element={<Register />} />
         <Route path="/home" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/profile" element={<Profile />}/>
+        <Route path="/about" element={<AboutBFY />}/>
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/productdetail/:productId" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
@@ -40,8 +49,16 @@ function AppLayout() {
         <Route path="/orderDetail/:orderNumber" element={<OrderDetail />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/homepage" element={<HomePage />}/>
+        <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
+        <Route path="/payment/momo/return" element={<MoMoReturn />} />
       </Routes>
       {!hideHeaderFooter && <Footer />}
+      {user && !hideHeaderFooter && (
+        <Chat 
+          customerId={user.id} 
+          customerName={user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email || `Khách hàng ${user.id}`} 
+        />
+      )}
     </>
   );
 }
