@@ -1,9 +1,14 @@
 package com.ttt.CosmeticStore.dto.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.List;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class PagedProductResponse {
     private List<ProductSimpleResponse> products;
     private int currentPage;

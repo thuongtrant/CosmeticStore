@@ -1,4 +1,4 @@
-package com.ttt.CosmeticStore.controller.admin;
+package com.ttt.CosmeticStore.controller;
 
 import com.ttt.CosmeticStore.config.JwtUtils;
 import com.ttt.CosmeticStore.dto.request.LoginRequest;
@@ -18,9 +18,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -43,7 +47,17 @@ public class AuthController {
     JwtUtils jwtUtils;
 
     @PostMapping("/signin")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest,
+                                              BindingResult bindingResult) {
+        // Kiểm tra validation errors
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return ResponseEntity.badRequest().body(errors);
+        }
+
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
@@ -63,39 +77,43 @@ public class AuthController {
                     roles.get(0).replace("ROLE_", ""))); // Remove ROLE_ prefix
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(new MessageResponse("Error: Invalid username or password!"));
+                    .body(new MessageResponse("Tên đăng nhập hoặc mật khẩu không chính xác!"));
         }
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
-        if (userRepository.existsByUsername(signUpRequest.getUsername())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Error: Username is already taken!"));
+    public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest,
+                                          BindingResult bindingResult) {
+
+        // Kiểm tra validation errors
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return ResponseEntity.badRequest().body(errors);
         }
 
-        if (userRepository.existsByEmail(signUpRequest.getEmail())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Error: Email is already in use!"));
+        try {
+            // Create new user's account
+            User user = new User();
+            user.setUsername(signUpRequest.getUsername());
+            user.setEmail(signUpRequest.getEmail());
+            user.setPassword(encoder.encode(signUpRequest.getPassword()));
+            user.setPhone(signUpRequest.getPhone());
+            user.setGender(signUpRequest.getGender());
+
+            // Set default role
+            Role userRole = roleRepository.findByName("CUSTOMER")
+                    .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy vai trò người dùng."));
+            user.setRole(userRole);
+
+            userRepository.save(user);
+
+            return ResponseEntity.ok(new MessageResponse("Đăng ký thành công!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new MessageResponse("Lỗi: Đăng ký thất bại. " + e.getMessage()));
         }
-
-        // Create new user's account
-        User user = new User();
-        user.setUsername(signUpRequest.getUsername());
-        user.setEmail(signUpRequest.getEmail());
-        user.setPassword(encoder.encode(signUpRequest.getPassword()));
-        user.setPhone(signUpRequest.getPhone());
-        user.setGender(signUpRequest.getGender());
-
-        // Set default role
-        Role userRole = roleRepository.findByName("CUSTOMER")
-                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-        user.setRole(userRole);
-
-        userRepository.save(user);
-
-        return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
 }

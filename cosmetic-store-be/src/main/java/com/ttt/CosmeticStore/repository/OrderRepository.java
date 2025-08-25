@@ -9,22 +9,31 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
-    List<Order> findByUserOrderByCreatedAtDesc(User user);
+    @Query("SELECT o FROM Order o " +
+            "LEFT JOIN FETCH o.orderItems oi " +
+            "LEFT JOIN FETCH oi.product p " +
+            "LEFT JOIN FETCH o.payment " +
+            "LEFT JOIN FETCH o.shippingAddress " +
+            "WHERE o.user = :user " +
+            "ORDER BY o.createdAt DESC")
+    List<Order> findByUserWithDetailsOrderByCreatedAtDesc(@Param("user") User user);
 
-    Optional<Order> findByOrderNumber(String orderNumber);
-
-    @Query("SELECT o FROM Order o WHERE o.user = :user AND o.status = :status")
-    List<Order> findByUserAndStatus(@Param("user") User user, @Param("status") Order.OrderStatus status);
+    @Query("SELECT o FROM Order o " +
+            "LEFT JOIN FETCH o.orderItems oi " +
+            "LEFT JOIN FETCH oi.product p " +
+            "LEFT JOIN FETCH o.payment " +
+            "LEFT JOIN FETCH o.shippingAddress " +
+            "WHERE o.orderNumber = :orderNumber")
+    Optional<Order> findByOrderNumberWithDetails(@Param("orderNumber") String orderNumber);
 
     Page<Order> findByStatus(Order.OrderStatus status, Pageable pageable);
-
-    long countByStatus(Order.OrderStatus status);
 
     // Tìm kiếm theo số đơn hàng
     Page<Order> findByOrderNumberContainingIgnoreCase(String orderNumber, Pageable pageable);
@@ -42,4 +51,31 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByStatusAndCreatedAtBetween(@Param("status") Order.OrderStatus status,
                                                 @Param("startDate") LocalDateTime startDate,
                                                 @Param("endDate") LocalDateTime endDate);
+
+    // Thống kê doanh thu theo ngày
+    @Query("SELECT DATE(o.createdAt), SUM(o.totalAmount), COUNT(o), COUNT(DISTINCT o.user) " +
+           "FROM Order o " +
+           "WHERE o.createdAt BETWEEN :startDate AND :endDate AND o.status = :status " +
+           "GROUP BY DATE(o.createdAt) " +
+           "ORDER BY DATE(o.createdAt)")
+    List<Object[]> findRevenueStatistics(@Param("startDate") LocalDateTime startDate,
+                                        @Param("endDate") LocalDateTime endDate,
+                                        @Param("status") Order.OrderStatus status);
+
+    // Tổng doanh thu
+    @Query("SELECT SUM(o.totalAmount) FROM Order o " +
+           "WHERE o.createdAt BETWEEN :startDate AND :endDate AND o.status = :status")
+    BigDecimal getTotalRevenue(@Param("startDate") LocalDateTime startDate,
+                              @Param("endDate") LocalDateTime endDate,
+                              @Param("status") Order.OrderStatus status);
+
+    // Đếm số đơn hàng theo trạng thái và thời gian
+    Long countByCreatedAtBetweenAndStatus(LocalDateTime startDate, LocalDateTime endDate, Order.OrderStatus status);
+
+    // Đếm số khách hàng khác nhau
+    @Query("SELECT COUNT(DISTINCT o.user) FROM Order o " +
+           "WHERE o.createdAt BETWEEN :startDate AND :endDate AND o.status = :status")
+    Long countDistinctCustomers(@Param("startDate") LocalDateTime startDate,
+                               @Param("endDate") LocalDateTime endDate,
+                               @Param("status") Order.OrderStatus status);
 }

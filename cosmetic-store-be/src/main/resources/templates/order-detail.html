@@ -174,10 +174,8 @@
                         <!-- Cancel Order -->
                         <div th:if="${order.status == 'PENDING' || order.status == 'CONFIRMED'}">
                             <hr>
-                            <button type="button" class="btn btn-danger w-100"
-                                    data-bs-toggle="modal" data-bs-target="#cancelModal">
-                                <i class="fas fa-times"></i> Hủy đơn hàng
-                            </button>
+                            <button type="submit">Hủy đơn hàng</button>
+
                         </div>
 
                         <!-- Order History Timeline -->
@@ -203,41 +201,5 @@
         </div>
     </div>
 </main>
-
-<!-- Cancel Order Modal -->
-<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            ...
-            <form th:action="@{/admin/orders/{id}/cancel(id=${order.id})}" method="post" id="cancelOrderForm">
-                <!-- Nếu bạn dùng CSRF -->
-                <!-- <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" /> -->
-                ...
-            </form>
-        </div>
-    </div>
-</div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const cancelForm = document.getElementById('cancelOrderForm');
-        const reasonTextarea = document.getElementById('reason');
-        const confirmBtn = document.getElementById('confirmCancelBtn');
-
-        if (cancelForm) {
-            cancelForm.addEventListener('submit', function(e) {
-                const reason = reasonTextarea.value.trim();
-                if (reason.length < 10) {
-                    e.preventDefault();
-                    alert('Vui lòng nhập lý do hủy đơn hàng (tối thiểu 10 ký tự)');
-                    reasonTextarea.focus();
-                    return false;
-                }
-                confirmBtn.disabled = true;
-                confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
-            });
-        }
-    });
-</script>
 </body>
 </html>

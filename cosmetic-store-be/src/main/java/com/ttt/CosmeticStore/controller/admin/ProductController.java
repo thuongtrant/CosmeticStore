@@ -2,6 +2,7 @@ package com.ttt.CosmeticStore.controller.admin;
 
 import com.ttt.CosmeticStore.dto.request.ProductRequest;
 import com.ttt.CosmeticStore.dto.response.ProductResponse;
+import com.ttt.CosmeticStore.dto.response.PagedProductListResponse;
 import com.ttt.CosmeticStore.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,8 +28,13 @@ public class ProductController {
     private final SkinTypeService skinTypeService;
 
     @GetMapping
-    public String listProducts(Model model) {
-        model.addAttribute("products", productService.getAllProducts());
+    public String listProducts(Model model,
+                              @RequestParam(defaultValue = "0") int page,
+                              @RequestParam(defaultValue = "10") int size) {
+        // Sử dụng method phân trang mới thay vì getAllProductsForList
+        PagedProductListResponse pagedProducts = productService.getAllProductsForList(page, size);
+        model.addAttribute("pagedProducts", pagedProducts);
+        model.addAttribute("products", pagedProducts.getProducts());
         return "product";
     }
 
@@ -49,12 +55,8 @@ public class ProductController {
                                 @RequestParam(value = "imageFiles", required = false) MultipartFile[] imageFiles,
                                 Model model) {
         try {
-            // upload main image
-//            if (mainImageFile != null && !mainImageFile.isEmpty()) {
                 String mainImageUrl = cloudinaryService.uploadImage(mainImageFile);
                 request.setMainImage(mainImageUrl);
-//            }
-            // upload images phụ
             List<String> imageUrls = new ArrayList<>();
             if (imageFiles != null) {
                 for (MultipartFile image : imageFiles) {

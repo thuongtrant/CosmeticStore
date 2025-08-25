@@ -31,6 +31,9 @@ public class ShippingAddressMapper {
         response.setLabel(address.getLabel());
         response.setFullAddress(address.getFullAddress());
         response.setCreatedAt(address.getCreatedAt());
+        response.setProvinceCode(address.getProvinceCode());
+        response.setDistrictCode(address.getDistrictCode());
+        response.setWardCode(address.getWardCode());
         return response;
     }
 
@@ -81,5 +84,20 @@ public class ShippingAddressMapper {
         existingAddress.setLabel(request.getLabel() != null ? request.getLabel().trim() : null);
 
         return existingAddress;
+    }
+
+    public ShippingAddressRequest toRequest(ShippingAddress address) {
+        if (address == null) return null;
+        ShippingAddressRequest req = new ShippingAddressRequest();
+        req.setRecipientName(address.getRecipientName());
+        req.setPhoneNumber(address.getPhoneNumber());
+        req.setAddressLine(address.getAddressLine());
+        req.setWard(address.getWard());
+        req.setDistrict(address.getDistrict());
+        req.setProvince(address.getProvince());
+        req.setPostalCode(address.getPostalCode());
+        req.setIsDefault(address.getIsDefault());
+        req.setLabel(address.getLabel());
+        return req;
     }
 }

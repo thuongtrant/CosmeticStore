@@ -1,11 +1,145 @@
+//package com.ttt.CosmeticStore.service.impl;
+//
+//import com.fasterxml.jackson.databind.ObjectMapper;
+//import com.ttt.CosmeticStore.config.MoMoConfig;
+//import com.ttt.CosmeticStore.dto.request.CheckoutRequest;
+//import com.ttt.CosmeticStore.dto.request.MoMoRequest;
+//import com.ttt.CosmeticStore.dto.response.MoMoResponse;
+//import com.ttt.CosmeticStore.service.MoMoService;
+//import com.ttt.CosmeticStore.service.OrderService;
+//import jakarta.transaction.Transactional;
+//import lombok.RequiredArgsConstructor;
+//import lombok.extern.slf4j.Slf4j;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Value;
+//import org.springframework.http.*;
+//import org.springframework.stereotype.Service;
+//import org.springframework.web.client.RestTemplate;
+//
+//import javax.crypto.Mac;
+//import javax.crypto.spec.SecretKeySpec;
+//import java.nio.charset.StandardCharsets;
+//import java.util.Base64;
+//import java.util.UUID;
+//
+//@Service
+//@Slf4j
+//@RequiredArgsConstructor
+//public class MoMoServiceImpl implements MoMoService {
+//
+//    @Autowired
+//    private MoMoConfig moMoConfig;
+//
+//    @Autowired
+//    private RestTemplate restTemplate;
+//
+//    @Override
+//    public MoMoResponse createPayment(String orderNumber, Long amount, String orderInfo) {
+//        return createPayment(orderNumber, amount, orderInfo, "captureWallet");
+//    }
+//
+//    // Phương thức mới hỗ trợ chọn requestType
+//    public MoMoResponse createPayment(String orderNumber, Long amount, String orderInfo, String requestType) {
+//        try {
+//            String requestId = UUID.randomUUID().toString();
+//            String orderId = orderNumber;
+//            String extraData = "";
+//            String lang = "vi";
+//
+//            // Tạo raw signature
+//            String rawHash = "accessKey=" + moMoConfig.getAccessKey() +
+//                    "&amount=" + amount +
+//                    "&extraData=" + extraData +
+//                    "&ipnUrl=" + moMoConfig.getNotifyUrl() +
+//                    "&orderId=" + orderId +
+//                    "&orderInfo=" + orderInfo +
+//                    "&partnerCode=" + moMoConfig.getPartnerCode() +
+//                    "&redirectUrl=" + moMoConfig.getReturnUrl() +
+//                    "&requestId=" + requestId +
+//                    "&requestType=" + requestType;
+//
+//            String signature = generateSignature(rawHash);
+//
+//            MoMoRequest request = MoMoRequest.builder()
+//                    .partnerCode(moMoConfig.getPartnerCode())
+//                    .requestId(requestId)
+//                    .amount(amount)
+//                    .orderId(orderId)
+//                    .orderInfo(orderInfo)
+//                    .redirectUrl(moMoConfig.getReturnUrl())
+//                    .ipnUrl(moMoConfig.getNotifyUrl())
+//                    .requestType(requestType) // Sử dụng requestType được truyền vào
+//                    .extraData(extraData)
+//                    .lang(lang)
+//                    .signature(signature)
+//                    .build();
+//
+//            HttpHeaders headers = new HttpHeaders();
+//            headers.setContentType(MediaType.APPLICATION_JSON);
+//            HttpEntity<MoMoRequest> entity = new HttpEntity<>(request, headers);
+//
+//            ResponseEntity<MoMoResponse> response = restTemplate.postForEntity(
+//                    moMoConfig.getEndpoint(), entity, MoMoResponse.class);
+//
+//            return response.getBody();
+//
+//        } catch (Exception e) {
+//            log.error("Lỗi khi tạo thanh toán MoMo: ", e);
+//            throw new RuntimeException("Không thể tạo thanh toán MoMo: " + e.getMessage());
+//        }
+//    }
+//
+//    @Override
+//    public boolean verifySignature(String signature, String rawData) {
+//        try {
+//            String generatedSignature = generateSignature(rawData);
+//            return signature.equals(generatedSignature);
+//        } catch (Exception e) {
+//            log.error("Lỗi khi xác thực chữ ký MoMo: ", e);
+//            return false;
+//        }
+//    }
+//
+//    @Override
+//    public String generateSignature(String rawData) {
+//        try {
+//            Mac hmacSha256 = Mac.getInstance("HmacSHA256");
+//            SecretKeySpec secretKey = new SecretKeySpec(
+//                    moMoConfig.getSecretKey().getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+//            hmacSha256.init(secretKey);
+//
+//            byte[] hash = hmacSha256.doFinal(rawData.getBytes(StandardCharsets.UTF_8));
+//            StringBuilder hexString = new StringBuilder();
+//
+//            for (byte b : hash) {
+//                String hex = Integer.toHexString(0xff & b);
+//                if (hex.length() == 1) {
+//                    hexString.append('0');
+//                }
+//                hexString.append(hex);
+//            }
+//
+//            return hexString.toString();
+//        } catch (Exception e) {
+//            log.error("Lỗi khi tạo chữ ký MoMo: ", e);
+//            throw new RuntimeException("Không thể tạo chữ ký MoMo");
+//        }
+//    }
+//}
 package com.ttt.CosmeticStore.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ttt.CosmeticStore.config.MoMoConfig;
+import com.ttt.CosmeticStore.dto.request.CheckoutRequest;
 import com.ttt.CosmeticStore.dto.request.MoMoRequest;
 import com.ttt.CosmeticStore.dto.response.MoMoResponse;
 import com.ttt.CosmeticStore.service.MoMoService;
+import com.ttt.CosmeticStore.service.OrderService;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -13,10 +147,12 @@ import org.springframework.web.client.RestTemplate;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.UUID;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class MoMoServiceImpl implements MoMoService {
 
     @Autowired
@@ -27,11 +163,15 @@ public class MoMoServiceImpl implements MoMoService {
 
     @Override
     public MoMoResponse createPayment(String orderNumber, Long amount, String orderInfo) {
+        return createPayment(orderNumber, amount, orderInfo, "captureWallet");
+    }
+
+    @Override
+    public MoMoResponse createPayment(String orderNumber, Long amount, String orderInfo, String requestType) {
         try {
             String requestId = UUID.randomUUID().toString();
             String orderId = orderNumber;
             String extraData = "";
-            String requestType = "captureWallet";
             String lang = "vi";
 
             // Tạo raw signature
@@ -47,6 +187,9 @@ public class MoMoServiceImpl implements MoMoService {
                     "&requestType=" + requestType;
 
             String signature = generateSignature(rawHash);
+
+            log.info("🔐 Creating MoMo payment - OrderId: {}, Amount: {}, RequestType: {}",
+                    orderId, amount, requestType);
 
             MoMoRequest request = MoMoRequest.builder()
                     .partnerCode(moMoConfig.getPartnerCode())
@@ -69,10 +212,40 @@ public class MoMoServiceImpl implements MoMoService {
             ResponseEntity<MoMoResponse> response = restTemplate.postForEntity(
                     moMoConfig.getEndpoint(), entity, MoMoResponse.class);
 
-            return response.getBody();
+            log.info("✅ MoMo response received - PayUrl: {}",
+                    response.getBody() != null ? response.getBody().getPayUrl() : "null");
+
+            MoMoResponse momoResponse = response.getBody();
+
+            if (momoResponse != null) {
+                log.info("📥 MoMo response received:");
+                log.info("   ResultCode: {}", momoResponse.getResultCode());
+                log.info("   Message: {}", momoResponse.getMessage());
+                log.info("   PayUrl: {}", momoResponse.getPayUrl());
+                log.info("   QrCodeUrl: {}", momoResponse.getQrCodeUrl());
+                log.info("   Deeplink: {}", momoResponse.getDeeplink());
+
+                // Check if request failed
+                if (momoResponse.getResultCode() != null && momoResponse.getResultCode() != 0) {
+                    log.error("❌ MoMo request failed with code {}: {}",
+                            momoResponse.getResultCode(), momoResponse.getMessage());
+                    throw new RuntimeException("MoMo error: " + momoResponse.getMessage());
+                }
+
+                // For QR payment, check if we have QR code URL
+                if ("captureWallet".equals(requestType) && momoResponse.getQrCodeUrl() == null && momoResponse.getPayUrl() == null) {
+                    log.error("❌ No payment URL or QR code URL received for QR payment");
+                    throw new RuntimeException("MoMo không trả về link thanh toán");
+                }
+            } else {
+                log.error("❌ MoMo response is null");
+                throw new RuntimeException("Không nhận được phản hồi từ MoMo");
+            }
+
+            return momoResponse;
 
         } catch (Exception e) {
-            log.error("Lỗi khi tạo thanh toán MoMo: ", e);
+            log.error("❌ Error creating MoMo payment: ", e);
             throw new RuntimeException("Không thể tạo thanh toán MoMo: " + e.getMessage());
         }
     }
@@ -81,9 +254,18 @@ public class MoMoServiceImpl implements MoMoService {
     public boolean verifySignature(String signature, String rawData) {
         try {
             String generatedSignature = generateSignature(rawData);
-            return signature.equals(generatedSignature);
+            boolean isValid = signature.equals(generatedSignature);
+
+            if (!isValid) {
+                log.warn("⚠️ Signature mismatch!");
+                log.debug("Expected: {}", generatedSignature);
+                log.debug("Received: {}", signature);
+                log.debug("Raw data: {}", rawData);
+            }
+
+            return isValid;
         } catch (Exception e) {
-            log.error("Lỗi khi xác thực chữ ký MoMo: ", e);
+            log.error("❌ Error verifying MoMo signature: ", e);
             return false;
         }
     }
@@ -109,7 +291,7 @@ public class MoMoServiceImpl implements MoMoService {
 
             return hexString.toString();
         } catch (Exception e) {
-            log.error("Lỗi khi tạo chữ ký MoMo: ", e);
+            log.error("❌ Error generating MoMo signature: ", e);
             throw new RuntimeException("Không thể tạo chữ ký MoMo");
         }
     }

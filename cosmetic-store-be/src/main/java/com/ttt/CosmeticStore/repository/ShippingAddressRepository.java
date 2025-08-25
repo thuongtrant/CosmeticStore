@@ -22,6 +22,6 @@ public interface ShippingAddressRepository extends JpaRepository<ShippingAddress
     @Query("UPDATE ShippingAddress sa SET sa.isDefault = false WHERE sa.user = :user")
     void clearDefaultForUser(@Param("user") User user);
 
-    @Query("SELECT COUNT(sa) FROM ShippingAddress sa WHERE sa.user = :user")
-    long countByUser(@Param("user") User user);
+//    @Query("SELECT COUNT(sa) FROM ShippingAddress sa WHERE sa.user = :user")
+//    long countByUser(@Param("user") User user);
 }

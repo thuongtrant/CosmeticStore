@@ -1,5 +1,6 @@
 package com.ttt.CosmeticStore.repository;
 
+import com.ttt.CosmeticStore.dto.response.ProductBasicInfo;
 import com.ttt.CosmeticStore.entity.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +13,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
+
+    @Query("SELECT new com.ttt.CosmeticStore.dto.response.ProductBasicInfo(p.id, p.name, p.price, p.mainImageUrl, c.name) " +
+            "FROM Product p LEFT JOIN p.category c ORDER BY p.id")
+    Page<ProductBasicInfo> findAllBasicInfo(Pageable pageable);
+
 
     @Query("SELECT p FROM Product p " +
            "LEFT JOIN FETCH p.category " +
@@ -44,15 +50,20 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("isNew") Boolean isNew,
             Pageable pageable);
 
-    // Lấy sản phẩm mới nhất
-    List<Product> findTop8ByIsNewTrueOrderByIdDesc();
-
-    // Lấy sản phẩm bán chạy
-    List<Product> findTop8ByIsBestSellerTrueOrderByIdDesc();
-
-    // Phân trang cho sản phẩm mới nhất
     Page<Product> findByIsNewTrue(Pageable pageable);
 
-    // Phân trang cho sản phẩm bán chạy
     Page<Product> findByIsBestSellerTrue(Pageable pageable);
+
+    // Thống kê sản phẩm tồn kho thấp - sử dụng native query
+    @Query(value = "SELECT p.id, p.name, c.name as category_name, p.inventory, " +
+           "(SELECT i.image_url FROM image i WHERE i.product_id = p.id LIMIT 1) " +
+           "FROM product p " +
+           "LEFT JOIN category c ON p.category_id = c.id " +
+           "WHERE p.inventory <= 10 " +
+           "ORDER BY p.inventory ASC",
+           nativeQuery = true)
+    List<Object[]> findLowStockProducts(Pageable pageable);
 }
+
+
+

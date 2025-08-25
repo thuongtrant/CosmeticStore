@@ -4,12 +4,14 @@ import com.ttt.CosmeticStore.dto.request.CheckoutRequest;
 import com.ttt.CosmeticStore.dto.response.OrderResponse;
 import com.ttt.CosmeticStore.entity.*;
 import com.ttt.CosmeticStore.mapper.OrderMapper;
+import com.ttt.CosmeticStore.mapper.ShippingAddressMapper;
 import com.ttt.CosmeticStore.repository.*;
 import com.ttt.CosmeticStore.service.OrderService;
 import com.ttt.CosmeticStore.service.ShippingAddressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -40,14 +42,21 @@ public class OrderServiceImpl implements OrderService {
     private CartItemRepository cartItemRepository;
 
     @Autowired
-    private ShippingAddressRepository shippingAddressRepository;
-
-    @Autowired
     private ShippingAddressService shippingAddressService;
 
     @Autowired
     private OrderMapper orderMapper;
-
+    @Override
+    public BigDecimal calculateTotalAmount(CheckoutRequest request) {
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        for (CheckoutRequest.CheckoutItem item : request.getItems()) {
+            Product product = productRepository.findById(item.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Product not found"));
+            BigDecimal itemTotal = product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+            totalAmount = totalAmount.add(itemTotal);
+        }
+        return totalAmount;
+    }
     @Override
     @Transactional
     public OrderResponse createOrder(User user, CheckoutRequest request) {
@@ -80,20 +89,23 @@ public class OrderServiceImpl implements OrderService {
         // Tính tổng tiền và tạo order items
         BigDecimal totalAmount = BigDecimal.ZERO;
         List<OrderItem> orderItems = new ArrayList<>();
-
         for (CheckoutRequest.CheckoutItem item : request.getItems()) {
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new RuntimeException("Product not found"));
+
+            // Tính tổng tiền cho item này
+            BigDecimal itemTotal = product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
 
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);
             orderItem.setProduct(product);
             orderItem.setQuantity(item.getQuantity());
             orderItem.setUnitPrice(product.getPrice());
-            orderItem.setTotalPrice(product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
-
+            orderItem.setTotalPrice(itemTotal); // Set the total price for this item
             orderItems.add(orderItem);
-            totalAmount = totalAmount.add(orderItem.getTotalPrice());
+
+            // Tính tổng tiền sản phẩm (không có phí ship)
+            totalAmount = totalAmount.add(itemTotal);
         }
 
         order.setTotalAmount(totalAmount);
@@ -120,40 +132,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
-    public OrderResponse processPayment(String orderNumber, String paymentMethod) {
-        Order order = orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        Payment payment = order.getPayment();
-
-        // Simulate payment processing
-        boolean paymentSuccess = simulatePaymentProcessing(payment.getAmount(), paymentMethod);
-
-        if (paymentSuccess) {
-            payment.setStatus(Payment.PaymentStatus.COMPLETED);
-            payment.setPaymentDate(LocalDateTime.now());
-            order.setStatus(Order.OrderStatus.CONFIRMED);
-        } else {
-            payment.setStatus(Payment.PaymentStatus.FAILED);
-            order.setStatus(Order.OrderStatus.CANCELLED);
-        }
-
-        paymentRepository.save(payment);
-        Order savedOrder = orderRepository.save(order);
-
-        return orderMapper.toOrderResponse(savedOrder);
-    }
-
-    @Override
     public List<OrderResponse> getUserOrders(User user) {
-        List<Order> orders = orderRepository.findByUserOrderByCreatedAtDesc(user);
+        List<Order> orders = orderRepository.findByUserWithDetailsOrderByCreatedAtDesc(user);
         return orderMapper.toOrderResponseList(orders);
     }
 
     @Override
     public OrderResponse getOrderByNumber(String orderNumber) {
-        Order order = orderRepository.findByOrderNumber(orderNumber)
+        Order order = orderRepository.findByOrderNumberWithDetails(orderNumber)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
         return orderMapper.toOrderResponse(order);
     }
@@ -166,18 +152,9 @@ public class OrderServiceImpl implements OrderService {
         return "TXN" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
     }
 
-    private boolean simulatePaymentProcessing(BigDecimal amount, String paymentMethod) {
-        // Giả lập xử lý thanh toán - trong thực tế sẽ tích hợp với payment gateway
-        try {
-            Thread.sleep(1000); // Simulate processing time
-            return Math.random() > 0.1; // 90% success rate
-        } catch (InterruptedException e) {
-            return false;
-        }
-    }
 
     private void clearUserCart(User user) {
-        Cart cart = cartRepository.findByUser(user).orElse(null);
+        Cart cart = cartRepository.findByUserId(user.getId()).orElse(null);
         if (cart != null) {
             cartItemRepository.deleteByCart(cart);
         }
@@ -186,7 +163,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public void updatePaymentStatus(String orderNumber, String status, String transactionId) {
-        Order order = orderRepository.findByOrderNumber(orderNumber)
+        Order order = orderRepository.findByOrderNumberWithDetails(orderNumber)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
         Payment payment = order.getPayment();
@@ -195,7 +172,6 @@ public class OrderServiceImpl implements OrderService {
             payment.setStatus(Payment.PaymentStatus.COMPLETED);
             payment.setPaymentDate(LocalDateTime.now());
             payment.setTransactionId(transactionId);
-            order.setStatus(Order.OrderStatus.CONFIRMED);
         } else if ("FAILED".equals(status)) {
             payment.setStatus(Payment.PaymentStatus.FAILED);
             order.setStatus(Order.OrderStatus.CANCELLED);
@@ -205,3 +181,4 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
     }
 }
+

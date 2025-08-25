@@ -5,6 +5,7 @@ import com.ttt.CosmeticStore.dto.response.ShippingAddressResponse;
 import com.ttt.CosmeticStore.entity.User;
 import com.ttt.CosmeticStore.service.ShippingAddressService;
 import com.ttt.CosmeticStore.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -49,7 +50,7 @@ public class ShippingAddressController {
 
     @PostMapping
     public ResponseEntity<?> createAddress(
-            @RequestBody ShippingAddressRequest request,
+            @Valid @RequestBody ShippingAddressRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         try {
             User user = userService.findByUsername(userDetails.getUsername());
@@ -72,7 +73,7 @@ public class ShippingAddressController {
 
     @PutMapping("/{addressId}")
     public ResponseEntity<?> updateAddress(
-            @PathVariable Long addressId,
+            @Valid @PathVariable Long addressId,
             @RequestBody ShippingAddressRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         try {

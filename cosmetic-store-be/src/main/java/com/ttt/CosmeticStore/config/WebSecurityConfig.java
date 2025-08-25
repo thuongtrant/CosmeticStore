@@ -8,10 +8,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.session.SessionRegistry;
@@ -22,9 +24,11 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
 import java.util.List;
 
@@ -44,37 +48,47 @@ public class WebSecurityConfig {
     };
 
     private static final String[] PUBLIC_API_ENDPOINTS = {
-            "/api/auth/**", "/api/test/public"
+            "/api/auth/**", "/oauth2/**", "/login/oauth2/**",
+            "/api/payment/momo/callback",
+            "/api/payment/momo/return",
     };
 
     private static final String[] ADMIN_WEB_ENDPOINTS = {
-            "/admin/**", "/dashboard/**", "/dashboard"
+            "/admin/**"
     };
 
     private static final String[] ADMIN_API_ENDPOINTS = {
-            "/api/admin/**", "/api/test/admin"
+            "/api/admin/**"
     };
 
     private static final String[] CUSTOMER_WEB_ENDPOINTS = {
             "/customer-dashboard/**", "/customer-dashboard"
     };
+//
+//    private static final String[] CUSTOMER_API_ENDPOINTS = {
+//            "/api/customer/**"
+//    };
 
-    private static final String[] CUSTOMER_API_ENDPOINTS = {
-            "/api/customer/**", "/api/test/customer"
-    };
-
-    private static final String[] PROTECTED_API_ENDPOINTS = {
+    private static final String[] CUSTOMER_API_ENDPOINTS  = {
             "/api/products/**", "/api/categories/**", "/api/secure/**",
-            "/api/cart/**", "/api/test/protected","/api/shipping-addresses/**"
+            "/api/cart/**","/api/shipping-addresses/**","/api/payment/**"
+
     };
 
     private final UserServiceImpl userDetailsService;
     private final AuthEntryPointJwt unauthorizedHandler;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     @Autowired
-    public WebSecurityConfig(UserServiceImpl userDetailsService, AuthEntryPointJwt unauthorizedHandler) {
+    public WebSecurityConfig(UserServiceImpl userDetailsService,
+                           AuthEntryPointJwt unauthorizedHandler,
+                           OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
+                           OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler) {
         this.userDetailsService = userDetailsService;
         this.unauthorizedHandler = unauthorizedHandler;
+        this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
+        this.oAuth2AuthenticationFailureHandler = oAuth2AuthenticationFailureHandler;
     }
 
 
@@ -121,9 +135,9 @@ public class WebSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080"));
-        config.setAllowedMethods(List.of("*"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedOrigins(List.of("http://localhost:3000","http://localhost:3001", "http://localhost:8080"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "Accept"));
         config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
@@ -137,10 +151,19 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
+                .headers(headers -> headers
+                        .frameOptions(frameOptionsConfig -> frameOptionsConfig.deny())
+                        .contentTypeOptions(contentTypeOptionsConfig -> {})
+                        .xssProtection(xssConfig -> {})
+                        .httpStrictTransportSecurity(hstsConfig -> hstsConfig
+                                .maxAgeInSeconds(31536000)
+                                .includeSubDomains(true)
+                        )
+                )
                 // CORS & CSRF
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/**", "/admin/**")
+                        .ignoringRequestMatchers("/api/**")
                         .csrfTokenRepository(csrfTokenRepository())
                 )
 
@@ -169,10 +192,7 @@ public class WebSecurityConfig {
                         .requestMatchers(PUBLIC_API_ENDPOINTS).permitAll()
 
                         // Admin endpoints
-                        .requestMatchers(HttpMethod.GET, ADMIN_WEB_ENDPOINTS).hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, ADMIN_WEB_ENDPOINTS).hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, ADMIN_WEB_ENDPOINTS).hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, ADMIN_WEB_ENDPOINTS).hasRole("ADMIN")
+                        .requestMatchers(ADMIN_WEB_ENDPOINTS).hasRole("ADMIN")
                         .requestMatchers(ADMIN_API_ENDPOINTS).hasRole("ADMIN")
 
                         // Customer endpoints
@@ -180,7 +200,7 @@ public class WebSecurityConfig {
                         .requestMatchers(CUSTOMER_API_ENDPOINTS).hasRole("CUSTOMER")
 
                         // Protected API endpoints
-                        .requestMatchers(PROTECTED_API_ENDPOINTS).authenticated()
+//                        .requestMatchers(PROTECTED_API_ENDPOINTS).authenticated()
 
                         // Everything else
                         .anyRequest().authenticated()
@@ -192,15 +212,17 @@ public class WebSecurityConfig {
                         .loginProcessingUrl("/perform_login")
                         .usernameParameter("username")
                         .passwordParameter("password")
-                        .defaultSuccessUrl("/dashboard", false)
                         .successHandler((request, response, authentication) -> {
-                            System.out.println("✅ Login successful for: " + authentication.getName());
-
+                            // Kiểm tra role và redirect phù hợp
                             boolean isAdmin = authentication.getAuthorities().stream()
-                                    .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+                                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
 
-                            String redirectUrl = isAdmin ? "/dashboard" : "/customer-dashboard";
-                            response.sendRedirect(redirectUrl);
+                            if (isAdmin) {
+                                response.sendRedirect("/admin/products");
+                            } else {
+                                // Customer không có trang web, redirect về login với message
+                                response.sendRedirect("/login?customer=true");
+                            }
                         })
                         .failureUrl("/login?error=true")
                         .permitAll()
@@ -208,11 +230,13 @@ public class WebSecurityConfig {
 
                 // Logout
                 .logout(logout -> logout
-                        .logoutUrl("/perform_logout")
-                        .logoutSuccessUrl("/login?logout=true")
+                        .logoutUrl("/logout")
+                        .logoutRequestMatcher(
+                                new AntPathRequestMatcher("/logout", "GET")
+                        )
+                        .logoutSuccessUrl("/login?logout")
                         .invalidateHttpSession(true)
-                        .clearAuthentication(true)
-                        .deleteCookies("JSESSIONID", "remember-me")
+                        .deleteCookies("JSESSIONID")
                         .permitAll()
                 )
 
@@ -223,6 +247,14 @@ public class WebSecurityConfig {
                         .rememberMeParameter("remember-me")
                         .tokenValiditySeconds(2592000) // 30 days
                         .rememberMeCookieName("remember-me")
+                )
+
+                // OAuth2 Login Configuration
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
+                        .permitAll()
                 )
 
                 // Add filters and providers
@@ -259,17 +291,18 @@ public class WebSecurityConfig {
     ) throws java.io.IOException {
 
         String requestURI = request.getRequestURI();
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String acceptHeader = request.getHeader("Accept");
 
-        System.out.println("🚫 Access Denied for URI: " + requestURI);
-        System.out.println("🚫 User: " + (authentication != null ? authentication.getName() : "Anonymous"));
+        boolean isApiRequest = requestURI.startsWith("/api/") ||
+                (acceptHeader != null && acceptHeader.contains("application/json"));
 
-        if (requestURI.startsWith("/api/")) {
+        if (isApiRequest) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType("application/json");
-            response.getWriter().write("{\"error\":\"Access Denied\",\"message\":\"Insufficient privileges\"}");
+            response.getWriter().write("{\"error\":\"Access Denied\", \"message\":\"Only admin can access this resource\"}");
         } else {
-            response.sendRedirect("/access-denied");
+            // Redirect customer về trang login với thông báo
+            response.sendRedirect("/login?access-denied=true");
         }
     }
 }

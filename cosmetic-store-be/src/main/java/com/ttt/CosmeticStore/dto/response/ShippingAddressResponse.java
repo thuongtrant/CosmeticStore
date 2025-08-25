@@ -17,4 +17,7 @@ public class ShippingAddressResponse {
     private String label;
     private String fullAddress;
     private LocalDateTime createdAt;
+    private String provinceCode;
+    private String districtCode;
+    private String wardCode;
 }
