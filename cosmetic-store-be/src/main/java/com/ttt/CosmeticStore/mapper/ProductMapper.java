@@ -3,6 +3,7 @@ package com.ttt.CosmeticStore.mapper;
 import com.ttt.CosmeticStore.dto.request.ProductRequest;
 import com.ttt.CosmeticStore.dto.response.ProductResponse;
 import com.ttt.CosmeticStore.dto.response.ProductSimpleResponse;
+import com.ttt.CosmeticStore.dto.response.ProductListResponse;
 import com.ttt.CosmeticStore.entity.Product;
 import org.springframework.stereotype.Component;
 
@@ -118,6 +119,33 @@ public class ProductMapper {
         if (request.getMainImage() != null) {
             product.setMainImageUrl(request.getMainImage());
         }
+    }
+
+    // Method mới cho admin list - chỉ map những field cần thiết
+    public ProductListResponse toListResponse(Product product) {
+        if (product == null) {
+            return null;
+        }
+
+        ProductListResponse response = new ProductListResponse();
+        response.setId(product.getId());
+        response.setName(product.getName());
+        response.setPrice(product.getPrice());
+        response.setMainImage(product.getMainImageUrl());
+
+        // Set category name
+        if (product.getCategory() != null) {
+            response.setCategoryName(product.getCategory().getName());
+        }
+
+        // Set image URLs
+        if (product.getImages() != null) {
+            response.setImages(product.getImages().stream()
+                    .map(image -> image.getImageUrl())
+                    .collect(Collectors.toList()));
+        }
+
+        return response;
     }
 
 }

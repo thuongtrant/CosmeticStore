@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class WebController {
@@ -36,8 +37,32 @@ public class WebController {
     }
 
     @GetMapping("/login")
-    public String login(Model model) {
+    public String login(@RequestParam(value = "error", required = false) String error,
+                        @RequestParam(value = "logout", required = false) String logout,
+                        @RequestParam(value = "customer", required = false) String customer,
+                        @RequestParam(value = "access-denied", required = false) String accessDenied,Model model) {
+        if (error != null) {
+            model.addAttribute("errorMessage", "Tên đăng nhập hoặc mật khẩu không chính xác!");
+        }
+
+        if (logout != null) {
+            model.addAttribute("successMessage", "Đăng xuất thành công!");
+        }
+
+        if (customer != null) {
+            model.addAttribute("customerMessage",
+                    "Hệ thống quản trị chỉ dành cho Administrator. " +
+                            "Tài khoản khách hàng không thể truy cập vào khu vực này. " +
+                            "Vui lòng sử dụng ứng dụng di động hoặc website khách hàng.");
+        }
+
+        if (accessDenied != null) {
+            model.addAttribute("accessDeniedMessage",
+                    "Bạn không có quyền truy cập vào khu vực này. " +
+                            "Chỉ có Administrator mới được phép truy cập BeautyForYou Admin.");
+        }
         model.addAttribute("loginRequest", new LoginRequest());
+
         return "login";
     }
 
@@ -58,19 +83,15 @@ public class WebController {
         }
 
         try {
-            // Kiểm tra username đã tồn tại
             if (userRepository.existsByUsername(signupRequest.getUsername())) {
                 model.addAttribute("error", "Lỗi!!! Username đã tồn tại!");
                 return "register";
             }
-
-            // Kiểm tra email đã tồn tại
             if (userRepository.existsByEmail(signupRequest.getEmail())) {
                 model.addAttribute("error", "Lỗi!!! Email này đã tồn tại!");
                 return "register";
             }
 
-            // Tạo user mới
             User user = new User();
             user.setUsername(signupRequest.getUsername());
             user.setEmail(signupRequest.getEmail());
@@ -92,69 +113,69 @@ public class WebController {
         }
     }
 
-    @GetMapping("/dashboard")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String dashboard(Authentication authentication, Model model) {
-        // Kiểm tra xác thực và quyền admin
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return "redirect:/login?error=authentication_required";
-        }
+//    @GetMapping("/dashboard")
+//    @PreAuthorize("hasRole('ADMIN')")
+//    public String dashboard(Authentication authentication, Model model) {
+//        // Kiểm tra xác thực và quyền admin
+//        if (authentication == null || !authentication.isAuthenticated()) {
+//            return "redirect:/login?error=authentication_required";
+//        }
+//
+//        // Kiểm tra quyền ADMIN một cách chặt chẽ
+//        boolean hasAdminRole = authentication.getAuthorities().stream()
+//                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+//
+//        if (!hasAdminRole) {
+//            // Log attempt for security monitoring
+//            System.out.println("Unauthorized access attempt to dashboard by user: " +
+//                             (authentication.getName() != null ? authentication.getName() : "anonymous"));
+//            return "redirect:/access-denied";
+//        }
+//
+//        // Thêm thông tin admin vào model một cách an toàn
+//        model.addAttribute("adminName", authentication.getName());
+//        model.addAttribute("adminRole", "ADMIN");
+//        model.addAttribute("isAuthenticated", true);
+//
+//        return "dashboard";
+//    }
+//
+//    @GetMapping("/customer-dashboard")
+//    @PreAuthorize("hasRole('CUSTOMER')")
+//    public String customerDashboard(Authentication authentication, Model model) {
+//        // Kiểm tra thêm để đảm bảo an toàn
+//        if (authentication == null || !authentication.getAuthorities().stream()
+//                .anyMatch(auth -> auth.getAuthority().equals("ROLE_CUSTOMER"))) {
+//            return "redirect:/login?error=access_denied";
+//        }
+//
+//        model.addAttribute("customerName", authentication.getName());
+//        return "customer-dashboard";
+//    }
 
-        // Kiểm tra quyền ADMIN một cách chặt chẽ
-        boolean hasAdminRole = authentication.getAuthorities().stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+//    @GetMapping("/loginSuccess")
+//    public String loginSuccess(Authentication authentication) {
+//        if (authentication != null && authentication.getAuthorities() != null) {
+//            boolean isAdmin = authentication.getAuthorities().stream()
+//                    .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_ADMIN"));
+//
+//            if (isAdmin) {
+//                return "redirect:/dashboard";
+//            } else {
+//                return "redirect:/customer-dashboard";
+//            }
+//        }
+//        return "redirect:/";
+//    }
+//
+//    @GetMapping("/error")
+//    public String error() {
+//        return "error";
+//    }
 
-        if (!hasAdminRole) {
-            // Log attempt for security monitoring
-            System.out.println("Unauthorized access attempt to dashboard by user: " +
-                             (authentication.getName() != null ? authentication.getName() : "anonymous"));
-            return "redirect:/access-denied";
-        }
-
-        // Thêm thông tin admin vào model một cách an toàn
-        model.addAttribute("adminName", authentication.getName());
-        model.addAttribute("adminRole", "ADMIN");
-        model.addAttribute("isAuthenticated", true);
-
-        return "dashboard";
-    }
-
-    @GetMapping("/customer-dashboard")
-    @PreAuthorize("hasRole('CUSTOMER')")
-    public String customerDashboard(Authentication authentication, Model model) {
-        // Kiểm tra thêm để đảm bảo an toàn
-        if (authentication == null || !authentication.getAuthorities().stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ROLE_CUSTOMER"))) {
-            return "redirect:/login?error=access_denied";
-        }
-
-        model.addAttribute("customerName", authentication.getName());
-        return "customer-dashboard";
-    }
-
-    @GetMapping("/loginSuccess")
-    public String loginSuccess(Authentication authentication) {
-        if (authentication != null && authentication.getAuthorities() != null) {
-            boolean isAdmin = authentication.getAuthorities().stream()
-                    .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_ADMIN"));
-
-            if (isAdmin) {
-                return "redirect:/dashboard";
-            } else {
-                return "redirect:/customer-dashboard";
-            }
-        }
-        return "redirect:/";
-    }
-
-    @GetMapping("/error")
-    public String error() {
-        return "error";
-    }
-
-    @GetMapping("/access-denied")
-    public String accessDenied(Model model) {
-        model.addAttribute("errorMessage", "Bạn không có quyền truy cập trang này. Chỉ có Admin mới được phép.");
-        return "error";
-    }
+//    @GetMapping("/access-denied")
+//    public String accessDenied(Model model) {
+//        model.addAttribute("errorMessage", "Bạn không có quyền truy cập trang này. Chỉ có Admin mới được phép.");
+//        return "error";
+//    }
 }

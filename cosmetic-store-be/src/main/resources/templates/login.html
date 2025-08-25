@@ -21,24 +21,54 @@
                         <h4 class="text-center mb-0">Đăng nhập</h4>
                     </div>
 
-                    <!-- Hiển thị thông báo lỗi -->
-                    <div th:if="${param.error}" class="alert alert-danger">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Tên đăng nhập hoặc mật khẩu không đúng!
-                    </div>
+<!--                    &lt;!&ndash; Hiển thị thông báo lỗi &ndash;&gt;-->
+<!--                    <div th:if="${param.error}" class="alert alert-danger">-->
+<!--                        <i class="fas fa-exclamation-triangle me-2"></i>-->
+<!--                        Tên đăng nhập hoặc mật khẩu không đúng!-->
+<!--                    </div>-->
 
-                    <!-- Hiển thị thông báo logout -->
-                    <div th:if="${param.logout}" class="alert alert-success">
+<!--                    &lt;!&ndash; Hiển thị thông báo logout &ndash;&gt;-->
+<!--                    <div th:if="${param.logout}" class="alert alert-success">-->
+<!--                        <i class="fas fa-check-circle me-2"></i>-->
+<!--                        Bạn đã đăng xuất thành công!-->
+<!--                    </div>-->
+
+<!--                    &lt;!&ndash; Hiển thị thông báo đăng ký thành công &ndash;&gt;-->
+<!--                    <div th:if="${param.registerSuccess}" class="alert alert-success">-->
+<!--                        <i class="fas fa-check-circle me-2"></i>-->
+<!--                        Đăng ký thành công! Vui lòng đăng nhập.-->
+<!--                    </div>-->
+                    <!-- Success Messages -->
+                    <div th:if="${successMessage}" class="alert alert-success">
                         <i class="fas fa-check-circle me-2"></i>
-                        Bạn đã đăng xuất thành công!
+                        <span th:text="${successMessage}"></span>
                     </div>
 
-                    <!-- Hiển thị thông báo đăng ký thành công -->
-                    <div th:if="${param.registerSuccess}" class="alert alert-success">
-                        <i class="fas fa-check-circle me-2"></i>
-                        Đăng ký thành công! Vui lòng đăng nhập.
+<!--                    &lt;!&ndash; Warning Messages &ndash;&gt;-->
+<!--                    <div th:if="${warningMessage}" class="alert alert-warning">-->
+<!--                        <i class="fas fa-exclamation-triangle me-2"></i>-->
+<!--                        <span th:text="${warningMessage}"></span>-->
+<!--                    </div>-->
+
+                    <!-- Error Messages -->
+                    <div th:if="${errorMessage}" class="alert alert-danger">
+                        <i class="fas fa-times-circle me-2"></i>
+                        <span th:text="${errorMessage}"></span>
                     </div>
 
+                    <!-- Customer Message -->
+                    <div th:if="${customerMessage}" class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Thông báo:</strong><br>
+                        <span th:text="${customerMessage}"></span>
+                    </div>
+
+                    <!-- Access Denied Message -->
+                    <div th:if="${accessDeniedMessage}" class="alert alert-danger">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        <strong>Truy cập bị từ chối:</strong><br>
+                        <span th:text="${accessDeniedMessage}"></span>
+                    </div>
                     <!-- Form đăng nhập với form binding -->
                     <form th:action="@{/perform_login}" th:object="${loginRequest}" method="post">
                         <div class="mb-3">

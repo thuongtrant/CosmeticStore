@@ -1,40 +1,34 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{base :: layout(~{::title}, ~{::main})}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Form danh mục - BFY Store </title>
-    <th:block th:replace="base :: resources"></th:block>
-    <th:block th:replace="base :: styles"></th:block>
+    <title>Quản lý danh mục - BeautyForYou Admin</title>
 </head>
 <body>
-<div th:replace="base :: header"></div>
-<h1>hello</h1>
-<div class="container mt-4" >
-    <div class="container-fluid mt-4" >
-        <div class="row">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2><i class="fas fa-list"></i> Quản lý danh mục</h2>
-                    <div>
-                        <a href="/admin/categories/new" class="btn btn-secondary" style="background-color: #d6ada9; color: white; border-color: #d6ada9; padding: 8px 12px; border-radius: 3px; text-decoration: none; margin: 10px">
-                            <i class="fas fa-plus"></i> Thêm danh mục mới
-                        </a>
-
-                        <a href="/dashboard" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Quay lại Dashboard
-                        </a>
+<main>
+    <div class="main-content">
+        <div class="container-fluid mt-4">
+            <div class="row">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="page-title"><i class="fas fa-list me-2"></i>Quản lý danh mục</h2>
+                        <div>
+                            <a href="/admin/categories/new" class="btn btn-pink me-2">
+                                <i class="fas fa-plus me-1"></i>Thêm danh mục mới
+                            </a>
+                            <a href="/dashboard" class="btn btn-outline-pink">
+                                <i class="fas fa-arrow-left me-1"></i>Quay lại Dashboard
+                            </a>
+                        </div>
                     </div>
-                </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-list"></i> Danh sách danh mục</h5>
-                    </div>
-                    <div class="card-body">
+                    <div class="management-card">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Danh sách danh mục</h5>
+                        </div>
                         <div class="row">
                             <div th:each="cate : ${categories}" class="col-md-4 mb-3">
-                                <div class="card h-100">
+                                <div class="card h-100" style="border-radius: 15px; border: 1px solid rgba(224, 183, 179, 0.2); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);">
                                     <div class="card-body">
                                         <h5 class="card-title" th:text="${cate.name}">Tên danh mục</h5>
                                         <p class="card-text">
@@ -44,13 +38,13 @@
                                         </p>
                                         <div class="d-flex gap-2">
                                             <a th:href="@{/admin/categories/{id}/edit(id=${cate.id})}"
-                                               class="btn btn-warning btn-sm" style="background-color: #a6f1ff; border-color: #a6f1ff">
-                                                <i class="fas fa-edit" ></i> Sửa
+                                               class="btn btn-outline-pink btn-sm">
+                                                <i class="fas fa-edit me-1"></i>Sửa
                                             </a>
                                             <a th:href="@{/admin/categories/{id}/delete(id=${cate.id})}"
                                                class="btn btn-danger btn-sm"
                                                onclick="return confirm('Bạn có chắc chắn muốn xóa danh mục này?')">
-                                                <i class="fas fa-trash"></i> Xóa
+                                                <i class="fas fa-trash me-1"></i>Xóa
                                             </a>
                                         </div>
                                     </div>
@@ -68,8 +62,6 @@
             </div>
         </div>
     </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</main>
 </body>
 </html>

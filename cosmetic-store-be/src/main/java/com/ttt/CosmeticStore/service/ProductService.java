@@ -3,11 +3,14 @@ package com.ttt.CosmeticStore.service;
 import com.ttt.CosmeticStore.dto.request.ProductRequest;
 import com.ttt.CosmeticStore.dto.request.ProductSearchRequest;
 import com.ttt.CosmeticStore.dto.response.PagedProductResponse;
+import com.ttt.CosmeticStore.dto.response.PagedProductListResponse;
 import com.ttt.CosmeticStore.dto.response.ProductResponse;
+import com.ttt.CosmeticStore.dto.response.ProductListResponse;
 import java.util.List;
 
 public interface ProductService {
     List<ProductResponse> getAllProducts();
+    PagedProductListResponse getAllProductsForList(int page, int size);
     PagedProductResponse getAllProductsPaged(int page, int size);
     ProductResponse getProductById(Long id);
     ProductResponse createProduct(ProductRequest request);
