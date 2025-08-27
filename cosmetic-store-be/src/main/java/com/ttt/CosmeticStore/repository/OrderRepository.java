@@ -23,7 +23,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "LEFT JOIN FETCH o.shippingAddress " +
             "WHERE o.user = :user " +
             "ORDER BY o.createdAt DESC")
-    List<Order> findByUserWithDetailsOrderByCreatedAtDesc(@Param("user") User user);
+    List<Order> myOrders(@Param("user") User user);
 
     @Query("SELECT o FROM Order o " +
             "LEFT JOIN FETCH o.orderItems oi " +
@@ -31,51 +31,73 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "LEFT JOIN FETCH o.payment " +
             "LEFT JOIN FETCH o.shippingAddress " +
             "WHERE o.orderNumber = :orderNumber")
-    Optional<Order> findByOrderNumberWithDetails(@Param("orderNumber") String orderNumber);
+    Optional<Order> getOrderDetail(@Param("orderNumber") String orderNumber);
 
     Page<Order> findByStatus(Order.OrderStatus status, Pageable pageable);
 
     // Tìm kiếm theo số đơn hàng
-    Page<Order> findByOrderNumberContainingIgnoreCase(String orderNumber, Pageable pageable);
+    Page<Order> findByOrderNumber(String orderNumber, Pageable pageable);
 
-    // Đếm đơn hàng theo khoảng thời gian
-    long countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o " +
+            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+            "AND o.status NOT IN ('CANCELLED')")
+    BigDecimal getTotalRevenue(@Param("startDate") LocalDateTime startDate,
+                               @Param("endDate") LocalDateTime endDate);
 
-    // Tìm đơn hàng theo khoảng thời gian
-    @Query("SELECT o FROM Order o WHERE o.createdAt BETWEEN :startDate AND :endDate")
-    List<Order> findByCreatedAtBetween(@Param("startDate") LocalDateTime startDate,
+    @Query("SELECT COUNT(o) FROM Order o " +
+            "WHERE o.createdAt BETWEEN :startDate AND :endDate")
+    Long countOrdersByDateRange(@Param("startDate") LocalDateTime startDate,
+                                @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT o.status, COUNT(o) FROM Order o " +
+            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+            "GROUP BY o.status")
+    List<Object[]> countOrdersByStatus(@Param("startDate") LocalDateTime startDate,
                                        @Param("endDate") LocalDateTime endDate);
 
-    // Tìm đơn hàng theo trạng thái và khoảng thời gian
-    @Query("SELECT o FROM Order o WHERE o.status = :status AND o.createdAt BETWEEN :startDate AND :endDate")
-    List<Order> findByStatusAndCreatedAtBetween(@Param("status") Order.OrderStatus status,
-                                                @Param("startDate") LocalDateTime startDate,
-                                                @Param("endDate") LocalDateTime endDate);
+    @Query("SELECT p.id, p.name, SUM(oi.quantity), SUM(oi.totalPrice), c.name " +
+            "FROM Order o " +
+            "JOIN o.orderItems oi " +
+            "JOIN oi.product p " +
+            "LEFT JOIN p.category c " +
+            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+            "AND o.status NOT IN ('CANCELLED') " +
+            "GROUP BY p.id, p.name, c.name " +
+            "ORDER BY SUM(oi.quantity) DESC")
+    List<Object[]> getTopSellingProducts(@Param("startDate") LocalDateTime startDate,
+                                         @Param("endDate") LocalDateTime endDate,
+                                         @Param("limit") int limit);
 
-    // Thống kê doanh thu theo ngày
-    @Query("SELECT DATE(o.createdAt), SUM(o.totalAmount), COUNT(o), COUNT(DISTINCT o.user) " +
-           "FROM Order o " +
-           "WHERE o.createdAt BETWEEN :startDate AND :endDate AND o.status = :status " +
-           "GROUP BY DATE(o.createdAt) " +
-           "ORDER BY DATE(o.createdAt)")
-    List<Object[]> findRevenueStatistics(@Param("startDate") LocalDateTime startDate,
-                                        @Param("endDate") LocalDateTime endDate,
-                                        @Param("status") Order.OrderStatus status);
+    @Query("SELECT COALESCE(c.id, 0), COALESCE(c.name, 'Chưa phân loại'), " +
+            "SUM(oi.quantity), SUM(oi.totalPrice), COUNT(DISTINCT o.id) " +
+            "FROM Order o " +
+            "JOIN o.orderItems oi " +
+            "JOIN oi.product p " +
+            "LEFT JOIN p.category c " +
+            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+            "AND o.status NOT IN ('CANCELLED') " +
+            "GROUP BY c.id, c.name " +
+            "ORDER BY SUM(oi.totalPrice) DESC")
+    List<Object[]> getCategoryStats(@Param("startDate") LocalDateTime startDate,
+                                    @Param("endDate") LocalDateTime endDate);
 
-    // Tổng doanh thu
-    @Query("SELECT SUM(o.totalAmount) FROM Order o " +
-           "WHERE o.createdAt BETWEEN :startDate AND :endDate AND o.status = :status")
-    BigDecimal getTotalRevenue(@Param("startDate") LocalDateTime startDate,
-                              @Param("endDate") LocalDateTime endDate,
-                              @Param("status") Order.OrderStatus status);
+    @Query("SELECT DATE(o.createdAt), COALESCE(SUM(o.totalAmount), 0), COUNT(o) " +
+            "FROM Order o " +
+            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+            "AND o.status NOT IN ('CANCELLED') " +
+            "GROUP BY DATE(o.createdAt) " +
+            "ORDER BY DATE(o.createdAt)")
+    List<Object[]> getDailyRevenue(@Param("startDate") LocalDateTime startDate,
+                                   @Param("endDate") LocalDateTime endDate);
 
-    // Đếm số đơn hàng theo trạng thái và thời gian
-    Long countByCreatedAtBetweenAndStatus(LocalDateTime startDate, LocalDateTime endDate, Order.OrderStatus status);
+    @Query("SELECT YEAR(o.createdAt), MONTH(o.createdAt), " +
+            "COALESCE(SUM(o.totalAmount), 0), COUNT(o) " +
+            "FROM Order o " +
+            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+            "AND o.status NOT IN ('CANCELLED') " +
+            "GROUP BY YEAR(o.createdAt), MONTH(o.createdAt) " +
+            "ORDER BY YEAR(o.createdAt), MONTH(o.createdAt)")
+    List<Object[]> getMonthlyRevenue(@Param("startDate") LocalDateTime startDate,
+                                     @Param("endDate") LocalDateTime endDate);
 
-    // Đếm số khách hàng khác nhau
-    @Query("SELECT COUNT(DISTINCT o.user) FROM Order o " +
-           "WHERE o.createdAt BETWEEN :startDate AND :endDate AND o.status = :status")
-    Long countDistinctCustomers(@Param("startDate") LocalDateTime startDate,
-                               @Param("endDate") LocalDateTime endDate,
-                               @Param("status") Order.OrderStatus status);
 }

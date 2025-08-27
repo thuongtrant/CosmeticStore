@@ -224,7 +224,7 @@ public class PaymentController {
             }
 
             // Direct order lookup
-            OrderResponse order = orderService.getOrderByNumber(orderId);
+            OrderResponse order = orderService.orderDetail(orderId);
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "status", "COMPLETED",
@@ -244,7 +244,7 @@ public class PaymentController {
         String orderNumber = completedOrders.get(orderId);
 
         if (orderNumber != null) {
-            OrderResponse order = orderService.getOrderByNumber(orderNumber);
+            OrderResponse order = orderService.orderDetail(orderNumber);
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "status", "COMPLETED",
@@ -258,7 +258,7 @@ public class PaymentController {
             Thread.sleep(500);
             orderNumber = completedOrders.get(orderId);
             if (orderNumber != null) {
-                OrderResponse order = orderService.getOrderByNumber(orderNumber);
+                OrderResponse order = orderService.orderDetail(orderNumber);
                 return ResponseEntity.ok(Map.of(
                         "success", true,
                         "status", "COMPLETED",
@@ -290,7 +290,7 @@ public class PaymentController {
         String orderNumber = completedOrders.get(sessionId);
         if (orderNumber != null) {
             try {
-                OrderResponse order = orderService.getOrderByNumber(orderNumber);
+                OrderResponse order = orderService.orderDetail(orderNumber);
                 return ResponseEntity.ok(Map.of(
                         "success", true,
                         "status", "COMPLETED",
@@ -321,7 +321,7 @@ public class PaymentController {
     public ResponseEntity<?> getUserOrders(@AuthenticationPrincipal UserDetails userDetails) {
         try {
             User user = userService.findByUsername(userDetails.getUsername());
-            List<OrderResponse> orders = orderService.getUserOrders(user);
+            List<OrderResponse> orders = orderService.getMyOrders(user);
             return ResponseEntity.ok(Map.of("success", true, "orders", orders));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
@@ -334,7 +334,7 @@ public class PaymentController {
     @GetMapping("/order/{orderNumber}")
     public ResponseEntity<?> getOrderDetails(@PathVariable String orderNumber) {
         try {
-            OrderResponse order = orderService.getOrderByNumber(orderNumber);
+            OrderResponse order = orderService.orderDetail(orderNumber);
             return ResponseEntity.ok(Map.of("success", true, "order", order));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(

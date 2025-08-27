@@ -10,12 +10,12 @@ import java.util.List;
 
 public interface ProductService {
     List<ProductResponse> getAllProducts();
-    PagedProductListResponse getAllProductsForList(int page, int size);
+    PagedProductListResponse getProducts(int page, int size);
     PagedProductResponse getAllProductsPaged(int page, int size);
     ProductResponse getProductById(Long id);
     ProductResponse createProduct(ProductRequest request);
     ProductResponse updateProduct(Long id, ProductRequest request);
     void deleteProduct(Long id);
     PagedProductResponse searchProducts(ProductSearchRequest searchRequest);
-    PagedProductResponse getProductsByTypePaged(String type, int page, int size);
+    PagedProductResponse getProductsByType(String type, int page, int size);
 }

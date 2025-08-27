@@ -94,7 +94,7 @@ public class ApiProductController {
             @RequestParam(value = "productType", required = false, defaultValue = "new") String productType,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "4") int size) {
-        PagedProductResponse response = productService.getProductsByTypePaged(productType, page, size);
+        PagedProductResponse response = productService.getProductsByType(productType, page, size);
         return ResponseEntity.ok(response);
     }
 

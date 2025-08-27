@@ -132,14 +132,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<OrderResponse> getUserOrders(User user) {
-        List<Order> orders = orderRepository.findByUserWithDetailsOrderByCreatedAtDesc(user);
+    public List<OrderResponse> getMyOrders(User user) {
+        List<Order> orders = orderRepository.myOrders(user);
         return orderMapper.toOrderResponseList(orders);
     }
 
     @Override
-    public OrderResponse getOrderByNumber(String orderNumber) {
-        Order order = orderRepository.findByOrderNumberWithDetails(orderNumber)
+    public OrderResponse orderDetail(String orderNumber) {
+        Order order = orderRepository.getOrderDetail(orderNumber)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
         return orderMapper.toOrderResponse(order);
     }
@@ -163,7 +163,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public void updatePaymentStatus(String orderNumber, String status, String transactionId) {
-        Order order = orderRepository.findByOrderNumberWithDetails(orderNumber)
+        Order order = orderRepository.getOrderDetail(orderNumber)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
         Payment payment = order.getPayment();

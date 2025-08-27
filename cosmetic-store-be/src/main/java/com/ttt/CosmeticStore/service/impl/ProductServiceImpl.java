@@ -32,11 +32,11 @@ public class ProductServiceImpl implements ProductService {
     private final ImageRepository imageRepository; // Inject thêm dependency này
 
     @Override
-    public PagedProductListResponse getAllProductsForList(int page, int size) {
+    public PagedProductListResponse getProducts(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
 
         // Query 1: Lấy thông tin cơ bản sản phẩm với phân trang - sử dụng method đã có
-        Page<ProductBasicInfo> basicInfoPage = productRepository.findAllBasicInfo(pageable);
+        Page<ProductBasicInfo> basicInfoPage = productRepository.getProductInfo(pageable);
 
         if (basicInfoPage.getContent().isEmpty()) {
             return createEmptyPagedListResponse(basicInfoPage);
@@ -158,7 +158,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public PagedProductResponse getProductsByTypePaged(String type, int page, int size) {
+    public PagedProductResponse getProductsByType(String type, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Product> productPage;
 

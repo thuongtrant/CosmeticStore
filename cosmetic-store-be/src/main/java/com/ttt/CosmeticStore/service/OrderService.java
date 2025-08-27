@@ -13,9 +13,9 @@ public interface OrderService {
 
     OrderResponse createOrder(User user, CheckoutRequest request);
 
-    List<OrderResponse> getUserOrders(User user);
+    List<OrderResponse> getMyOrders(User user);
 
-    OrderResponse getOrderByNumber(String orderNumber);
+    OrderResponse orderDetail(String orderNumber);
     void updatePaymentStatus(String orderNumber, String status, String transactionId);
 
 }

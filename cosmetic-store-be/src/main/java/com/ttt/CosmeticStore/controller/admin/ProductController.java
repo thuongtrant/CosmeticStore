@@ -32,7 +32,7 @@ public class ProductController {
                               @RequestParam(defaultValue = "0") int page,
                               @RequestParam(defaultValue = "10") int size) {
         // Sử dụng method phân trang mới thay vì getAllProductsForList
-        PagedProductListResponse pagedProducts = productService.getAllProductsForList(page, size);
+        PagedProductListResponse pagedProducts = productService.getProducts(page, size);
         model.addAttribute("pagedProducts", pagedProducts);
         model.addAttribute("products", pagedProducts.getProducts());
         return "product";

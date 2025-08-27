@@ -40,7 +40,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
 
     @Override
     public Page<OrderResponse> searchOrdersByOrderNumber(String orderNumber, Pageable pageable) {
-        Page<Order> ordersPage = orderRepository.findByOrderNumberContainingIgnoreCase(orderNumber, pageable);
+        Page<Order> ordersPage = orderRepository.findByOrderNumber(orderNumber, pageable);
         return ordersPage.map(orderMapper::toOrderResponse);
     }
 

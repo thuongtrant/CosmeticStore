@@ -16,16 +16,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT new com.ttt.CosmeticStore.dto.response.ProductBasicInfo(p.id, p.name, p.price, p.mainImageUrl, c.name) " +
             "FROM Product p LEFT JOIN p.category c ORDER BY p.id")
-    Page<ProductBasicInfo> findAllBasicInfo(Pageable pageable);
+    Page<ProductBasicInfo> getProductInfo(Pageable pageable);
 
 
-    @Query("SELECT p FROM Product p " +
-           "LEFT JOIN FETCH p.category " +
-           "LEFT JOIN FETCH p.images " +
-           "LEFT JOIN FETCH p.ingredients " +
-           "LEFT JOIN FETCH p.skinTypes " +
-           "WHERE p.id = :id")
-    Optional<Product> findByIdWithDetails(@Param("id") Long id);
+//    @Query("SELECT p FROM Product p " +
+//           "LEFT JOIN FETCH p.category " +
+//           "LEFT JOIN FETCH p.images " +
+//           "LEFT JOIN FETCH p.ingredients " +
+//           "LEFT JOIN FETCH p.skinTypes " +
+//           "WHERE p.id = :id")
+//    Optional<Product> findByIdWithDetails(@Param("id") Long id);
 
     @Query("SELECT DISTINCT p FROM Product p " +
            "LEFT JOIN p.category c " +
@@ -54,15 +54,22 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Page<Product> findByIsBestSellerTrue(Pageable pageable);
 
-    // Thống kê sản phẩm tồn kho thấp - sử dụng native query
-    @Query(value = "SELECT p.id, p.name, c.name as category_name, p.inventory, " +
-           "(SELECT i.image_url FROM image i WHERE i.product_id = p.id LIMIT 1) " +
-           "FROM product p " +
-           "LEFT JOIN category c ON p.category_id = c.id " +
-           "WHERE p.inventory <= 10 " +
-           "ORDER BY p.inventory ASC",
-           nativeQuery = true)
-    List<Object[]> findLowStockProducts(Pageable pageable);
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.inventory <= :threshold")
+    Long countLowStockProducts(@Param("threshold") int threshold);
+
+    @Query("SELECT p.id, p.name, p.inventory, COALESCE(c.name, 'Chưa phân loại') " +
+            "FROM Product p " +
+            "LEFT JOIN p.category c " +
+            "WHERE p.inventory = 0 " +
+            "ORDER BY p.name")
+    List<Object[]> getOutOfStockProducts();
+
+    @Query("SELECT p.id, p.name, p.inventory, COALESCE(c.name, 'Chưa phân loại') " +
+            "FROM Product p " +
+            "LEFT JOIN p.category c " +
+            "WHERE p.inventory <= :threshold AND p.inventory > 0 " +
+            "ORDER BY p.inventory ASC")
+    List<Object[]> getLowStockProducts(@Param("threshold") int threshold);
 }
 
 
