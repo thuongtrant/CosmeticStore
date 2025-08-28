@@ -1,23 +1,22 @@
 package com.ttt.CosmeticStore.service.impl;
 
+import com.ttt.CosmeticStore.Util.PaginationUtil;
 import com.ttt.CosmeticStore.dto.request.ProductRequest;
 import com.ttt.CosmeticStore.dto.request.ProductSearchRequest;
 import com.ttt.CosmeticStore.dto.response.*;
 import com.ttt.CosmeticStore.entity.*;
 import com.ttt.CosmeticStore.exception.ResourceNotFoundException;
+import com.ttt.CosmeticStore.mapper.PageProductMapper;
 import com.ttt.CosmeticStore.mapper.ProductMapper;
 import com.ttt.CosmeticStore.repository.*;
 import com.ttt.CosmeticStore.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,48 +28,21 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
     private final IngredientRepository ingredientRepository;
     private final SkinTypeRepository skinTypeRepository;
-    private final ImageRepository imageRepository; // Inject thêm dependency này
+    private final PageProductMapper pageProductMapper;
 
     @Override
     public PagedProductListResponse getProducts(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-
-        // Query 1: Lấy thông tin cơ bản sản phẩm với phân trang - sử dụng method đã có
+        Pageable pageable = PaginationUtil.createPageablePS(page, size);
         Page<ProductBasicInfo> basicInfoPage = productRepository.getProductInfo(pageable);
 
         if (basicInfoPage.getContent().isEmpty()) {
-            return createEmptyPagedListResponse(basicInfoPage);
-        }
+            return pageProductMapper.toEmptyPagedProductListResponse(basicInfoPage);        }
 
-        // Lấy danh sách product IDs từ trang hiện tại
-        List<Long> productIds = basicInfoPage.getContent().stream()
-                .map(ProductBasicInfo::getId)
+        List<ProductListResponse> products = basicInfoPage.getContent().stream()
+                .map(productMapper::toListResponse)
                 .collect(Collectors.toList());
 
-        // Query 2: Lấy images theo batch cho trang hiện tại - tái sử dụng logic cũ
-        List<ProductImageInfo> imageInfos = imageRepository.findImagesByProductIds(productIds);
-
-        // Group images by product ID - tái sử dụng logic cũ
-        Map<Long, List<String>> productImagesMap = imageInfos.stream()
-                .collect(Collectors.groupingBy(
-                        ProductImageInfo::getProductId,
-                        Collectors.mapping(ProductImageInfo::getImageUrl, Collectors.toList())
-                ));
-
-        // Combine data - tái sử dụng logic cũ
-        List<ProductListResponse> products = basicInfoPage.getContent().stream().map(basic -> {
-            ProductListResponse response = new ProductListResponse();
-            response.setId(basic.getId());
-            response.setName(basic.getName());
-            response.setPrice(basic.getPrice());
-            response.setMainImage(basic.getMainImageUrl());
-            response.setCategoryName(basic.getCategoryName());
-            response.setImages(productImagesMap.getOrDefault(basic.getId(), new ArrayList<>()));
-            return response;
-        }).collect(Collectors.toList());
-
-        return createPagedListResponse(products, basicInfoPage);
-    }
+        return pageProductMapper.toPagedProductListResponse(products, basicInfoPage);    }
 
     @Override
     public List<ProductResponse> getAllProducts() {
@@ -88,10 +60,14 @@ public class ProductServiceImpl implements ProductService {
 
 
     @Override
-    public PagedProductResponse searchProducts(ProductSearchRequest searchRequest) {
+    public PagedProductByTypeResponse searchProducts(ProductSearchRequest searchRequest) {
         // Tạo Pageable với sorting
-        Pageable pageable = createPageable(searchRequest);
-
+        Pageable pageable = PaginationUtil.createPageable(
+                searchRequest.getPage(),
+                searchRequest.getSize(),
+                searchRequest.getSortBy(),
+                searchRequest.getSortDirection()
+        );
         // Xử lý filter parameters
         String keyword = searchRequest.getKeyword();
         if (keyword != null && keyword.trim().isEmpty()) {
@@ -127,124 +103,48 @@ public class ProductServiceImpl implements ProductService {
         );
 
         // Convert sang DTO
-        List<ProductSimpleResponse> products = productPage.getContent().stream()
+        List<ProductByTypeResponse> products = productPage.getContent().stream()
                 .map(productMapper::toSimpleResponse)
                 .collect(Collectors.toList());
 
         // Tạo response
-        PagedProductResponse response = new PagedProductResponse();
-        response.setProducts(products);
-        response.setCurrentPage(productPage.getNumber());
-        response.setTotalPages(productPage.getTotalPages());
-        response.setTotalElements(productPage.getTotalElements());
-        response.setSize(productPage.getSize());
-        response.setHasNext(productPage.hasNext());
-        response.setHasPrevious(productPage.hasPrevious());
-
-        return response;
+        return pageProductMapper.toPagedProductResponse(products, productPage);
     }
 
 
     @Override
-    public PagedProductResponse getAllProductsPaged(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public PagedProductByTypeResponse getAllProductsPaged(int page, int size) {
+        Pageable pageable = PaginationUtil.createPageablePS(page, size);
         Page<Product> productPage = productRepository.findAll(pageable);
 
-        List<ProductSimpleResponse> products = productPage.getContent().stream()
+        List<ProductByTypeResponse> products = productPage.getContent().stream()
                 .map(productMapper::toSimpleResponse)
                 .collect(Collectors.toList());
 
-        return createPagedSimpleResponse(products, productPage);
-    }
+        return pageProductMapper.toPagedProductResponse(products, productPage);    }
 
     @Override
-    public PagedProductResponse getProductsByType(String type, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public PagedProductByTypeResponse getProductsByType(String type, int page, int size) {
+        Pageable pageable = PaginationUtil.createPageablePS(page, size);
         Page<Product> productPage;
 
         switch (type.toLowerCase()) {
             case "new":
-            case "newest":
                 productPage = productRepository.findByIsNewTrue(pageable);
                 break;
             case "bestseller":
-            case "best-seller":
                 productPage = productRepository.findByIsBestSellerTrue(pageable);
                 break;
             default:
-                throw new IllegalArgumentException("Invalid product type: " + type);
+                throw new IllegalArgumentException("Khong tim thay: " + type);
         }
 
-        List<ProductSimpleResponse> products = productPage.getContent().stream()
+        List<ProductByTypeResponse> products = productPage.getContent().stream()
                 .map(productMapper::toSimpleResponse)
                 .collect(Collectors.toList());
 
-        return createPagedSimpleResponse(products, productPage);
-    }
+        return pageProductMapper.toPagedProductResponse(products, productPage);    }
 
-    private PagedProductResponse createPagedSimpleResponse(List<ProductSimpleResponse> products, Page<Product> productPage) {
-        PagedProductResponse response = new PagedProductResponse();
-        response.setProducts(products);
-        response.setCurrentPage(productPage.getNumber());
-        response.setTotalPages(productPage.getTotalPages());
-        response.setTotalElements(productPage.getTotalElements());
-        response.setSize(productPage.getSize());
-        response.setHasNext(productPage.hasNext());
-        response.setHasPrevious(productPage.hasPrevious());
-        return response;
-    }
-
-    // Helper methods cho phân trang admin list - tận dụng pattern có sẵn
-    private PagedProductListResponse createPagedListResponse(List<ProductListResponse> products, Page<ProductBasicInfo> page) {
-        PagedProductListResponse response = new PagedProductListResponse();
-        response.setProducts(products);
-        response.setCurrentPage(page.getNumber());
-        response.setTotalPages(page.getTotalPages());
-        response.setTotalElements(page.getTotalElements());
-        response.setSize(page.getSize());
-        response.setHasNext(page.hasNext());
-        response.setHasPrevious(page.hasPrevious());
-        return response;
-    }
-
-    private PagedProductListResponse createEmptyPagedListResponse(Page<ProductBasicInfo> page) {
-        PagedProductListResponse response = new PagedProductListResponse();
-        response.setProducts(new ArrayList<>());
-        response.setCurrentPage(page.getNumber());
-        response.setTotalPages(page.getTotalPages());
-        response.setTotalElements(page.getTotalElements());
-        response.setSize(page.getSize());
-        response.setHasNext(page.hasNext());
-        response.setHasPrevious(page.hasPrevious());
-        return response;
-    }
-
-    private Pageable createPageable(ProductSearchRequest searchRequest) {
-        String sortBy = searchRequest.getSortBy();
-        if (sortBy == null || sortBy.trim().isEmpty()) {
-            sortBy = "id"; // default sort
-        }
-
-        String sortDirection = searchRequest.getSortDirection();
-        Sort.Direction direction = Sort.Direction.ASC;
-        if ("DESC".equalsIgnoreCase(sortDirection)) {
-            direction = Sort.Direction.DESC;
-        }
-
-        // Validate sortBy field
-        switch (sortBy.toLowerCase()) {
-            case "price":
-            case "name":
-            case "createdat":
-            case "id":
-                break;
-            default:
-                sortBy = "id"; // fallback to safe default
-        }
-
-        Sort sort = Sort.by(direction, sortBy);
-        return PageRequest.of(searchRequest.getPage(), searchRequest.getSize(), sort);
-    }
 
     @Override
     public ProductResponse createProduct(ProductRequest request) {
@@ -271,19 +171,7 @@ public class ProductServiceImpl implements ProductService {
             product.setSkinTypes(new ArrayList<>());
         }
 
-        // Handle additional images
-        if (request.getImages() != null && !request.getImages().isEmpty()) {
-            List<Image> imageEntities = request.getImages().stream()
-                    .map(imageUrl -> {
-                        Image image = new Image();
-                        image.setImageUrl(imageUrl);
-                        image.setProduct(product);
-                        return image;
-                    })
-                    .collect(Collectors.toList());
-            product.setImages(imageEntities);
-        }
-
+        productMapper.mapperImages(product, request.getImages());
         Product saved = productRepository.save(product);
         return productMapper.toResponse(saved);
     }
@@ -324,6 +212,7 @@ public class ProductServiceImpl implements ProductService {
                     }).collect(Collectors.toList());
             product.getImages().addAll(imageEntities);
         }
+        productMapper.updateImages(product, request.getImages());
         Product saved = productRepository.save(product);
         return productMapper.toResponse(saved);
     }

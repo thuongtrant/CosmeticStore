@@ -9,8 +9,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PagedProductResponse {
-    private List<ProductSimpleResponse> products;
+public class PagedProductByTypeResponse {
+    private List<ProductByTypeResponse> products;
     private int currentPage;
     private int totalPages;
     private long totalElements;
