@@ -1,5 +1,6 @@
 package com.ttt.CosmeticStore.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -10,7 +11,7 @@ public class OrderResponse {
     private Long id;
     private String orderNumber;
     private BigDecimal totalAmount;
-    private String status;
+    private OrderStatus status;
     private String shippingAddress;
     private String phoneNumber;
     private String note;
@@ -18,23 +19,23 @@ public class OrderResponse {
     private PaymentResponse payment;
     private List<OrderItemResponse> items;
 
-    @Data
-    public static class OrderItemResponse {
-        private Long productId;
-        private String productName;
-        private Integer quantity;
-        private BigDecimal unitPrice;
-        private BigDecimal totalPrice;
-        private String mainImage;
+    public enum OrderStatus {
+        PENDING("Chờ xử lý"),
+        CONFIRMED("Đã xác nhận"),
+        PROCESSING("Đang xử lý"),
+        SHIPPED("Đã giao hàng"),
+        DELIVERED("Đã nhận hàng"),
+        CANCELLED("Đã hủy");
 
-    }
+        private final String displayName;
 
-    @Data
-    public static class PaymentResponse {
-        private String paymentMethod;
-        private BigDecimal amount;
-        private String status;
-        private String transactionId;
-        private LocalDateTime paymentDate;
+        OrderStatus(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @JsonValue
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 }
