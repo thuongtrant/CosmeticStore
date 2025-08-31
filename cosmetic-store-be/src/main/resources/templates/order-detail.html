@@ -2,6 +2,8 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{base :: layout(~{::title}, ~{::main})}">
 <head>
     <title>Chi tiết đơn hàng - Admin</title>
+    <link rel="stylesheet" th:href="@{/styles/order.css}">
+
 </head>
 <body>
 <main>
@@ -46,15 +48,16 @@
                             </div>
                             <div class="col-md-6">
                                 <p><strong>Trạng thái:</strong>
-                                    <span th:class="${'badge fs-6 ' +
-                                            (order.status == 'PENDING' ? 'bg-warning' :
-                                             order.status == 'CONFIRMED' ? 'bg-info' :
-                                             order.status == 'PROCESSING' ? 'bg-primary' :
-                                             order.status == 'SHIPPED' ? 'bg-secondary' :
-                                             order.status == 'DELIVERED' ? 'bg-success' :
-                                             order.status == 'CANCELLED' ? 'bg-danger' : 'bg-light')}"
+                                    <span th:class="${'order-badge ' +
+                                           (order.status == 'PENDING' ? 'pending' :
+                                            order.status == 'CONFIRMED' ? 'confirmed' :
+                                            order.status == 'PROCESSING' ? 'processing' :
+                                            order.status == 'SHIPPED' ? 'shipped' :
+                                            order.status == 'DELIVERED' ? 'delivered' :
+                                            order.status == 'CANCELLED' ? 'cancelled' : 'default')}"
                                           th:text="${order.status}">
-                                        </span>
+</span>
+
                                 </p>
                                 <p th:if="${order.note}"><strong>Ghi chú:</strong> <span th:text="${order.note}"></span></p>
                             </div>
@@ -128,7 +131,7 @@
                             </div>
                             <div class="col-md-6">
                                 <p><strong>Trạng thái:</strong>
-                                    <span th:class="${'badge ' +
+                                    <span th:class="${'order-badge' +
                                             (order.payment.status == 'PENDING' ? 'bg-warning' :
                                              order.payment.status == 'COMPLETED' ? 'bg-success' :
                                              order.payment.status == 'FAILED' ? 'bg-danger' : 'bg-secondary')}"

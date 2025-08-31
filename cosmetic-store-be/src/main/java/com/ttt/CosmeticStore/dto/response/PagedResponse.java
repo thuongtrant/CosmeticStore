@@ -9,13 +9,12 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PagedProductListResponse {
-    private List<ProductListResponse> products;
+public class PagedResponse<T> {
+    private List<T> products;
     private int currentPage;
     private int totalPages;
     private long totalElements;
     private int size;
     private boolean hasNext;
     private boolean hasPrevious;
-
 }

@@ -1,9 +1,10 @@
 package com.ttt.CosmeticStore.controller.admin;
 
-import com.ttt.CosmeticStore.dto.response.CategoryReport;
-import com.ttt.CosmeticStore.dto.response.DailyReport;
-import com.ttt.CosmeticStore.dto.response.ProductReport;
-import com.ttt.CosmeticStore.service.ReportService;
+import com.ttt.CosmeticStore.dto.DateRange;
+import com.ttt.CosmeticStore.dto.response.ReportSummary;
+import com.ttt.CosmeticStore.service.ChartDataService;
+import com.ttt.CosmeticStore.service.DateRangeCalculator;
+import com.ttt.CosmeticStore.service.ReportDataService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -13,10 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +24,9 @@ import java.util.Map;
 @Slf4j
 public class ReportController {
 
-    private final ReportService reportService;
+    private final ReportDataService reportDataService;
+    private final ChartDataService chartDataService;
+    private final DateRangeCalculator dateCalculator;
 
     @GetMapping("/reports")
     public String showReportsPage(Model model,
@@ -36,73 +36,33 @@ public class ReportController {
         log.info("Số ngày thống kê: {}", days);
 
         try {
-            // Tính khoảng thời gian
-            LocalDateTime endDate = LocalDateTime.now();
-            LocalDateTime startDate = endDate.minusDays(days);
-            LocalDate startLocalDate = startDate.toLocalDate();
-            LocalDate endLocalDate = endDate.toLocalDate();
+            // Calculate date range
+            DateRange range = dateCalculator.calculateRange(days);
 
-            // Lấy thống kê tổng quan
-            BigDecimal totalRevenue = reportService.getTotalRevenue(startDate, endDate);
-            Long totalOrders = reportService.getTotalOrders(startDate, endDate);
-            Long totalUsers = reportService.getTotalUsers();
-            Long totalProducts = reportService.getTotalProducts();
+            // Delegate to service for data retrieval
+            ReportSummary summary = reportDataService.getReportSummary(range.getStart(), range.getEnd());
 
-            log.info("Thống kê tổng quan - Doanh thu: {}, Đơn hàng: {}, Users: {}, Products: {}",
-                     totalRevenue, totalOrders, totalUsers, totalProducts);
-
-            // Lấy thống kê chi tiết
-            Map<String, Long> ordersByStatus = reportService.getOrdersByStatus(startDate, endDate);
-            List<ProductReport> topProducts = reportService.getTopSellingProducts(startDate, endDate, 10);
-            List<CategoryReport> categoryStats = reportService.getCategoryStats(startDate, endDate);
-            List<DailyReport> dailyRevenue = reportService.getDailyRevenue(startLocalDate, endLocalDate);
-
-            log.info("Thống kê chi tiết - Top products: {}, Categories: {}, Daily revenue: {}",
-                     topProducts.size(), categoryStats.size(), dailyRevenue.size());
-
-            // Thêm dữ liệu vào model
+            // Add to model - simplified attribute mapping
             model.addAttribute("selectedDays", days);
-            model.addAttribute("totalRevenue", totalRevenue);
-            model.addAttribute("totalOrders", totalOrders);
-            model.addAttribute("totalUsers", totalUsers);
-            model.addAttribute("totalProducts", totalProducts);
-            model.addAttribute("ordersByStatus", ordersByStatus);
-            model.addAttribute("topProducts", topProducts);
-            model.addAttribute("categoryStats", categoryStats);
-            model.addAttribute("dailyRevenue", dailyRevenue);
-
-            // Thống kê khách hàng
-            Long newCustomers = reportService.getNewCustomers(startDate, endDate);
-            Long activeCustomers = reportService.getActiveCustomers(startDate, endDate);
-            model.addAttribute("newCustomers", newCustomers);
-            model.addAttribute("activeCustomers", activeCustomers);
-
-            // Thống kê kho hàng
-            Long lowStockCount = reportService.getLowStockProducts(10);
-            List<ProductReport> outOfStockProducts = reportService.getOutOfStockProducts();
-            model.addAttribute("lowStockCount", lowStockCount);
-            model.addAttribute("outOfStockProducts", outOfStockProducts);
+            model.addAttribute("summary", summary);
+            model.addAttribute("totalRevenue", summary.getTotalRevenue());
+            model.addAttribute("totalOrders", summary.getTotalOrders());
+            model.addAttribute("totalUsers", summary.getTotalUsers());
+            model.addAttribute("totalProducts", summary.getTotalProducts());
+            model.addAttribute("ordersByStatus", summary.getOrdersByStatus());
+            model.addAttribute("topProducts", summary.getTopProducts());
+            model.addAttribute("categoryStats", summary.getCategoryStats());
+            model.addAttribute("dailyRevenue", summary.getDailyRevenue());
+            model.addAttribute("newCustomers", summary.getNewCustomers());
+            model.addAttribute("activeCustomers", summary.getActiveCustomers());
+            model.addAttribute("lowStockCount", summary.getLowStockCount());
+            model.addAttribute("outOfStockProducts", summary.getOutOfStockProducts());
 
             log.info("✅ Báo cáo thống kê được tải thành công");
 
         } catch (Exception e) {
             log.error("❌ Lỗi khi tải báo cáo thống kê: ", e);
-
-            // Thêm dữ liệu mặc định khi có lỗi
-            model.addAttribute("selectedDays", days);
-            model.addAttribute("totalRevenue", BigDecimal.ZERO);
-            model.addAttribute("totalOrders", 0L);
-            model.addAttribute("totalUsers", 0L);
-            model.addAttribute("totalProducts", 0L);
-            model.addAttribute("ordersByStatus", Map.of());
-            model.addAttribute("topProducts", List.of());
-            model.addAttribute("categoryStats", List.of());
-            model.addAttribute("dailyRevenue", List.of());
-            model.addAttribute("newCustomers", 0L);
-            model.addAttribute("activeCustomers", 0L);
-            model.addAttribute("lowStockCount", 0L);
-            model.addAttribute("outOfStockProducts", List.of());
-
+            addDefaultAttributes(model, days);
             model.addAttribute("error", "Có lỗi xảy ra khi tải dữ liệu báo cáo: " + e.getMessage());
         }
 
@@ -121,7 +81,7 @@ public class ReportController {
             LocalDate endDate = endDateStr != null ?
                 LocalDate.parse(endDateStr) : LocalDate.now();
 
-            return reportService.getRevenueChartData(startDate, endDate);
+            return chartDataService.getRevenueChartData(startDate, endDate);
         } catch (Exception e) {
             log.error("Lỗi khi lấy dữ liệu biểu đồ doanh thu: ", e);
             return Map.of("labels", List.of(), "data", List.of());
@@ -134,10 +94,8 @@ public class ReportController {
             @RequestParam(value = "days", defaultValue = "30") int days) {
 
         try {
-            LocalDateTime endDate = LocalDateTime.now();
-            LocalDateTime startDate = endDate.minusDays(days);
-
-            return reportService.getCategoryChartData(startDate, endDate);
+            DateRange range = dateCalculator.calculateRange(days);
+            return chartDataService.getCategoryChartData(range.getStart(), range.getEnd());
         } catch (Exception e) {
             log.error("Lỗi khi lấy dữ liệu biểu đồ danh mục: ", e);
             return Map.of("labels", List.of(), "data", List.of());
@@ -150,13 +108,27 @@ public class ReportController {
             @RequestParam(value = "days", defaultValue = "30") int days) {
 
         try {
-            LocalDateTime endDate = LocalDateTime.now();
-            LocalDateTime startDate = endDate.minusDays(days);
-
-            return reportService.getOrderStatusChartData(startDate, endDate);
+            DateRange range = dateCalculator.calculateRange(days);
+            return chartDataService.getOrderStatusChartData(range.getStart(), range.getEnd());
         } catch (Exception e) {
             log.error("Lỗi khi lấy dữ liệu biểu đồ trạng thái đơn hàng: ", e);
             return Map.of("labels", List.of(), "data", List.of());
         }
+    }
+
+    private void addDefaultAttributes(Model model, int days) {
+        model.addAttribute("selectedDays", days);
+        model.addAttribute("totalRevenue", java.math.BigDecimal.ZERO);
+        model.addAttribute("totalOrders", 0L);
+        model.addAttribute("totalUsers", 0L);
+        model.addAttribute("totalProducts", 0L);
+        model.addAttribute("ordersByStatus", Map.of());
+        model.addAttribute("topProducts", List.of());
+        model.addAttribute("categoryStats", List.of());
+        model.addAttribute("dailyRevenue", List.of());
+        model.addAttribute("newCustomers", 0L);
+        model.addAttribute("activeCustomers", 0L);
+        model.addAttribute("lowStockCount", 0L);
+        model.addAttribute("outOfStockProducts", List.of());
     }
 }

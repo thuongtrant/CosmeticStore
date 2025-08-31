@@ -31,25 +31,23 @@ public class ProductServiceImpl implements ProductService {
     private final PageProductMapper pageProductMapper;
 
     @Override
-    public PagedProductListResponse getProducts(int page, int size) {
+    public PagedResponse<ProductListResponse> getProducts(int page, int size) {
         Pageable pageable = PaginationUtil.createPageablePS(page, size);
-        Page<ProductBasicInfo> basicInfoPage = productRepository.getProductInfo(pageable);
+        Page<Product> productPage = productRepository.getProductsForAdmin(pageable);
 
-        if (basicInfoPage.getContent().isEmpty()) {
-            return pageProductMapper.toEmptyPagedProductListResponse(basicInfoPage);        }
-
-        List<ProductListResponse> products = basicInfoPage.getContent().stream()
-                .map(productMapper::toListResponse)
+        List<ProductListResponse> products = productPage.getContent().stream()
+                .map(productMapper::toProductAResponse)
                 .collect(Collectors.toList());
 
-        return pageProductMapper.toPagedProductListResponse(products, basicInfoPage);    }
-
-    @Override
-    public List<ProductResponse> getAllProducts() {
-        return productRepository.findAll().stream()
-                .map(productMapper::toResponse)
-                .collect(Collectors.toList());
+        return pageProductMapper.toPagedResponse(products, productPage);
     }
+
+//    @Override
+//    public List<ProductResponse> getAllProducts() {
+//        return productRepository.findAll().stream()
+//                .map(productMapper::toResponse)
+//                .collect(Collectors.toList());
+//    }
 
     @Override
     public ProductResponse getProductById(Long id) {
@@ -60,7 +58,7 @@ public class ProductServiceImpl implements ProductService {
 
 
     @Override
-    public PagedProductByTypeResponse searchProducts(ProductSearchRequest searchRequest) {
+    public PagedResponse<ProductBasicInfo> searchProducts(ProductSearchRequest searchRequest) {
         // Tạo Pageable với sorting
         Pageable pageable = PaginationUtil.createPageable(
                 searchRequest.getPage(),
@@ -103,47 +101,60 @@ public class ProductServiceImpl implements ProductService {
         );
 
         // Convert sang DTO
-        List<ProductByTypeResponse> products = productPage.getContent().stream()
-                .map(productMapper::toSimpleResponse)
+        List<ProductBasicInfo> products = productPage.getContent().stream()
+                .map(productMapper::toProductsResponse)
                 .collect(Collectors.toList());
 
         // Tạo response
-        return pageProductMapper.toPagedProductResponse(products, productPage);
+        return pageProductMapper.toPagedResponse(products, productPage);
     }
 
 
     @Override
-    public PagedProductByTypeResponse getAllProductsPaged(int page, int size) {
-        Pageable pageable = PaginationUtil.createPageablePS(page, size);
-        Page<Product> productPage = productRepository.findAll(pageable);
+    public PagedResponse<ProductBasicInfo> getProductsCus(int page, int size) {
+        try {
+            Pageable pageable = PaginationUtil.createPageablePS(page, size);
+            Page<ProductBasicInfo> productPage = productRepository.getProductsForCus(pageable);
 
-        List<ProductByTypeResponse> products = productPage.getContent().stream()
-                .map(productMapper::toSimpleResponse)
-                .collect(Collectors.toList());
+            List<ProductBasicInfo> products = productPage.getContent();
 
-        return pageProductMapper.toPagedProductResponse(products, productPage);    }
+
+            return pageProductMapper.toPagedResponse(products, productPage);
+        } catch (Exception e) {
+            System.err.println("ERROR in getProductsCus: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
 
     @Override
-    public PagedProductByTypeResponse getProductsByType(String type, int page, int size) {
-        Pageable pageable = PaginationUtil.createPageablePS(page, size);
-        Page<Product> productPage;
+    public PagedResponse<ProductByTypeResponse> getProductsByType(String type, int page, int size) {
+        try {
+            Pageable pageable = PaginationUtil.createPageablePS(page, size);
+            Page<Product> productPage;
 
-        switch (type.toLowerCase()) {
-            case "new":
-                productPage = productRepository.findByIsNewTrue(pageable);
-                break;
-            case "bestseller":
-                productPage = productRepository.findByIsBestSellerTrue(pageable);
-                break;
-            default:
-                throw new IllegalArgumentException("Khong tim thay: " + type);
+            switch (type.toLowerCase()) {
+                case "new":
+                    productPage = productRepository.findByIsNewTrue(pageable);
+                    break;
+                case "bestseller":
+                    productPage = productRepository.findByIsBestSellerTrue(pageable);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Khong tim thay loai san pham: " + type);
+            }
+
+            List<ProductByTypeResponse> products = productPage.getContent().stream()
+                    .map(productMapper::toProductTypeResponse)
+                    .collect(Collectors.toList());
+
+            return pageProductMapper.toPagedResponse(products, productPage);
+        } catch (Exception e) {
+            System.err.println("ERROR in getProductsByType: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
-
-        List<ProductByTypeResponse> products = productPage.getContent().stream()
-                .map(productMapper::toSimpleResponse)
-                .collect(Collectors.toList());
-
-        return pageProductMapper.toPagedProductResponse(products, productPage);    }
+    }
 
 
     @Override

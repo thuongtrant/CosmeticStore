@@ -2,16 +2,23 @@ package com.ttt.CosmeticStore.service.impl;
 
 import com.ttt.CosmeticStore.dto.request.CheckoutRequest;
 import com.ttt.CosmeticStore.dto.response.OrderResponse;
+import com.ttt.CosmeticStore.dto.response.OrdersResponseA;
+import com.ttt.CosmeticStore.dto.response.OrdersResponseC;
+import com.ttt.CosmeticStore.dto.response.PagedResponse;
 import com.ttt.CosmeticStore.entity.*;
 import com.ttt.CosmeticStore.exception.AddressException;
 import com.ttt.CosmeticStore.exception.OrderException;
 import com.ttt.CosmeticStore.exception.OrderProcessingException;
 import com.ttt.CosmeticStore.exception.ProductNotFoundException;
 import com.ttt.CosmeticStore.mapper.OrderMapper;
+import com.ttt.CosmeticStore.mapper.PageProductMapper;
 import com.ttt.CosmeticStore.repository.*;
 import com.ttt.CosmeticStore.service.OrderService;
 import com.ttt.CosmeticStore.service.ShippingAddressService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +52,10 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private OrderMapper orderMapper;
+
+    @Autowired
+    private PageProductMapper pageProductMapper;
+
     @Override
     public BigDecimal calculateTotalAmount(CheckoutRequest request) {
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -103,9 +114,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<OrderResponse> getMyOrders(User user) {
-        List<Order> orders = orderRepository.myOrders(user);
-        return orderMapper.toOrderResponseList(orders);
+    public PagedResponse<OrdersResponseC> getMyOrders(User user, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<OrdersResponseC> ordersPage = orderRepository.myOrders(user, pageable);
+        return pageProductMapper.toPagedResponse(ordersPage.getContent(), ordersPage);
     }
 
     @Override

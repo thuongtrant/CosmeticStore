@@ -1,13 +1,11 @@
 package com.ttt.CosmeticStore.controller;
 
 import com.ttt.CosmeticStore.dto.request.ProductSearchRequest;
-import com.ttt.CosmeticStore.dto.response.PagedProductByTypeResponse;
-//import com.ttt.CosmeticStore.dto.response.PagedSimpleProductResponse;
-//import com.ttt.CosmeticStore.dto.response.ProductDetailResponse;
+import com.ttt.CosmeticStore.dto.response.PagedResponse;
+import com.ttt.CosmeticStore.dto.response.ProductBasicInfo;
+import com.ttt.CosmeticStore.dto.response.ProductByTypeResponse;
 import com.ttt.CosmeticStore.dto.response.ProductResponse;
 import com.ttt.CosmeticStore.service.ProductService;
-import com.ttt.CosmeticStore.service.CloudinaryService;
-import com.ttt.CosmeticStore.mapper.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,28 +19,21 @@ import java.util.List;
 public class ApiProductController {
 
     private final ProductService productService;
-    private final CloudinaryService cloudinaryService;
-    private final ProductMapper productMapper;
-
-    @GetMapping
-    public List<ProductResponse> getAllProducts() {
-        return productService.getAllProducts();
-    }
 
     @GetMapping("/{id}/detail")
-    public ResponseEntity<ProductResponse> getProductBasic(@PathVariable Long id) {
+    public ResponseEntity<ProductResponse> getProductDetail(@PathVariable Long id) {
         ProductResponse product = productService.getProductById(id);
         return ResponseEntity.ok(product);
     }
 
     @PostMapping("/search")
-    public ResponseEntity<PagedProductByTypeResponse> searchProducts(@RequestBody ProductSearchRequest searchRequest) {
-        PagedProductByTypeResponse response = productService.searchProducts(searchRequest);
+    public ResponseEntity<PagedResponse<ProductBasicInfo>> searchProducts(@RequestBody ProductSearchRequest searchRequest) {
+        PagedResponse<ProductBasicInfo> response = productService.searchProducts(searchRequest);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<PagedProductByTypeResponse> searchProductsGet(
+    public ResponseEntity<PagedResponse<ProductBasicInfo>> searchProductsGet(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) List<Long> categoryIds,
             @RequestParam(required = false) List<Long> ingredientIds,
@@ -70,27 +61,30 @@ public class ApiProductController {
         searchRequest.setPage(page);
         searchRequest.setSize(size);
 
-        PagedProductByTypeResponse response = productService.searchProducts(searchRequest);
+        PagedResponse<ProductBasicInfo> response = productService.searchProducts(searchRequest);
         return ResponseEntity.ok(response);
     }
 
-    // Endpoint phân trang cho tất cả sản phẩm - 9 sản phẩm mỗi trang
+    // Api phân trang cho tất cả sản phẩm phía khách hàng
     @GetMapping("/paged")
-    public ResponseEntity<PagedProductByTypeResponse> getAllProductsPaged(
+    public ResponseEntity<PagedResponse<ProductBasicInfo>> getAllProductsPaged(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "9") int size) {
-        PagedProductByTypeResponse response = productService.getAllProductsPaged(page, size);
-        return ResponseEntity.ok(response);
+            PagedResponse<ProductBasicInfo> response = productService.getProductsCus(page, size);
+            return ResponseEntity.ok(response);
     }
 
-    // Endpoint phân trang cho sản phẩm theo loại - 4 sản phẩm mỗi trang
+    // Api phân trang cho sản phẩm theo loại phía khách hàng
     @GetMapping("/by-type/paged")
-    public ResponseEntity<PagedProductByTypeResponse> getProductsByTypePaged(
+    public ResponseEntity<PagedResponse<ProductByTypeResponse>> getProductsByTypePaged(
             @RequestParam(value = "productType", required = false, defaultValue = "new") String productType,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "4") int size) {
-        PagedProductByTypeResponse response = productService.getProductsByType(productType, page, size);
-        return ResponseEntity.ok(response);
-    }
+            PagedResponse<ProductByTypeResponse> response = productService.getProductsByType(productType, page, size);
+            return ResponseEntity.ok(response);
 
+    }
 }
+
+
+

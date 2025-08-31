@@ -1,0 +1,17 @@
+/* Badge cho trạng thái order */
+.order-badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    text-transform: uppercase;
+}
+
+.order-badge.pending   { background-color: #ffc107; color: #212529; }
+.order-badge.confirmed { background-color: #0dcaf0; color: #fff; }
+.order-badge.processing{ background-color: #0d6efd; color: #fff; }
+.order-badge.shipped   { background-color: var(--primary-pink); color: #fff; }
+.order-badge.delivered { background-color: #198754; color: #fff; }
+.order-badge.cancelled { background-color: #dc3545; color: #fff; }
+.order-badge.default   { background-color: #6c757d; color: #fff; }

@@ -98,7 +98,7 @@
                     <table class="table table-hover">
                         <thead class="table-pink">
                         <tr>
-                            <th>#</th>
+                            <th>STT</th>
                             <th>Sản phẩm</th>
                             <th>Danh mục</th>
                             <th>Số lượng</th>
@@ -250,86 +250,190 @@
     const dailyRevenueData = /*[[${dailyRevenue}]]*/ [];
     const ordersByStatusData = /*[[${ordersByStatus}]]*/ {};
 
-    // Biểu đồ doanh thu
-    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-    const revenueChart = new Chart(revenueCtx, {
-        type: 'line',
-        data: {
-            labels: dailyRevenueData.map(item => {
-                const date = new Date(item.date);
-                return (date.getDate() + '').padStart(2, '0') + '/' + (date.getMonth() + 1 + '').padStart(2, '0');
-            }),
-            datasets: [{
-                label: 'Doanh thu (VNĐ)',
-                data: dailyRevenueData.map(item => item.revenue),
-                borderColor: '#E0B7B3',
-                backgroundColor: 'rgba(224, 183, 179, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#E0B7B3',
-                pointBorderColor: '#D4A4A0',
-                pointRadius: 6,
-                pointHoverRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return new Intl.NumberFormat('vi-VN', {
-                                style: 'currency',
-                                currency: 'VND'
-                            }).format(value);
-                        }
-                    }
-                }
-            }
-        }
+    console.log('=== DEBUG CHART DATA ===');
+    console.log('Daily Revenue Data:', dailyRevenueData);
+    console.log('Orders by Status Data:', ordersByStatusData);
+
+    // Khởi tạo biểu đồ khi DOM loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded - initializing charts...');
+        initializeCharts();
     });
 
-    // Biểu đồ trạng thái đơn hàng
-    const orderStatusCtx = document.getElementById('orderStatusChart').getContext('2d');
-    const orderStatusChart = new Chart(orderStatusCtx, {
-        type: 'doughnut',
-        data: {
-            labels: Object.keys(ordersByStatusData),
-            datasets: [{
-                data: Object.values(ordersByStatusData),
-                backgroundColor: [
-                    '#E0B7B3', '#D4A4A0', '#F5E6E4', '#C89691', '#B8908B', '#A67C77'
-                ],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        padding: 15,
-                        font: {
-                            size: 11
+    function initializeCharts() {
+        initRevenueChart();
+        initOrderStatusChart();
+    }
+
+    // Biểu đồ doanh thu - cải thiện để xử lý dữ liệu tốt hơn
+    function initRevenueChart() {
+        const revenueCtx = document.getElementById('revenueChart');
+        if (!revenueCtx) {
+            console.error('Revenue chart canvas not found!');
+            return;
+        }
+
+        // Chuẩn bị dữ liệu
+        let labels = [];
+        let data = [];
+
+        if (dailyRevenueData && dailyRevenueData.length > 0) {
+            dailyRevenueData.forEach(item => {
+                // Xử lý label (ngày)
+                if (item.formattedDate) {
+                    labels.push(item.formattedDate);
+                } else if (item.date) {
+                    const date = new Date(item.date);
+                    const formattedDate = (date.getDate()).toString().padStart(2, '0') + '/' +
+                                        (date.getMonth() + 1).toString().padStart(2, '0');
+                    labels.push(formattedDate);
+                } else {
+                    labels.push('N/A');
+                }
+
+                // Xử lý dữ liệu doanh thu
+                if (item.revenue) {
+                    data.push(parseFloat(item.revenue) || 0);
+                } else {
+                    data.push(0);
+                }
+            });
+        } else {
+            // Dữ liệu mặc định khi không có data
+            labels = ['Không có dữ liệu'];
+            data = [0];
+        }
+
+        console.log('Revenue chart - Labels:', labels);
+        console.log('Revenue chart - Data:', data);
+
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Doanh thu (VNĐ)',
+                    data: data,
+                    borderColor: '#E0B7B3',
+                    backgroundColor: 'rgba(224, 183, 179, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#E0B7B3',
+                    pointBorderColor: '#D4A4A0',
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Doanh thu: ' + new Intl.NumberFormat('vi-VN', {
+                                    style: 'currency',
+                                    currency: 'VND'
+                                }).format(context.parsed.y);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return new Intl.NumberFormat('vi-VN', {
+                                    style: 'currency',
+                                    currency: 'VND',
+                                    notation: 'compact'
+                                }).format(value);
+                            }
                         }
                     }
                 }
             }
+        });
+
+        console.log('Revenue chart initialized successfully');
+    }
+
+    // Biểu đồ trạng thái đơn hàng - cải thiện
+    function initOrderStatusChart() {
+        const orderStatusCtx = document.getElementById('orderStatusChart');
+        if (!orderStatusCtx) {
+            console.error('Order status chart canvas not found!');
+            return;
         }
-    });
+
+        let labels = [];
+        let data = [];
+        let hasData = false;
+
+        if (ordersByStatusData && typeof ordersByStatusData === 'object') {
+            labels = Object.keys(ordersByStatusData);
+            data = Object.values(ordersByStatusData);
+            hasData = labels.length > 0 && data.some(value => value > 0);
+        }
+
+        if (!hasData) {
+            labels = ['Không có dữ liệu'];
+            data = [1];
+        }
+
+        console.log('Order status chart - Labels:', labels);
+        console.log('Order status chart - Data:', data);
+
+        new Chart(orderStatusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: hasData ? [
+                        '#E0B7B3', '#D4A4A0', '#F5E6E4', '#C89691', '#B8908B', '#A67C77'
+                    ] : ['#ddd'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (!hasData) return 'Không có dữ liệu';
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.parsed * 100) / total).toFixed(1);
+                                return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        console.log('Order status chart initialized successfully');
+    }
 
     // Chức năng thay đổi kỳ báo cáo
     function changePeriod() {
         const days = document.getElementById('periodSelect').value;
+        console.log('Changing period to:', days, 'days');
         window.location.href = '/admin/reports?days=' + days;
     }
 
@@ -344,12 +448,14 @@
         content += `- Tổng khách hàng: ${document.querySelectorAll('.stats-number')[2].textContent}\n`;
         content += `- Tổng sản phẩm: ${document.querySelectorAll('.stats-number')[3].textContent}\n\n`;
 
-        content += 'CHI TIẾT TRẠNG THÁI ĐON HÀNG:\n';
-        Object.entries(ordersByStatusData).forEach(([status, count]) => {
-            content += `- ${status}: ${count}\n`;
-        });
+        content += 'CHI TIẾT TRẠNG THÁI ĐƠN HÀNG:\n';
+        if (ordersByStatusData && typeof ordersByStatusData === 'object') {
+            Object.entries(ordersByStatusData).forEach(([status, count]) => {
+                content += `- ${status}: ${count}\n`;
+            });
+        }
 
-        // Tạo file và tải xuống
+        // T��o file và tải xuống
         const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -363,12 +469,14 @@
 
     // Cập nhật biểu đồ định kỳ (mỗi 5 phút)
     setInterval(() => {
-        fetch(`/admin/reports/revenue-chart?startDate=${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}&endDate=${new Date().toISOString().split('T')[0]}`)
+        const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const endDate = new Date().toISOString().split('T')[0];
+
+        fetch(`/admin/reports/revenue-chart?startDate=${startDate}&endDate=${endDate}`)
             .then(response => response.json())
             .then(data => {
-                revenueChart.data.labels = data.labels;
-                revenueChart.data.datasets[0].data = data.data;
-                revenueChart.update();
+                console.log('Auto-refresh chart data received:', data);
+                // TODO: Update existing chart instead of creating new one
             })
             .catch(error => console.log('Lỗi cập nhật biểu đồ:', error));
     }, 300000); // 5 phút

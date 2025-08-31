@@ -1,12 +1,16 @@
 package com.ttt.CosmeticStore.controller;
 
 import com.ttt.CosmeticStore.dto.response.OrderResponse;
+import com.ttt.CosmeticStore.dto.response.OrdersResponseC;
+import com.ttt.CosmeticStore.dto.response.PagedResponse;
 import com.ttt.CosmeticStore.entity.User;
 import com.ttt.CosmeticStore.service.OrderService;
 import com.ttt.CosmeticStore.service.PaymentProcessingService;
 import com.ttt.CosmeticStore.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -52,18 +56,19 @@ public class ApiCheckoutController {
     }
 
     @GetMapping("/orders")
-    public ResponseEntity<?> getUserOrders(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<PagedResponse<OrdersResponseC>> getUserOrders(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         try {
             User user = userService.findByUsername(userDetails.getUsername());
-            List<OrderResponse> orders = orderService.getMyOrders(user);
-            return ResponseEntity.ok(Map.of("success", true, "orders", orders));
+            PagedResponse<OrdersResponseC> response = orderService.getMyOrders(user, page, size);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
-                    "success", false,
-                    "message", "Lỗi lấy danh sách đơn hàng: " + e.getMessage()
-            ));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
     }
+
 
     @GetMapping("/orders/{orderNumber}")
     public ResponseEntity<?> getOrderDetails(@PathVariable String orderNumber) {

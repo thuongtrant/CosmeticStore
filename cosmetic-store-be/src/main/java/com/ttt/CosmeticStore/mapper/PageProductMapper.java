@@ -9,37 +9,26 @@ import java.util.ArrayList;
 import java.util.List;
 @Component
 public class PageProductMapper {
-    public PagedProductByTypeResponse toPagedProductResponse(List<ProductByTypeResponse> products, Page<Product> productPage) {
-        PagedProductByTypeResponse response = new PagedProductByTypeResponse();
-        response.setProducts(products);
-        response.setCurrentPage(productPage.getNumber());
-        response.setTotalPages(productPage.getTotalPages());
-        response.setTotalElements(productPage.getTotalElements());
-        response.setSize(productPage.getSize());
-        response.setHasNext(productPage.hasNext());
-        response.setHasPrevious(productPage.hasPrevious());
-        return response;
+    public <T> PagedResponse<T> toPagedResponse(List<T> content, Page<?> page) {
+        return new PagedResponse<>(
+                content,
+                page.getNumber(),
+                page.getTotalPages(),
+                page.getTotalElements(),
+                page.getSize(),
+                page.hasNext(),
+                page.hasPrevious()
+        );
     }
-    public PagedProductListResponse toPagedProductListResponse(List<ProductListResponse> products, Page<ProductBasicInfo> page) {
-        PagedProductListResponse response = new PagedProductListResponse();
-        response.setProducts(products);
-        response.setCurrentPage(page.getNumber());
-        response.setTotalPages(page.getTotalPages());
-        response.setTotalElements(page.getTotalElements());
-        response.setSize(page.getSize());
-        response.setHasNext(page.hasNext());
-        response.setHasPrevious(page.hasPrevious());
-        return response;
-    }
-    public PagedProductListResponse toEmptyPagedProductListResponse(Page<ProductBasicInfo> page) {
-        PagedProductListResponse response = new PagedProductListResponse();
-        response.setProducts(new ArrayList<>());
-        response.setCurrentPage(page.getNumber());
-        response.setTotalPages(page.getTotalPages());
-        response.setTotalElements(page.getTotalElements());
-        response.setSize(page.getSize());
-        response.setHasNext(page.hasNext());
-        response.setHasPrevious(page.hasPrevious());
-        return response;
+    public <T> PagedResponse<T> toEmptyPagedResponse(Page<?> page) {
+        return new PagedResponse<>(
+                new ArrayList<>(),
+                page.getNumber(),
+                page.getTotalPages(),
+                page.getTotalElements(),
+                page.getSize(),
+                page.hasNext(),
+                page.hasPrevious()
+        );
     }
 }

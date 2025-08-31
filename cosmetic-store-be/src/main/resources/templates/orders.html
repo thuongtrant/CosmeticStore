@@ -2,6 +2,7 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{base :: layout(~{::title}, ~{::main})}">
 <head>
     <title>Quản lý đơn hàng - Admin</title>
+    <link rel="stylesheet" th:href="@{/styles/order.css}">
 </head>
 <body>
 <main>
@@ -94,8 +95,8 @@
                     <table class="table table-striped table-hover">
                         <thead class="table-dark">
                         <tr>
-                            <th>Số đơn hàng</th>
-                            <th>Khách hàng</th>
+                            <th>Mã đơn hàng</th>
+                            <th>Địa chỉ giao hàng</th>
                             <th>Tổng tiền</th>
                             <th>Trạng thái</th>
                             <th>Ngày đặt</th>
@@ -113,13 +114,13 @@
                             <td th:text="${order.shippingAddress}">Địa chỉ giao hàng</td>
                             <td th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</td>
                             <td>
-                                <span th:class="${'badge ' +
-                                    (order.status == 'PENDING' ? 'bg-warning' :
-                                     order.status == 'CONFIRMED' ? 'bg-info' :
-                                     order.status == 'PROCESSING' ? 'bg-primary' :
-                                     order.status == 'SHIPPED' ? 'bg-secondary' :
-                                     order.status == 'DELIVERED' ? 'bg-success' :
-                                     order.status == 'CANCELLED' ? 'bg-danger' : 'bg-light')}"
+                                <span th:class="${'order-badge ' +
+                                   (order.status == 'PENDING' ? 'pending' :
+                                    order.status == 'CONFIRMED' ? 'confirmed' :
+                                    order.status == 'PROCESSING' ? 'processing' :
+                                    order.status == 'SHIPPED' ? 'shipped' :
+                                    order.status == 'DELIVERED' ? 'delivered' :
+                                    order.status == 'CANCELLED' ? 'cancelled' : 'default')}"
                                       th:text="${order.status}">
                                 </span>
                             </td>

@@ -1,10 +1,13 @@
 package com.ttt.CosmeticStore.repository;
 
+import com.ttt.CosmeticStore.dto.response.OrdersResponseA;
+import com.ttt.CosmeticStore.dto.response.OrdersResponseC;
 import com.ttt.CosmeticStore.entity.Order;
 import com.ttt.CosmeticStore.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -16,14 +19,13 @@ import java.util.Optional;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
-    @Query("SELECT o FROM Order o " +
-            "LEFT JOIN FETCH o.orderItems oi " +
-            "LEFT JOIN FETCH oi.product p " +
-            "LEFT JOIN FETCH o.payment " +
-            "LEFT JOIN FETCH o.shippingAddress " +
-            "WHERE o.user = :user " +
+    @Query("SELECT new com.ttt.CosmeticStore.dto.response.OrdersResponseC(" +
+            "o.id, o.orderNumber, o.totalAmount, o.status, " +
+            "o.createdAt) " +
+            "FROM Order o " +
             "ORDER BY o.createdAt DESC")
-    List<Order> myOrders(@Param("user") User user);
+    Page<OrdersResponseC> myOrders(@Param("user") User user, Pageable page);
+
 
     @Query("SELECT o FROM Order o " +
             "LEFT JOIN FETCH o.orderItems oi " +
@@ -33,10 +35,41 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "WHERE o.orderNumber = :orderNumber")
     Optional<Order> getOrderDetail(@Param("orderNumber") String orderNumber);
 
-    Page<Order> findByStatus(Order.OrderStatus status, Pageable pageable);
+    @Query("SELECT new com.ttt.CosmeticStore.dto.response.OrdersResponseA(" +
+            "o.id, o.orderNumber, o.totalAmount, o.status, " +
+            "CONCAT(sa.addressLine, ', ', sa.ward, ', ', sa.district, ', ', sa.province), " +
+            "o.createdAt) " +
+            "FROM Order o " +
+            "JOIN o.shippingAddress sa " +
+            "ORDER BY o.createdAt DESC")
+    Page<OrdersResponseA> getOrdersForAd(Pageable pageable);
 
-    // Tìm kiếm theo số đơn hàng
-    Page<Order> findByOrderNumber(String orderNumber, Pageable pageable);
+    @Query("SELECT new com.ttt.CosmeticStore.dto.response.OrdersResponseA(" +
+            "o.id, o.orderNumber, o.totalAmount, o.status, " +
+            "CONCAT(sa.addressLine, ', ', sa.ward, ', ', sa.district, ', ', sa.province), " +
+            "o.createdAt) " +
+            "FROM Order o " +
+            "JOIN o.shippingAddress sa " +
+            "WHERE o.status = :status " +
+            "ORDER BY o.createdAt DESC")
+    Page<OrdersResponseA> findByStatus(Order.OrderStatus status, Pageable pageable);
+
+    @Query("SELECT new com.ttt.CosmeticStore.dto.response.OrdersResponseA(" +
+            "o.id, o.orderNumber, o.totalAmount, o.status, " +
+            "CONCAT(sa.addressLine, ', ', sa.ward, ', ', sa.district, ', ', sa.province), " +
+            "o.createdAt) " +
+            "FROM Order o " +
+            "JOIN o.shippingAddress sa " +
+            "WHERE o.orderNumber LIKE %:orderNumber% " +
+            "ORDER BY o.createdAt DESC")
+    Page<OrdersResponseA> findByOrderNumber(@Param("orderNumber") String orderNumber, Pageable pageable);
+
+
+    @Modifying
+    @Query("UPDATE Order o SET o.status = :status, o.updatedAt = :updatedAt WHERE o.id = :id")
+    void updateStatus(@Param("id") Long id,
+                      @Param("status") Order.OrderStatus status,
+                      @Param("updatedAt") LocalDateTime updatedAt);
 
     @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o " +
             "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
@@ -61,7 +94,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "JOIN oi.product p " +
             "LEFT JOIN p.category c " +
             "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
-            "AND o.status NOT IN ('CANCELLED') " +
+            "AND o.status IN ('DELIVERED') " +
             "GROUP BY p.id, p.name, c.name " +
             "ORDER BY SUM(oi.quantity) DESC")
     List<Object[]> getTopSellingProducts(@Param("startDate") LocalDateTime startDate,
