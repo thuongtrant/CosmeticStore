@@ -8,10 +8,6 @@ export const endpoints = {
     'login': '/api/auth/signin',
     'my-profile': '/api/secure/user/my-profile',
 
-    // 'listProduct': '/api/products/list',
-    // 'productsByType': (type, limit) => `/api/products/by-type?productType=${type}&limit=${limit}`,
-    // 'productsByType': (type, limit) => `/api/products/by-type?productType=${type}&limit=${limit}`,
-
     'productDetail': productId => `/api/products/${productId}/detail`,
     'productsAllPaged': (page, size) => `/api/products/paged?page=${page}&size=${size}`,
     'productsByTypePaged': (type, page, size) => `/api/products/by-type/paged?productType=${type}&page=${page}&size=${size}`,
@@ -25,16 +21,21 @@ export const endpoints = {
     'categories': '/api/filters/categories',
     'ingredients': '/api/filters/ingredients',
     'skin-types': '/api/filters/skin-types',
-
     'shippingAddress': '/api/shipping-address',
     'defaultAddress': '/api/shipping-address/default',
 
-    'checkout': '/api/payment/checkout',
-    'checkoutSid':sid=> `/api/payment/momo/check-order/${sid}`,
-    'processPayment': orderNumber => `/api/payment/process/${orderNumber}`,
-    'orders': '/api/payment/orders',
-    'orderDetail': orderNumber => `/api/payment/order/${orderNumber}`,
-    'paymentMethods': '/api/payment/methods',
+    // 'checkout': '/api/payment/checkout',
+    // 'checkoutSid':sid=> `/api/payment/momo/check-order/${sid}`,
+    // 'processPayment': orderNumber => `/api/payment/process/${orderNumber}`,
+    // 'orders': '/api/payment/orders',
+    // 'orderDetail': orderNumber => `/api/payment/order/${orderNumber}`,
+    // 'paymentMethods': '/api/payment/methods',
+    'checkout': '/api/checkout/orders',
+    'checkoutSid': sid => `/api/payment/momo/check-order/${sid}`,
+    'processPayment': orderNumber => `/api/checkout/process/${orderNumber}`,
+    'orders': '/api/checkout/orders',
+    'orderDetail': orderNumber => `/api/checkout/orders/${orderNumber}`,
+    'paymentMethods': '/api/checkout/methods',
 };
 export const authApis = () => {
     const token = cookie.load('token');
