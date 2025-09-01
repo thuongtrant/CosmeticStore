@@ -36,6 +36,11 @@ export const endpoints = {
     'orders': '/api/checkout/orders',
     'orderDetail': orderNumber => `/api/checkout/orders/${orderNumber}`,
     'paymentMethods': '/api/checkout/methods',
+
+    'chat-init': '/api/chat/init',
+    'chat-validate': '/api/chat/validate-user',
+    'chat-send': '/api/chat/send',
+    'firebase-config': '/api/firebase/config',
 };
 export const authApis = () => {
     const token = cookie.load('token');

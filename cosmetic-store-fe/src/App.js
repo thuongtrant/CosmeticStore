@@ -16,7 +16,7 @@ import cartReducer from "./reducers/CartReducer";
 import ProductDetail from "./components/Customer/ProductDetail";
 import Cart from "./components/Customer/Cart";
 import Checkout from "./components/Customer/Checkout";
-import ShippingAddress  from "./components/Customer/ShippingAddress";
+import ShippingAddress from "./components/Customer/ShippingAddress";
 import OrderDetail from "./components/Customer/OrderDetail";
 import Orders from "./components/Customer/Orders";
 import HomePage from "./components/HomePage";
@@ -39,8 +39,10 @@ function AppLayout() {
         <Route path="/register" element={<Register />} />
         <Route path="/home" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/profile" element={<Profile />}/>
-        <Route path="/about" element={<AboutBFY />}/>
+        {/* <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />  Thêm route này */}
+
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/about" element={<AboutBFY />} />
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/productdetail/:productId" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
@@ -48,15 +50,15 @@ function AppLayout() {
         <Route path="/shippingAddress" element={<ShippingAddress />} />
         <Route path="/orderDetail/:orderNumber" element={<OrderDetail />} />
         <Route path="/orders" element={<Orders />} />
-        <Route path="/homepage" element={<HomePage />}/>
+        <Route path="/homepage" element={<HomePage />} />
         <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
         <Route path="/payment/momo/return" element={<MoMoReturn />} />
       </Routes>
       {!hideHeaderFooter && <Footer />}
       {user && !hideHeaderFooter && (
-        <Chat 
-          customerId={user.id} 
-          customerName={user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email || `Khách hàng ${user.id}`} 
+        <Chat
+          customerId={user.id}
+          customerName={user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email || `Khách hàng ${user.id}`}
         />
       )}
     </>
