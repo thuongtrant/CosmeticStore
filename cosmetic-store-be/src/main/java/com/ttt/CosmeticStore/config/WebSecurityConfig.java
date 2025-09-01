@@ -5,17 +5,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -28,7 +24,6 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
 import java.util.List;
 
@@ -48,9 +43,10 @@ public class WebSecurityConfig {
     };
 
     private static final String[] PUBLIC_API_ENDPOINTS = {
-            "/api/auth/**", "/oauth2/**", "/login/oauth2/**",
+            "/api/auth/**", "/oauth2/**", "/login/oauth2/**","/oauth2/redirect",
             "/api/payment/momo/callback",
             "/api/payment/momo/return",
+            "/api/oauth2/redirect",
     };
 
     private static final String[] ADMIN_WEB_ENDPOINTS = {
@@ -58,7 +54,7 @@ public class WebSecurityConfig {
     };
 
     private static final String[] ADMIN_API_ENDPOINTS = {
-            "/api/admin/**"
+            "/api/admin/**", "/api/firebase/**"
     };
 
     private static final String[] CUSTOMER_WEB_ENDPOINTS = {
@@ -71,8 +67,8 @@ public class WebSecurityConfig {
 
     private static final String[] CUSTOMER_API_ENDPOINTS  = {
             "/api/products/**", "/api/categories/**", "/api/secure/**",
-            "/api/cart/**","/api/shipping-addresses/**","/api/payment/**"
-
+            "/api/cart/**","/api/shipping-addresses/**","/api/payment/**",
+            "/api/chat/**", "/api/firebase/config"
     };
 
     private final UserServiceImpl userDetailsService;
@@ -137,6 +133,7 @@ public class WebSecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:3000","http://localhost:3001", "http://localhost:8080"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "Accept"));
         config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);

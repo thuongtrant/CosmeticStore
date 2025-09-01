@@ -17,7 +17,7 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                       AuthenticationException exception) throws IOException, ServletException {
 
-        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3001/login")
+        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3000/login")
                 .queryParam("error", "oauth2_failed")
                 .queryParam("message", exception.getLocalizedMessage())
                 .build().toUriString();

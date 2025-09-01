@@ -156,9 +156,9 @@
             }
         </style>
 
-        <!-- Firebase Scripts - Match React version -->
+        <!-- Firebase Scripts - Dynamic Config Loading -->
         <script type="module">
-            // Import Firebase v9+ modular SDK to match React frontend
+            // Import Firebase v9+ modular SDK
             import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
             import {
                 getFirestore,
@@ -172,29 +172,85 @@
                 serverTimestamp
             } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
-            // Firebase configuration - Use real config from backend
-            const firebaseConfig = {
-                apiKey: /*[[${@environment.getProperty('firebase.api-key')}]]*/ "AIzaSyAMcbWMp6eYnM0s86I6FaicXCi_JdtsmwQ",
-                authDomain: /*[[${@environment.getProperty('firebase.auth-domain')}]]*/ "cosmeticstore-89bd8.firebaseapp.com",
-                projectId: /*[[${@environment.getProperty('firebase.project-id')}]]*/ "cosmeticstore-89bd8",
-                storageBucket: /*[[${@environment.getProperty('firebase.storage-bucket')}]]*/ "cosmeticstore-89bd8.firebasestorage.app",
-                messagingSenderId: /*[[${@environment.getProperty('firebase.messaging-sender-id')}]]*/ "628570756539",
-                appId: /*[[${@environment.getProperty('firebase.app-id')}]]*/ "1:628570756539:web:4ec4315bf9d048c2e8209e",
-                measurementId: /*[[${@environment.getProperty('firebase.measurement-id')}]]*/ "G-4KDS6TTTJX"
-            };
-
-            console.log('Admin Chat - Firebase Config:', firebaseConfig);
-
-            // Initialize Firebase
-            const app = initializeApp(firebaseConfig);
-            const db = getFirestore(app);
-
+            let firebaseConfig = null;
+            let app = null;
+            let db = null;
             let currentChatRoomId = null;
             let messagesUnsubscribe = null;
             let chatRoomsUnsubscribe = null;
 
+            // Load Firebase config from backend API
+            async function loadFirebaseConfig() {
+                try {
+                    console.log('Loading Firebase config from backend...');
+                    const response = await fetch('/api/firebase/firebase-config', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    firebaseConfig = await response.json();
+                    console.log('Firebase config loaded successfully:', {
+                        projectId: firebaseConfig.projectId,
+                        authDomain: firebaseConfig.authDomain
+                    });
+
+                    // Initialize Firebase with loaded config
+                    initializeFirebase();
+
+                } catch (error) {
+                    console.error('Error loading Firebase config:', error);
+                    showError('Không thể tải cấu hình Firebase: ' + error.message);
+                }
+            }
+
+            function initializeFirebase() {
+                if (!firebaseConfig) {
+                    console.error('Firebase config not loaded');
+                    return;
+                }
+
+                try {
+                    // Initialize Firebase
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+
+                    console.log('Firebase initialized successfully');
+
+                    // Start loading chat data
+                    loadChatRooms();
+
+                } catch (error) {
+                    console.error('Error initializing Firebase:', error);
+                    showError('Lỗi khởi tạo Firebase: ' + error.message);
+                }
+            }
+
+            function showError(message) {
+                const chatRoomsList = document.getElementById('chatRoomsList');
+                chatRoomsList.innerHTML = `
+                    <div class="text-center text-danger p-4">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                        <p class="mb-0">${message}</p>
+                        <button class="btn btn-outline-danger btn-sm mt-2" onclick="location.reload()">
+                            <i class="fas fa-redo me-1"></i>Thử lại
+                        </button>
+                    </div>
+                `;
+            }
+
             // Load danh sách phòng chat
             function loadChatRooms() {
+                if (!db) {
+                    console.error('Firebase not initialized');
+                    return;
+                }
+
                 console.log('Loading chat rooms...');
                 if (chatRoomsUnsubscribe) {
                     chatRoomsUnsubscribe();
@@ -229,13 +285,7 @@
                     });
                 }, (error) => {
                     console.error('Error loading chat rooms:', error);
-                    const chatRoomsList = document.getElementById('chatRoomsList');
-                    chatRoomsList.innerHTML = `
-                        <div class="text-center text-danger p-4">
-                            <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
-                            <p class="mb-0">Lỗi khi tải danh sách chat: ${error.message}</p>
-                        </div>
-                    `;
+                    showError('Lỗi khi tải danh sách chat: ' + error.message);
                 });
             }
 
@@ -259,6 +309,7 @@
                                 <h6 class="mb-1 fw-bold">
                                     <i class="fas fa-user me-1"></i>${chatRoom.customerName || 'Khách hàng'}
                                 </h6>
+                                ${unreadBadge}
                             </div>
                             <p class="mb-1 text-truncate" style="max-width: 200px; font-size: 0.9rem;">
                                 ${chatRoom.lastMessage || 'Chưa có tin nhắn'}
@@ -366,14 +417,14 @@
 
                 div.innerHTML = `
                     <div class="d-inline-block message-bubble ${
-                        message.isAdmin ? 'admin-message' : 'customer-message'
-                    }">
+                    message.isAdmin ? 'admin-message' : 'customer-message'
+                }">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <small class="fw-bold">
                                 ${message.isAdmin ?
-                                    '<i class="fas fa-user-shield me-1"></i>Admin' :
-                                    `<i class="fas fa-user me-1"></i>${message.senderName || 'Khách hàng'}`
-                                }
+                    '<i class="fas fa-user-shield me-1"></i>Admin' :
+                    `<i class="fas fa-user me-1"></i>${message.senderName || 'Khách hàng'}`
+                }
                             </small>
                         </div>
                         <div class="message-content">${message.content}</div>
@@ -393,7 +444,7 @@
                 const sendButton = document.getElementById('sendButton');
                 const content = messageInput.value.trim();
 
-                if (!content || !currentChatRoomId) return;
+                if (!content || !currentChatRoomId || !db) return;
 
                 // Disable form while sending
                 messageInput.disabled = true;
@@ -403,7 +454,7 @@
                 try {
                     console.log('Sending admin message:', content);
 
-                    // Add message
+                    // Add message to Firebase
                     const messagesRef = collection(db, 'chatRooms', currentChatRoomId, 'messages');
                     await addDoc(messagesRef, {
                         content: content,
@@ -438,9 +489,13 @@
             // Refresh chat data
             function refreshChatData() {
                 console.log('Refreshing chat data...');
-                loadChatRooms();
-                if (currentChatRoomId) {
-                    loadMessages(currentChatRoomId);
+                if (db) {
+                    loadChatRooms();
+                    if (currentChatRoomId) {
+                        loadMessages(currentChatRoomId);
+                    }
+                } else {
+                    loadFirebaseConfig();
                 }
             }
 
@@ -479,15 +534,8 @@
                 window.refreshChatData = refreshChatData;
                 window.selectChatRoom = selectChatRoom;
 
-                // Load initial data
-                loadChatRooms();
-
-                // Auto-refresh every 30 seconds
-                setInterval(() => {
-                    if (!messagesUnsubscribe) {
-                        loadChatRooms();
-                    }
-                }, 30000);
+                // Load Firebase config and initialize
+                loadFirebaseConfig();
             });
 
             // Cleanup when page unloads

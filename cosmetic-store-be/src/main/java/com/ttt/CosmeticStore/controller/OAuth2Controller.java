@@ -72,4 +72,33 @@ public class OAuth2Controller {
                 .body(Map.of("error", "Failed to get user info", "message", e.getMessage()));
         }
     }
+
+    // Temporary endpoint to handle OAuth2 redirect for testing
+    @GetMapping("/redirect")
+    public ResponseEntity<?> handleOAuth2Redirect(
+            @RequestParam String token,
+            @RequestParam String role) {
+        try {
+            if (jwtUtils.validateJwtToken(token)) {
+                String username = jwtUtils.getUserNameFromJwtToken(token);
+                User user = userService.getUserByUsername(username);
+
+                return ResponseEntity.ok(Map.of(
+                    "message", "OAuth2 Login Successful!",
+                    "token", token,
+                    "role", role,
+                    "username", username,
+                    "email", user.getEmail(),
+                    "userId", user.getId(),
+                    "instructions", "Copy this token to use in your API requests with header: Authorization: Bearer " + token
+                ));
+            } else {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Invalid token received"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Failed to process OAuth2 redirect", "message", e.getMessage()));
+        }
+    }
 }
