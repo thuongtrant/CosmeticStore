@@ -1,6 +1,7 @@
 package com.ttt.CosmeticStore.controller.admin;
 
 import com.ttt.CosmeticStore.dto.response.OrderResponse;
+import com.ttt.CosmeticStore.dto.response.OrdersResponseA;
 import com.ttt.CosmeticStore.entity.Order;
 import com.ttt.CosmeticStore.service.AdminOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,12 +28,14 @@ public class OrderController {
                              Model model) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<OrderResponse> ordersPage;
+        Page<OrdersResponseA> ordersPage;
 
         if (status != null && !status.isEmpty()) {
-            ordersPage = adminOrderService.getOrdersByStatus(Order.OrderStatus.valueOf(status), pageable);
+            ordersPage = adminOrderService.getOrdersByStatus(
+                    Order.OrderStatus.valueOf(status), pageable);
         } else if (search != null && !search.trim().isEmpty()) {
-            ordersPage = adminOrderService.searchOrdersByOrderNumber(search.trim(), pageable);
+                    ordersPage = adminOrderService.searchOrdersByOrderNumber(
+                        search.trim(), pageable);
         } else {
             ordersPage = adminOrderService.getAllOrders(pageable);
         }

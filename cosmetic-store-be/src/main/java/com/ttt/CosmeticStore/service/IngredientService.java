@@ -1,30 +1,17 @@
 package com.ttt.CosmeticStore.service;
 
 import com.ttt.CosmeticStore.entity.Ingredient;
-import com.ttt.CosmeticStore.repository.IngredientRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
-public class IngredientService {
-    private final IngredientRepository ingredientRepository;
 
-    public List<Ingredient> getAllIngredients() {
-        return ingredientRepository.findAll();
-    }
+public interface IngredientService {
 
-    public Ingredient getIngredientById(Long id) {
-        return ingredientRepository.findById(id).orElse(null);
-    }
+    public List<Ingredient> getAllIngredients();
 
-    public Ingredient saveIngredient(Ingredient ingredient) {
-        return ingredientRepository.save(ingredient);
-    }
 
-    public void deleteIngredient(Long id) {
-        ingredientRepository.deleteById(id);
-    }
+    public Ingredient getIngredientById(Long id);
+
+    public Ingredient saveIngredient(Ingredient ingredient);
+    public void deleteIngredient(Long id);
 }

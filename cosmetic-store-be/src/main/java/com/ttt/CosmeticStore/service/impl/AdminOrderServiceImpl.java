@@ -1,6 +1,7 @@
 package com.ttt.CosmeticStore.service.impl;
 
 import com.ttt.CosmeticStore.dto.response.OrderResponse;
+import com.ttt.CosmeticStore.dto.response.OrdersResponseA;
 import com.ttt.CosmeticStore.entity.Order;
 import com.ttt.CosmeticStore.mapper.OrderMapper;
 import com.ttt.CosmeticStore.repository.OrderRepository;
@@ -27,21 +28,21 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     private OrderMapper orderMapper;
 
     @Override
-    public Page<OrderResponse> getAllOrders(Pageable pageable) {
-        Page<Order> ordersPage = orderRepository.findAll(pageable);
-        return ordersPage.map(orderMapper::toOrderResponse);
+    public Page<OrdersResponseA> getAllOrders(Pageable pageable) {
+        return orderRepository.getOrdersForAd(pageable);
+
     }
 
     @Override
-    public Page<OrderResponse> getOrdersByStatus(Order.OrderStatus status, Pageable pageable) {
-        Page<Order> ordersPage = orderRepository.findByStatus(status, pageable);
-        return ordersPage.map(orderMapper::toOrderResponse);
+    public Page<OrdersResponseA> getOrdersByStatus(Order.OrderStatus status, Pageable pageable) {
+        return orderRepository.findByStatus(status, pageable);
+
     }
 
     @Override
-    public Page<OrderResponse> searchOrdersByOrderNumber(String orderNumber, Pageable pageable) {
-        Page<Order> ordersPage = orderRepository.findByOrderNumberContainingIgnoreCase(orderNumber, pageable);
-        return ordersPage.map(orderMapper::toOrderResponse);
+    public Page<OrdersResponseA> searchOrdersByOrderNumber(String orderNumber, Pageable pageable) {
+        return orderRepository.findByOrderNumber(orderNumber, pageable);
+
     }
 
     @Override
@@ -60,11 +61,11 @@ public class AdminOrderServiceImpl implements AdminOrderService {
         // Kiểm tra logic chuyển trạng thái hợp lệ
         validateStatusTransition(order.getStatus(), newStatus);
 
-        order.setStatus(newStatus);
-        order.setUpdatedAt(LocalDateTime.now());
+        orderRepository.updateStatus(orderId, newStatus, LocalDateTime.now());
 
-        Order savedOrder = orderRepository.save(order);
-        return orderMapper.toOrderResponse(savedOrder);
+        Order updated = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+        return orderMapper.toOrderResponse(updated);
     }
 
     @Override

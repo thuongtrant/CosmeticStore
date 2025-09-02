@@ -51,7 +51,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         if (email == null || email.isEmpty()) {
             // Redirect to error page if email is not available
             getRedirectStrategy().sendRedirect(request, response,
-                "http://localhost:3001/login?error=email_required");
+                "http://localhost:3000/login?error=email_required");
             return;
         }
 
@@ -61,8 +61,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         UserPrincipal userPrincipal = UserPrincipal.build(user);
         String jwt = jwtUtils.generateTokenFromUsername(user.getUsername());
 
-        // Redirect to frontend with JWT token
-        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3001/oauth2/redirect")
+        // Redirect to frontend OAuth2 redirect component with JWT token
+        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3000/oauth2/redirect")
                 .queryParam("token", jwt)
                 .queryParam("role", user.getRole().getName())
                 .build().toUriString();

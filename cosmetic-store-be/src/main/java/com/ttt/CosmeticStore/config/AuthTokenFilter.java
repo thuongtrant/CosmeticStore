@@ -131,7 +131,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
 
         // QUAN TRỌNG: Bỏ qua filter này cho tất cả non-API requests
-        // Chỉ áp dụng filter cho /api/** endpoints (trừ /api/auth/**)
+        // Ch��� áp dụng filter cho /api/** endpoints (trừ /api/auth/**)
         boolean shouldSkip = !path.startsWith("/api/") || path.startsWith("/api/auth/");
 
         if (shouldSkip) {
@@ -148,7 +148,15 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             String requestURI = request.getRequestURI();
             System.out.println("JWT Filter - Processing API request: " + requestURI);
 
-            // Chỉ xử lý JWT cho API requests
+            // Check if there's already a valid session authentication (for admin users)
+            if (SecurityContextHolder.getContext().getAuthentication() != null &&
+                SecurityContextHolder.getContext().getAuthentication().isAuthenticated()) {
+
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // Process JWT authentication for API requests
             String jwt = parseJwt(request);
 
             if (jwt != null) {
@@ -167,23 +175,18 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    System.out.println("JWT Authentication set for user: " + username);
-                    System.out.println("Authorities: " + userDetails.getAuthorities());
                 } else {
-                    SecurityContextHolder.clearContext();
                     request.setAttribute("jwt.error", "Invalid or expired JWT token");
-
                 }
             } else {
                 System.out.println("No JWT token found in request");
-                SecurityContextHolder.clearContext();
-
+                // Don't clear context - let session authentication handle it
+                // SecurityContextHolder.clearContext(); // REMOVED THIS LINE
             }
 
         } catch (Exception e) {
             System.err.println("🚨 JWT Filter error: " + e.getMessage());
             logger.error("Cannot set user authentication: {}", e);
-            SecurityContextHolder.clearContext();
             request.setAttribute("jwt.error", "JWT processing error: " + e.getMessage());
 
         }

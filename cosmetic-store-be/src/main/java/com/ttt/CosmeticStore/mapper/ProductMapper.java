@@ -1,12 +1,13 @@
 package com.ttt.CosmeticStore.mapper;
 
 import com.ttt.CosmeticStore.dto.request.ProductRequest;
-import com.ttt.CosmeticStore.dto.response.ProductResponse;
-import com.ttt.CosmeticStore.dto.response.ProductSimpleResponse;
-import com.ttt.CosmeticStore.dto.response.ProductListResponse;
+import com.ttt.CosmeticStore.dto.response.*;
+import com.ttt.CosmeticStore.entity.Image;
 import com.ttt.CosmeticStore.entity.Product;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -66,12 +67,12 @@ public class ProductMapper {
         return response;
     }
 
-    public ProductSimpleResponse toSimpleResponse(Product product) {
+    public ProductByTypeResponse toProductTypeResponse(Product product) {
         if (product == null) {
             return null;
         }
 
-        ProductSimpleResponse simple = new ProductSimpleResponse();
+        ProductByTypeResponse simple = new ProductByTypeResponse();
         simple.setId(product.getId());
         simple.setName(product.getName());
         simple.setPrice(product.getPrice());
@@ -80,6 +81,47 @@ public class ProductMapper {
         simple.setMainImageUrl(product.getMainImageUrl());
 
         return simple;
+    }
+    public ProductBasicInfo toProductsResponse(Product product) {
+        if (product == null) {
+            return null;
+        }
+        return new ProductBasicInfo(
+                product.getId(),
+                product.getName(),
+                product.getPrice(),
+                product.getMainImageUrl()
+        );
+    }
+    public ProductByTypeResponse mapToProductByTypeResponse(ProductBasicInfo basicInfo) {
+        if (basicInfo == null) {
+            return null;
+        }
+        ProductByTypeResponse response = new ProductByTypeResponse();
+        response.setId(basicInfo.getId());
+        response.setName(basicInfo.getName());
+        response.setPrice(basicInfo.getPrice());
+        response.setMainImageUrl(basicInfo.getMainImageUrl());
+        response.setIsBestSeller(false); // Giá trị mặc định
+        response.setIsNew(false); // Giá trị mặc định
+        return response;
+    }
+    public ProductListResponse toProductAResponse(Product productsAdmin) {
+        if (productsAdmin == null) {
+            return null;
+        }
+
+        ProductListResponse response = new ProductListResponse();
+        response.setId(productsAdmin.getId());
+        response.setName(productsAdmin.getName());
+        response.setPrice(productsAdmin.getPrice());
+        response.setMainImage(productsAdmin.getMainImageUrl());
+        response.setCategoryName(productsAdmin.getCategory().getName());
+        response.setImages(productsAdmin.getImages() != null ?
+                productsAdmin.getImages().stream()
+                        .map(Image::getImageUrl)
+                        .collect(Collectors.toList()) :
+                new ArrayList<>());        return response;
     }
 
     public Product toEntity(ProductRequest request) {
@@ -121,31 +163,38 @@ public class ProductMapper {
         }
     }
 
-    // Method mới cho admin list - chỉ map những field cần thiết
-    public ProductListResponse toListResponse(Product product) {
-        if (product == null) {
-            return null;
+
+
+    // Phương thức mới để xử lý ánh xạ ảnh (cho create)
+    public void mapperImages(Product product, List<String> imageUrls) {
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            List<Image> imageEntities = imageUrls.stream()
+                    .map(url -> {
+                        Image image = new Image();
+                        image.setImageUrl(url);
+                        image.setProduct(product);
+                        return image;
+                    })
+                    .collect(Collectors.toList());
+            product.setImages(imageEntities);
+        } else {
+            product.setImages(new ArrayList<>());
         }
-
-        ProductListResponse response = new ProductListResponse();
-        response.setId(product.getId());
-        response.setName(product.getName());
-        response.setPrice(product.getPrice());
-        response.setMainImage(product.getMainImageUrl());
-
-        // Set category name
-        if (product.getCategory() != null) {
-            response.setCategoryName(product.getCategory().getName());
-        }
-
-        // Set image URLs
-        if (product.getImages() != null) {
-            response.setImages(product.getImages().stream()
-                    .map(image -> image.getImageUrl())
-                    .collect(Collectors.toList()));
-        }
-
-        return response;
     }
 
+    // Phương thức mới để xử lý ánh xạ ảnh (cho update)
+    public void updateImages(Product product, List<String> imageUrls) {
+        product.getImages().clear();
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            List<Image> imageEntities = imageUrls.stream()
+                    .map(url -> {
+                        Image image = new Image();
+                        image.setImageUrl(url);
+                        image.setProduct(product);
+                        return image;
+                    })
+                    .collect(Collectors.toList());
+            product.getImages().addAll(imageEntities);
+        }
+    }
 }

@@ -10,28 +10,23 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
+
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    @Query("SELECT new com.ttt.CosmeticStore.dto.response.ProductBasicInfo(p.id, p.name, p.price, p.mainImageUrl, c.name) " +
-            "FROM Product p LEFT JOIN p.category c ORDER BY p.id")
-    Page<ProductBasicInfo> findAllBasicInfo(Pageable pageable);
+    @Query("SELECT new com.ttt.CosmeticStore.dto.response.ProductBasicInfo(p.id, p.name, p.price, p.mainImageUrl) " +
+            "FROM Product p WHERE p.id IS NOT NULL ORDER BY p.id")
+    Page<ProductBasicInfo> getProductsForCus(Pageable pageable);
 
-
-    @Query("SELECT p FROM Product p " +
-           "LEFT JOIN FETCH p.category " +
-           "LEFT JOIN FETCH p.images " +
-           "LEFT JOIN FETCH p.ingredients " +
-           "LEFT JOIN FETCH p.skinTypes " +
-           "WHERE p.id = :id")
-    Optional<Product> findByIdWithDetails(@Param("id") Long id);
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.category LEFT JOIN FETCH p.images WHERE p.id IS NOT NULL ORDER BY p.id")
+    Page<Product> getProductsForAdmin(Pageable pageable);
 
     @Query("SELECT DISTINCT p FROM Product p " +
            "LEFT JOIN p.category c " +
            "LEFT JOIN p.ingredients i " +
            "LEFT JOIN p.skinTypes s " +
-           "WHERE (:keyword IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "WHERE p.id IS NOT NULL " +
+           "AND (:keyword IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
            "AND (:categoryIds IS NULL OR c.id IN :categoryIds) " +
            "AND (:ingredientIds IS NULL OR i.id IN :ingredientIds) " +
            "AND (:skinTypeIds IS NULL OR s.id IN :skinTypeIds) " +
@@ -50,20 +45,21 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("isNew") Boolean isNew,
             Pageable pageable);
 
+    @Query("SELECT p FROM Product p WHERE p.isNew = true ORDER BY p.id")
     Page<Product> findByIsNewTrue(Pageable pageable);
 
+    @Query("SELECT p FROM Product p WHERE p.isBestSeller = true ORDER BY p.id")
     Page<Product> findByIsBestSellerTrue(Pageable pageable);
 
-    // Thống kê sản phẩm tồn kho thấp - sử dụng native query
-    @Query(value = "SELECT p.id, p.name, c.name as category_name, p.inventory, " +
-           "(SELECT i.image_url FROM image i WHERE i.product_id = p.id LIMIT 1) " +
-           "FROM product p " +
-           "LEFT JOIN category c ON p.category_id = c.id " +
-           "WHERE p.inventory <= 10 " +
-           "ORDER BY p.inventory ASC",
-           nativeQuery = true)
-    List<Object[]> findLowStockProducts(Pageable pageable);
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.inventory <= :threshold")
+    Long countLowStockProducts(@Param("threshold") int threshold);
+
+    @Query("SELECT p.id, p.name, p.inventory, COALESCE(c.name, 'Chưa phân loại') " +
+            "FROM Product p " +
+            "LEFT JOIN p.category c " +
+            "WHERE p.inventory = 0 " +
+            "ORDER BY p.name")
+    List<Object[]> getOutOfStockProducts();
+
 }
-
-
-
