@@ -62,18 +62,19 @@ const Home = () => {
             setLoading(true);
             setAnimate(false);
             try {
-                if(searchKeyword){
+                if (searchKeyword) {
                     let res = await authApis().get(endpoints["search"], {
-                        params: {keyword:searchKeyword, page:currentPage,size:9}
+                        params: { keyword: searchKeyword, page: currentPage, size: 9 }
                     });
                     setProducts(res.data.products || []);
                     setTotalPages(res.data.totalPages || 1);
                 } else {
-                let res = await authApis().get(endpoints['productsAllPaged'](currentPage, 9));
-                if (res.data?.products) {
-                    setProducts(res.data.products);
-                    setTotalPages(res.data.totalPages);
-                }}
+                    let res = await authApis().get(endpoints['productsAllPaged'](currentPage, 9));
+                    if (res.data?.products) {
+                        setProducts(res.data.products);
+                        setTotalPages(res.data.totalPages);
+                    }
+                }
                 setTimeout(() => setAnimate(true), 50); // trigger fade-in
             } catch (err) {
                 console.error(err);
@@ -135,9 +136,15 @@ const Home = () => {
             await authApis().post(endpoints["addToCart"], { productId, quantity: 1 });
             let res = await authApis().get(endpoints["cartCount"]);
             cartDispatch({ type: "set", payload: res.data });
-        } catch (err) {
-            console.error("Lỗi thêm vào giỏ hàng:", err);
+        } catch (error) {
+            if (error.needAuth) {
+                alert(error.message);
+                window.location.href = '/login';
+            } else {
+                console.error(error);
+            }
         }
+
     };
 
     const renderPagination = () => (
@@ -147,7 +154,7 @@ const Home = () => {
                 disabled={currentPage === 0}
                 onClick={() => setCurrentPage(prev => prev - 1)}
             >
-                « 
+                «
             </button>
 
             {[...Array(totalPages)].map((_, index) => (

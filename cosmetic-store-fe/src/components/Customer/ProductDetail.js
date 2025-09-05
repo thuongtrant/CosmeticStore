@@ -73,8 +73,13 @@ const ProductDetail = () => {
             });
             let res = await authApis().get(endpoints["cartCount"]);
             cartDispatch({ type: "set", payload: res.data });
-        } catch (err) {
-            console.error("Lỗi thêm vào giỏ hàng:", err);
+        } catch (error) {
+            if (error.needAuth) {
+                alert(error.message);
+                window.location.href = '/login';
+            } else {
+                console.error(error);
+            }
         }
     };
     return (
