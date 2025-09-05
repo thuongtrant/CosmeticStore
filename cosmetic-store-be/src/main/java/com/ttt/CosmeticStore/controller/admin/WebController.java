@@ -58,7 +58,7 @@ public class WebController {
 
         if (accessDenied != null) {
             model.addAttribute("accessDeniedMessage",
-                    "Bạn không có quyền truy cập vào khu vực này. " +
+                    "Bạn không có quyền truy cập vào trang này. " +
                             "Chỉ có Administrator mới được phép truy cập BeautyForYou Admin.");
         }
         model.addAttribute("loginRequest", new LoginRequest());
@@ -77,7 +77,6 @@ public class WebController {
                                  BindingResult bindingResult,
                                  Model model) {
 
-        // Kiểm tra validation errors
         if (bindingResult.hasErrors()) {
             return "register";
         }

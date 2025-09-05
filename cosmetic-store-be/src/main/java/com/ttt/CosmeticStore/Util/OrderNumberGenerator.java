@@ -1,4 +1,4 @@
-package com.ttt.CosmeticStore.util;
+package com.ttt.CosmeticStore.Util;
 
 import org.springframework.stereotype.Component;
 

@@ -19,9 +19,11 @@ public class ChatRoom {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "customer_id", nullable = false)
-    private Long customerId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", nullable = false)
+    private User customer;
 
+    // Giữ lại customer_name để cache tên, nhưng sẽ đồng bộ từ User
     @Column(name = "customer_name", nullable = false, length = 100)
     private String customerName;
 
@@ -40,4 +42,19 @@ public class ChatRoom {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    // Helper methods để tương thích với code hiện tại
+    public Long getCustomerId() {
+        return customer != null ? customer.getId() : null;
+    }
+
+    public void setCustomerId(Long customerId) {
+        // Method này sẽ được deprecated, khuyến khích sử dụng setCustomer()
+        if (customerId != null && (customer == null || !customerId.equals(customer.getId()))) {
+            // Cần load User từ database khi set customerId
+            User user = new User();
+            user.setId(customerId);
+            this.customer = user;
+        }
+    }
 }

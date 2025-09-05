@@ -3,9 +3,11 @@ package com.ttt.CosmeticStore.service.impl;
 import com.ttt.CosmeticStore.dto.response.ChatRoomResponse;
 import com.ttt.CosmeticStore.entity.ChatRoom;
 import com.ttt.CosmeticStore.entity.ChatStatus;
+import com.ttt.CosmeticStore.entity.User;
 import com.ttt.CosmeticStore.exception.ChatRoomNotFoundException;
 import com.ttt.CosmeticStore.mapper.ChatRoomMapper;
 import com.ttt.CosmeticStore.repository.ChatRoomRepository;
+import com.ttt.CosmeticStore.repository.UserRepository;
 import com.ttt.CosmeticStore.service.ChatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,9 @@ public class ChatServiceImpl implements ChatService {
     private ChatRoomRepository chatRoomRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private ChatRoomMapper chatMapper;
 
     @Override
@@ -33,16 +38,20 @@ public class ChatServiceImpl implements ChatService {
             throw new IllegalArgumentException("Customer name không được để trống");
         }
 
+        // Load User entity từ database
+        User customer = userRepository.findById(customerId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy user với ID: " + customerId));
+
         // Tìm tất cả active rooms
         List<ChatRoom> activeRooms = chatRoomRepository.findActiveByCustomerId(customerId);
 
         if (!activeRooms.isEmpty()) {
-            ChatRoom chatRoom = handleExistingRooms(activeRooms, customerName);
+            ChatRoom chatRoom = handleExistingRooms(activeRooms, customer, customerName);
             return chatMapper.toResponse(chatRoom);
         }
 
         // Tạo room mới
-        ChatRoom newRoom = createNewChatRoom(customerId, customerName);
+        ChatRoom newRoom = createNewChatRoom(customer, customerName);
         return chatMapper.toResponse(newRoom);
     }
 
@@ -101,7 +110,7 @@ public class ChatServiceImpl implements ChatService {
 
     // Private helper methods
 
-    private ChatRoom handleExistingRooms(List<ChatRoom> activeRooms, String customerName) {
+    private ChatRoom handleExistingRooms(List<ChatRoom> activeRooms, User customer, String customerName) {
         ChatRoom chatRoom;
 
         if (activeRooms.size() > 1) {
@@ -119,19 +128,20 @@ public class ChatServiceImpl implements ChatService {
             chatRoom = activeRooms.get(0);
         }
 
-        // Update customer name nếu cần
-        if (!customerName.equals(chatRoom.getCustomerName())) {
-            chatRoom.setCustomerName(customerName);
+        // Update customer name nếu cần và đồng bộ từ User entity
+        String actualCustomerName = customer.getUsername(); // Hoặc field tên khác từ User
+        if (!actualCustomerName.equals(chatRoom.getCustomerName())) {
+            chatRoom.setCustomerName(actualCustomerName);
             chatRoom = chatRoomRepository.save(chatRoom);
         }
 
         return chatRoom;
     }
 
-    private ChatRoom createNewChatRoom(Long customerId, String customerName) {
+    private ChatRoom createNewChatRoom(User customer, String customerName) {
         ChatRoom newRoom = new ChatRoom();
-        newRoom.setCustomerId(customerId);
-        newRoom.setCustomerName(customerName.trim());
+        newRoom.setCustomer(customer); // Set User entity thay vì customerId
+        newRoom.setCustomerName(customer.getUsername()); // Lấy tên từ User entity
         newRoom.setStatus(ChatStatus.ACTIVE);
         newRoom.setCreatedAt(LocalDateTime.now());
         newRoom.setUnreadCount(0);

@@ -16,7 +16,7 @@
                 <div class="login-form">
                     <div class="login-header">
                         <a href="/" class="brand-logo">
-                            <i class="fas fa-spa"></i> BeautyForYou
+                           BeautyForYou
                         </a>
                         <h4 class="text-center mb-0">Đăng nhập</h4>
                     </div>
@@ -63,13 +63,11 @@
                         <span th:text="${customerMessage}"></span>
                     </div>
 
-                    <!-- Access Denied Message -->
                     <div th:if="${accessDeniedMessage}" class="alert alert-danger">
                         <i class="fas fa-shield-alt me-2"></i>
                         <strong>Truy cập bị từ chối:</strong><br>
                         <span th:text="${accessDeniedMessage}"></span>
                     </div>
-                    <!-- Form đăng nhập với form binding -->
                     <form th:action="@{/perform_login}" th:object="${loginRequest}" method="post">
                         <div class="mb-3">
                             <label for="username" class="form-label">
@@ -108,7 +106,6 @@
                             </label>
                         </div>
 
-                        <!-- CSRF Token -->
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
                         <button type="submit" class="btn btn-pink mb-3">
