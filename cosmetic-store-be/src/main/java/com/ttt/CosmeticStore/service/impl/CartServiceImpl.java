@@ -2,17 +2,12 @@ package com.ttt.CosmeticStore.service.impl;
 
 import com.ttt.CosmeticStore.dto.request.AddToCartRequest;
 import com.ttt.CosmeticStore.dto.response.CartResponse;
-import com.ttt.CosmeticStore.entity.Cart;
-import com.ttt.CosmeticStore.entity.CartItem;
-import com.ttt.CosmeticStore.entity.Product;
-import com.ttt.CosmeticStore.entity.User;
+import com.ttt.CosmeticStore.entity.*;
 import com.ttt.CosmeticStore.exception.ResourceNotFoundException;
 import com.ttt.CosmeticStore.mapper.CartMapper;
-import com.ttt.CosmeticStore.repository.CartItemRepository;
-import com.ttt.CosmeticStore.repository.CartRepository;
-import com.ttt.CosmeticStore.repository.ProductRepository;
-import com.ttt.CosmeticStore.repository.UserRepository;
+import com.ttt.CosmeticStore.repository.*;
 import com.ttt.CosmeticStore.service.CartService;
+import com.ttt.CosmeticStore.validation.InventoryValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,16 +16,15 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
-    private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final ProductRepository productRepository;
     private final CartMapper cartMapper;
+    private final InventoryValidator inventoryValidator;
 
-    // CartServiceImpl.java - Thêm try-catch và flush
     @Override
     @Transactional
     public CartResponse addToCart(Long userId, AddToCartRequest request) {
@@ -47,11 +41,8 @@ public class CartServiceImpl implements CartService {
                     .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm với id: " + request.getProductId()));
             System.out.println("✅ Product found: " + product.getName() + ", inventory: " + product.getInventory());
 
-            // Check inventory availability
-            if (product.getInventory() == null || product.getInventory() < request.getQuantity()) {
-                throw new IllegalArgumentException("Số lượng sản phẩm không đủ. Còn lại: " +
-                        (product.getInventory() != null ? product.getInventory() : 0));
-            }
+            // Sử dụng InventoryValidator để kiểm tra tồn kho
+            inventoryValidator.validateSingleProductInventory(request.getProductId(), request.getQuantity());
 
             // Find or create cart for user
             Cart cart = cartRepository.findByUserId(userId)
@@ -59,7 +50,7 @@ public class CartServiceImpl implements CartService {
                         System.out.println("📦 Creating new cart for user: " + userId);
                         Cart newCart = new Cart();
                         newCart.setUser(user);
-                        return cartRepository.saveAndFlush(newCart); // Use saveAndFlush
+                        return cartRepository.saveAndFlush(newCart);
                     });
             System.out.println("🛒 Cart found/created with id: " + cart.getId());
 
@@ -71,9 +62,8 @@ public class CartServiceImpl implements CartService {
                 CartItem cartItem = existingItem.get();
                 int newQuantity = cartItem.getQuantity() + request.getQuantity();
 
-                if (product.getInventory() < newQuantity) {
-                    throw new IllegalArgumentException("Số lượng sản phẩm không đủ. Còn lại: " + product.getInventory());
-                }
+                // Validate tổng số lượng mới với InventoryValidator
+                inventoryValidator.validateSingleProductInventory(request.getProductId(), newQuantity);
 
                 cartItem.setQuantity(newQuantity);
                 cartItemRepository.saveAndFlush(cartItem);
@@ -85,27 +75,16 @@ public class CartServiceImpl implements CartService {
                 cartItem.setProduct(product);
                 cartItem.setQuantity(request.getQuantity());
                 cartItemRepository.saveAndFlush(cartItem);
-                System.out.println("✅ New cart item created");
+                System.out.println("✅ New cart item added");
             }
 
             // Return updated cart
-            System.out.println("🔍 Fetching updated cart with items...");
-            Cart updatedCart = cartRepository.findByUserId(userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giỏ hàng"));
-            System.out.println("✅ Updated cart fetched with " +
-                    (updatedCart.getCartItems() != null ? updatedCart.getCartItems().size() : 0) + " items");
-
-            CartResponse response = cartMapper.toCartResponse(updatedCart);
-            System.out.println("✅ CartResponse created successfully");
+            CartResponse response = getCartByUserId(userId);
+            System.out.println("✅ CartService - addToCart completed successfully");
             return response;
-
-        } catch (ResourceNotFoundException | IllegalArgumentException e) {
+        } catch (Exception e) {
             System.out.println("🚨 Business error in CartService.addToCart: " + e.getMessage());
             throw e;
-        } catch (Exception e) {
-            System.out.println("🚨 Unexpected error in CartService.addToCart: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng", e);
         }
     }
 
@@ -139,21 +118,20 @@ public class CartServiceImpl implements CartService {
         CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm trong giỏ hàng"));
 
-        Product product = cartItem.getProduct();
-        if (product.getInventory() < quantity) {
-            throw new IllegalArgumentException("Số lượng sản phẩm không đủ. Còn lại: " + product.getInventory());
-        }
+        // Sử dụng InventoryValidator để kiểm tra tồn kho
+        inventoryValidator.validateSingleProductInventory(productId, quantity);
 
         cartItem.setQuantity(quantity);
         cartItemRepository.save(cartItem);
 
         Cart updatedCart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giỏ h��ng"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giỏ hàng"));
 
         return cartMapper.toCartResponse(updatedCart);
     }
 
     @Override
+    @Transactional
     public void removeFromCart(Long userId, Long productId) {
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giỏ hàng"));
@@ -162,6 +140,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public void clearCart(Long userId) {
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giỏ hàng"));

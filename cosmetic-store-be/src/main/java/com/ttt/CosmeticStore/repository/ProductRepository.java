@@ -14,7 +14,7 @@ import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    @Query("SELECT new com.ttt.CosmeticStore.dto.response.ProductBasicInfo(p.id, p.name, p.price, p.mainImageUrl) " +
+    @Query("SELECT new com.ttt.CosmeticStore.dto.response.ProductBasicInfo(p.id, p.name, p.price, p.mainImageUrl, p.inventory) " +
             "FROM Product p WHERE p.id IS NOT NULL ORDER BY p.id")
     Page<ProductBasicInfo> getProductsForCus(Pageable pageable);
 

@@ -16,4 +16,5 @@ public class ProductByTypeResponse {
     private Boolean isBestSeller;
     private Boolean isNew;
     private String mainImageUrl;
+    private Integer inventory;
 }

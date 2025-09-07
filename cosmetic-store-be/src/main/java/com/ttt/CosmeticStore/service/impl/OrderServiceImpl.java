@@ -13,6 +13,7 @@ import com.ttt.CosmeticStore.exception.ProductNotFoundException;
 import com.ttt.CosmeticStore.mapper.OrderMapper;
 import com.ttt.CosmeticStore.mapper.PageProductMapper;
 import com.ttt.CosmeticStore.repository.*;
+import com.ttt.CosmeticStore.service.InventoryService;
 import com.ttt.CosmeticStore.service.OrderService;
 import com.ttt.CosmeticStore.service.ShippingAddressService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +28,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -56,6 +56,9 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private PageProductMapper pageProductMapper;
 
+    @Autowired
+    private InventoryService inventoryService;
+
     @Override
     public BigDecimal calculateTotalAmount(CheckoutRequest request) {
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -67,9 +70,13 @@ public class OrderServiceImpl implements OrderService {
         }
         return totalAmount;
     }
+
     @Override
     @Transactional
     public OrderResponse createOrder(User user, CheckoutRequest request) {
+        // Bước 1: Kiểm tra và validate tồn kho trước khi tạo đơn hàng
+        inventoryService.validateAndReserveInventory(request.getItems());
+
         // Xử lý địa chỉ giao hàng
         ShippingAddress shippingAddress;
         if (request.getShippingAddressId() != null) {
@@ -101,6 +108,12 @@ public class OrderServiceImpl implements OrderService {
         // Lưu đơn hàng
         Order savedOrder = orderRepository.save(order);
 
+        // Bước 2: Xác nhận trừ tồn kho sau khi lưu đơn hàng thành công
+        // Chỉ trừ tồn kho cho COD, với MoMo sẽ trừ khi callback xác nhận thanh toán thành công
+        if ("COD".equals(request.getPaymentMethod())) {
+            inventoryService.confirmInventoryDeduction(savedOrder);
+        }
+
         // Tạo payment record bằng mapper
         Payment payment = orderMapper.toPayment(savedOrder, request, totalAmount, generateTransactionId());
         Payment savedPayment = paymentRepository.save(payment);
@@ -127,6 +140,12 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toOrderResponse(order);
     }
 
+    @Override
+    public Order getOrderEntity(String orderNumber) {
+        return orderRepository.getOrderDetail(orderNumber)
+                .orElseThrow(() -> new OrderException("Khong tim thay don hang: " + orderNumber));
+    }
+
     private String generateOrderNumber() {
         return "ORD" + System.currentTimeMillis();
     }
@@ -134,7 +153,6 @@ public class OrderServiceImpl implements OrderService {
     private String generateTransactionId() {
         return "TXN" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
     }
-
 
     private void clearUserCart(User user) {
         Cart cart = cartRepository.findByUserId(user.getId()).orElse(null);
@@ -169,4 +187,3 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
     }
 }
-

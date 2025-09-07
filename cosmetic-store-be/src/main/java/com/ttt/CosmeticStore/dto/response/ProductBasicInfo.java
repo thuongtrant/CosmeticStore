@@ -13,4 +13,6 @@ public class ProductBasicInfo {
     private String name;
     private BigDecimal price;
     private String mainImageUrl;
+    private Integer inventory;
 }
+

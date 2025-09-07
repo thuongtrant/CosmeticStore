@@ -2,7 +2,9 @@ package com.ttt.CosmeticStore.controller;
 
 import com.ttt.CosmeticStore.dto.request.CheckoutRequest;
 import com.ttt.CosmeticStore.dto.response.OrderResponse;
+import com.ttt.CosmeticStore.entity.Order;
 import com.ttt.CosmeticStore.entity.User;
+import com.ttt.CosmeticStore.service.InventoryService;
 import com.ttt.CosmeticStore.service.OrderService;
 import com.ttt.CosmeticStore.service.PaymentSessionService;
 import com.ttt.CosmeticStore.service.UserService;
@@ -28,6 +30,9 @@ public class ApiMoMoController {
 
     @Autowired
     private PaymentSessionService sessionService;
+
+    @Autowired
+    private InventoryService inventoryService;
 
     @PostMapping("/callback")
     public ResponseEntity<?> handleMoMoCallback(@RequestBody Map<String, Object> callbackData) {
@@ -188,6 +193,10 @@ public class ApiMoMoController {
                 try {
                     User user = userService.findByUsername(username);
                     OrderResponse order = orderService.createOrder(user, checkoutRequest);
+
+                    // Trừ tồn kho khi thanh toán MoMo thành công
+                    Order orderEntity = orderService.getOrderEntity(order.getOrderNumber());
+                    inventoryService.confirmInventoryDeduction(orderEntity);
 
                     // Update payment status
                     String transId = String.valueOf(callbackData.get("transId"));

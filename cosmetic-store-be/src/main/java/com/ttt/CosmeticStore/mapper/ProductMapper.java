@@ -79,6 +79,7 @@ public class ProductMapper {
         simple.setIsBestSeller(product.getIsBestSeller());
         simple.setIsNew(product.getIsNew());
         simple.setMainImageUrl(product.getMainImageUrl());
+        simple.setInventory(product.getInventory());
 
         return simple;
     }
@@ -90,7 +91,8 @@ public class ProductMapper {
                 product.getId(),
                 product.getName(),
                 product.getPrice(),
-                product.getMainImageUrl()
+                product.getMainImageUrl(),
+                product.getInventory()
         );
     }
     public ProductByTypeResponse mapToProductByTypeResponse(ProductBasicInfo basicInfo) {
@@ -102,6 +104,7 @@ public class ProductMapper {
         response.setName(basicInfo.getName());
         response.setPrice(basicInfo.getPrice());
         response.setMainImageUrl(basicInfo.getMainImageUrl());
+        response.setInventory(basicInfo.getInventory()); // Map inventory từ basicInfo
         response.setIsBestSeller(false); // Giá trị mặc định
         response.setIsNew(false); // Giá trị mặc định
         return response;

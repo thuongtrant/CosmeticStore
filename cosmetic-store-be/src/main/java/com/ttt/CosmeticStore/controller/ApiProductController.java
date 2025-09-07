@@ -69,7 +69,7 @@ public class ApiProductController {
     @GetMapping("/paged")
     public ResponseEntity<PagedResponse<ProductBasicInfo>> getAllProductsPaged(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "9") int size) {
+            @RequestParam(defaultValue = "12") int size) {
             PagedResponse<ProductBasicInfo> response = productService.getProductsCus(page, size);
             return ResponseEntity.ok(response);
     }
@@ -85,6 +85,3 @@ public class ApiProductController {
 
     }
 }
-
-
-
