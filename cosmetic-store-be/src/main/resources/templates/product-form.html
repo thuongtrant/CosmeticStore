@@ -14,7 +14,6 @@
           th:action="${mode == 'edit'} ? @{'/admin/products/' + ${product.id} + '/edit'} : @{/admin/products}"
           method="post" enctype="multipart/form-data">
 
-        <!-- Thêm trường id ẩn cho chế độ edit -->
         <input type="hidden" th:if="${mode == 'edit'}" th:value="${product.id}" name="id">
 
         <div class="mb-3">
@@ -57,7 +56,6 @@
             </select>
         </div>
 
-        <!-- Chọn nhiều loại da phù hợp (Skin Types) -->
         <div class="mb-3">
             <label for="skinTypeIds" class="form-label">Loại da phù hợp</label>
             <select id="skinTypeIds" th:field="*{skinTypeIds}" class="form-select" multiple>
@@ -75,7 +73,6 @@
             <label class="form-check-label" for="isNew">Sản phẩm mới</label>
         </div>
 
-        <!-- Hiển thị hình ảnh hiện tại khi edit -->
         <div class="mb-3" th:if="${mode == 'edit' and product.mainImage != null and !#strings.isEmpty(product.mainImage)}">
             <label class="form-label">Hình ảnh chính hiện tại</label>
             <div style="position: relative; display: inline-block;">
@@ -96,7 +93,6 @@
                    th:required="${mode != 'edit'}">
         </div>
 
-        <!-- Hiển thị hình ảnh phụ hiện tại khi edit -->
         <div class="mb-3" th:if="${mode == 'edit' and product.images != null and not #lists.isEmpty(product.images)}">
             <label class="form-label">Hình ảnh phụ hiện tại</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">

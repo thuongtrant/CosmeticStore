@@ -108,7 +108,6 @@ public class ChatServiceImpl implements ChatService {
         return chatMapper.toResponse(chatRoom);
     }
 
-    // Private helper methods
 
     private ChatRoom handleExistingRooms(List<ChatRoom> activeRooms, User customer, String customerName) {
         ChatRoom chatRoom;

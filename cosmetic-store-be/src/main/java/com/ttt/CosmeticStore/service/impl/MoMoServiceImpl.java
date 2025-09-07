@@ -56,9 +56,6 @@ public class MoMoServiceImpl implements MoMoService {
 
             String signature = generateSignature(rawHash);
 
-            log.info("🔐 Creating MoMo payment - OrderId: {}, Amount: {}, RequestType: {}",
-                    orderId, amount, requestType);
-
             MoMoRequest request = MoMoRequest.builder()
                     .partnerCode(moMoConfig.getPartnerCode())
                     .requestId(requestId)
@@ -80,33 +77,26 @@ public class MoMoServiceImpl implements MoMoService {
             ResponseEntity<MoMoResponse> response = restTemplate.postForEntity(
                     moMoConfig.getEndpoint(), entity, MoMoResponse.class);
 
-            log.info("✅ MoMo response received - PayUrl: {}",
-                    response.getBody() != null ? response.getBody().getPayUrl() : "null");
 
             MoMoResponse momoResponse = response.getBody();
 
             if (momoResponse != null) {
                 // Check if request failed
                 if (momoResponse.getResultCode() != null && momoResponse.getResultCode() != 0) {
-                    log.error("MoMo request failed with code {}: {}",
-                            momoResponse.getResultCode(), momoResponse.getMessage());
                     throw new OrderException("MoMo error: " + momoResponse.getMessage());
                 }
 
                 // For QR payment, check if we have QR code URL
                 if ("captureWallet".equals(requestType) && momoResponse.getQrCodeUrl() == null && momoResponse.getPayUrl() == null) {
-                    log.error("No payment URL or QR code URL received for QR payment");
                     throw new OrderProcessingException("MoMo không trả về link thanh toán");
                 }
             } else {
-                log.error("MoMo response is null");
                 throw new OrderProcessingException("Không nhận được phản hồi từ MoMo");
             }
 
             return momoResponse;
 
         } catch (Exception e) {
-            log.error("Error creating MoMo payment: ", e);
             throw new OrderProcessingException("Không thể tạo thanh toán MoMo: " + e.getMessage());
         }
     }
@@ -118,7 +108,7 @@ public class MoMoServiceImpl implements MoMoService {
             boolean isValid = signature.equals(generatedSignature);
 
             if (!isValid) {
-                log.warn("⚠️ Signature mismatch!");
+                log.warn("Signature mismatch!");
                 log.debug("Expected: {}", generatedSignature);
                 log.debug("Received: {}", signature);
                 log.debug("Raw data: {}", rawData);

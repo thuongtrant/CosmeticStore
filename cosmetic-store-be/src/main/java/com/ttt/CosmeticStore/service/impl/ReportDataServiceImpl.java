@@ -109,11 +109,8 @@ public class ReportDataServiceImpl implements ReportDataService {
                 statusMap.put(reportMapper.getStatusDisplayName(status), count);
             }
 
-            log.info("Orders by status calculated: {}", statusMap);
             return statusMap;
         } catch (Exception e) {
-            log.error("Error calculating orders by status: ", e);
-
             // Return default data instead of empty map
             Map<String, Long> defaultMap = new LinkedHashMap<>();
             defaultMap.put("Chờ xử lý", 0L);

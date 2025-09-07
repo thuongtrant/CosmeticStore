@@ -33,15 +33,10 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
     @Transactional
     public ShippingAddressResponse createAddress(User user, ShippingAddressRequest request) {
         try {
-            // Nếu đây là địa chỉ mặc định, bỏ mặc định của các địa chỉ khác
             if (request.getIsDefault() != null && request.getIsDefault()) {
                 shippingAddressRepository.clearDefaultForUser(user);
             }
-
-            // Convert DTO to entity using mapper
             ShippingAddress address = shippingAddressMapper.toEntity(request, user);
-
-            // Save address
             ShippingAddress savedAddress = shippingAddressRepository.save(address);
 
             return shippingAddressMapper.toResponse(savedAddress);
@@ -56,10 +51,8 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
         ShippingAddress address = shippingAddressRepository.findById(addressId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
 
-        // Kiểm tra quyền sở hữu
         validateOwnership(address, user);
 
-        // Nếu đây là địa chỉ mặc định, bỏ mặc định của các địa chỉ khác
         if (request.getIsDefault() != null && request.getIsDefault() && !address.getIsDefault()) {
             shippingAddressRepository.clearDefaultForUser(user);
         }
@@ -76,8 +69,6 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
     public void deleteAddress(Long addressId, User user) {
         ShippingAddress address = shippingAddressRepository.findById(addressId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
-
-        // Kiểm tra quyền sở hữu
         validateOwnership(address, user);
 
         shippingAddressRepository.delete(address);
@@ -89,13 +80,10 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
         ShippingAddress address = shippingAddressRepository.findById(addressId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
 
-        // Kiểm tra quyền sở hữu
         validateOwnership(address, user);
 
-        // Bỏ mặc định của các địa chỉ khác
         shippingAddressRepository.clearDefaultForUser(user);
 
-        // Đặt làm mặc định
         address.setIsDefault(true);
         ShippingAddress savedAddress = shippingAddressRepository.save(address);
 
