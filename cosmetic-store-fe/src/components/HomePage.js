@@ -97,7 +97,29 @@ const HomePage = () => {
                         <Card.Body className="d-flex flex-column">
                             <Card.Title style={{ fontSize: "14px", fontWeight: "bold", minHeight: "40px" }}>{p.name}</Card.Title>
                             <Card.Text className="price" style={{ fontWeight: "bold" }}>{p.price.toLocaleString()}₫</Card.Text>
-                            <Button className="btn-add-cart mt-auto" onClick={(e) => { e.stopPropagation(); addToCart(p.id); }}>Thêm Vào Giỏ Hàng</Button>
+
+                            {/* Kiểm tra tồn kho trước khi hiển thị nút */}
+                            {p.inventory && p.inventory > 0 ? (
+                                <Button
+                                    className="btn-add-cart mt-auto"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        addToCart(p.id);
+                                    }}
+                                >
+                                    Thêm Vào Giỏ Hàng
+                                </Button>
+                            ) : (
+                                <Button
+                                    variant="secondary"
+                                    className="mt-auto"
+                                    disabled
+                                    style={{ cursor: "not-allowed" }}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    Hết hàng
+                                </Button>
+                            )}
                         </Card.Body>
                     </Card>
                 </Col>
