@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/filters")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class ApiFilterController {
 
     private final CategoryRepository categoryRepository;
