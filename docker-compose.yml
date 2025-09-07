@@ -44,8 +44,7 @@ services:
     build: ./cosmetic-store-fe
     container_name: cosmetic-frontend
     ports:
-      - 80:80
-      - 443:443
+      - 3000:80
     networks:
       - cosmetic-network
     depends_on:
