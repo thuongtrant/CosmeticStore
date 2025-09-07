@@ -17,7 +17,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/chat")
 @PreAuthorize("hasRole('CUSTOMER')")
-@CrossOrigin
 public class ChatApiController {
 
     @Autowired

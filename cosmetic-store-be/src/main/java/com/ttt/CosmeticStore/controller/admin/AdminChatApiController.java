@@ -16,7 +16,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/chat")
 @PreAuthorize("hasRole('ADMIN')")
-@CrossOrigin
 public class AdminChatApiController {
 
     @Autowired
