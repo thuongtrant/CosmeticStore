@@ -23,6 +23,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "o.id, o.orderNumber, o.totalAmount, o.status, " +
             "o.createdAt) " +
             "FROM Order o " +
+            "WHERE o.user = :user " +
             "ORDER BY o.createdAt DESC")
     Page<OrdersResponseC> myOrders(@Param("user") User user, Pageable page);
 
