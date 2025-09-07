@@ -1,0 +1,60 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: cosmetic-db
+    environment:
+      MYSQL_ROOT_PASSWORD: Think!7688
+      MYSQL_DATABASE: bfystore
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    ports:
+      - 3307:3306
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # - ./cosmetic-store-be/s-data/bfystore.sql.gz:/docker-entrypoint-initdb.d/bfystore.sql.gz
+
+    networks:
+      - cosmetic-network
+    command: >
+      sh -c "
+      curl -L 'https://drive.google.com/uc?export=download&id=1ohLQqC3r9o9z6Mm6U0LnM12uWqrNYEEc' -o /docker-entrypoint-initdb.d/bfystore.sql.gz &&
+      /entrypoint.sh mysqld
+      "
+    restart: unless-stopped
+
+  backend:
+    build: ./cosmetic-store-be
+    container_name: cosmetic-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/bfystore?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: Think!7688
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_PROFILES_ACTIVE: docker
+      JAVA_OPTS: "-Xmx512m -Xms256m"
+    ports:
+      - "8080:8080"
+    networks:
+      - cosmetic-network
+    depends_on:
+      - mysql
+    restart: unless-stopped
+
+  frontend:
+    build: ./cosmetic-store-fe
+    container_name: cosmetic-frontend
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - cosmetic-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+
+networks:
+  cosmetic-network:
+    driver: bridge
