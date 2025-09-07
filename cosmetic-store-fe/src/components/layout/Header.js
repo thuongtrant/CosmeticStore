@@ -191,9 +191,9 @@ const Header = () => {
                             <Link to="/login" className="nav-link text-dark">
                                 Đăng nhập
                             </Link>
-                            <Link to="/register" className="nav-link text-dark">
+                            {/* <Link to="/register" className="nav-link text-dark">
                                 Đăng ký
-                            </Link>
+                            </Link> */}
                         </>
                     )}
 

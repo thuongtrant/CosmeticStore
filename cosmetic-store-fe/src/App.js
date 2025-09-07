@@ -39,11 +39,9 @@ function AppLayout() {
         <Route path="/register" element={<Register />} />
         <Route path="/home" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        {/* <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />  Thêm route này */}
-
         <Route path="/profile" element={<Profile />} />
         <Route path="/about" element={<AboutBFY />} />
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/" element={<Navigate to="/homepage" />} />
         <Route path="/productdetail/:productId" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />

@@ -42,23 +42,50 @@ export const endpoints = {
     'chat-send': '/api/chat/send',
     'firebase-config': '/api/firebase/config',
 };
+// export const authApis = () => {
+//     const token = cookie.load('token');
+//     console.log("Token from cookie:", token); // Debug
+
+//     if (!token) {
+//         console.error("No token found in cookie!");
+//         throw new Error("No authentication token found");
+//     }
+
+//     return axios.create({
+//         baseURL: BASE_URL,
+//         headers: {
+//             'Authorization': `Bearer ${token}`
+//         }
+
+//     });
+
+// }
 export const authApis = () => {
     const token = cookie.load('token');
-    console.log("Token from cookie:", token); // Debug
-
-    if (!token) {
-        console.error("No token found in cookie!");
-        throw new Error("No authentication token found");
-    }
-
-    return axios.create({
+    
+    const instance = axios.create({
         baseURL: BASE_URL,
-        headers: {
+        headers: token ? {
             'Authorization': `Bearer ${token}`
-        }
-
+        } : {}
     });
 
+    // Response interceptor để handle 401/403 errors
+    instance.interceptors.response.use(
+        (response) => response,
+        (error) => {
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                // Throw custom error với message tiếng Việt
+                const customError = new Error("Vui lòng đăng nhập để sử dụng tính năng này");
+                customError.needAuth = true;
+                customError.originalError = error;
+                throw customError;
+            }
+            throw error;
+        }
+    );
+
+    return instance;
 }
 export default axios.create({
     baseURL: BASE_URL,

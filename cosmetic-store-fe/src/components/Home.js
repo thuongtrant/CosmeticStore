@@ -62,18 +62,19 @@ const Home = () => {
             setLoading(true);
             setAnimate(false);
             try {
-                if(searchKeyword){
+                if (searchKeyword) {
                     let res = await authApis().get(endpoints["search"], {
-                        params: {keyword:searchKeyword, page:currentPage,size:9}
+                        params: { keyword: searchKeyword, page: currentPage, size: 12 }
                     });
                     setProducts(res.data.products || []);
                     setTotalPages(res.data.totalPages || 1);
                 } else {
-                let res = await authApis().get(endpoints['productsAllPaged'](currentPage, 9));
-                if (res.data?.products) {
-                    setProducts(res.data.products);
-                    setTotalPages(res.data.totalPages);
-                }}
+                    let res = await authApis().get(endpoints['productsAllPaged'](currentPage, 12));
+                    if (res.data?.products) {
+                        setProducts(res.data.products);
+                        setTotalPages(res.data.totalPages);
+                    }
+                }
                 setTimeout(() => setAnimate(true), 50); // trigger fade-in
             } catch (err) {
                 console.error(err);
@@ -108,7 +109,7 @@ const Home = () => {
                 sortBy: "id",
                 sortDirection: "ASC",
                 page: 0,
-                size: 9
+                size: 12
             };
 
             let res = await authApis().get(endpoints["search"], {
@@ -135,9 +136,15 @@ const Home = () => {
             await authApis().post(endpoints["addToCart"], { productId, quantity: 1 });
             let res = await authApis().get(endpoints["cartCount"]);
             cartDispatch({ type: "set", payload: res.data });
-        } catch (err) {
-            console.error("Lỗi thêm vào giỏ hàng:", err);
+        } catch (error) {
+            if (error.needAuth) {
+                alert(error.message);
+                window.location.href = '/login';
+            } else {
+                console.error(error);
+            }
         }
+
     };
 
     const renderPagination = () => (
@@ -147,7 +154,7 @@ const Home = () => {
                 disabled={currentPage === 0}
                 onClick={() => setCurrentPage(prev => prev - 1)}
             >
-                « 
+                «
             </button>
 
             {[...Array(totalPages)].map((_, index) => (
@@ -174,8 +181,8 @@ const Home = () => {
     return (
         <>
             <FirstHeader />
-            <div className="container mt-4">
-                <h3 className="text-center mb-4">Sản phẩm</h3>
+            <div className="container-fluid mt-4" style={{ maxWidth: '1400px', margin: '0 auto' }}>
+                    <h3 className="text-center mb-4">Sản phẩm</h3>
                 <Row>
                     {/* FILTER */}
                     <Col md={3}>
@@ -263,14 +270,14 @@ const Home = () => {
                     </Col>
 
                     {/* PRODUCTS */}
-                    <Col md={9}>
+                    <Col md={9} className="products-container"> {/* Thêm class products-container */}
                         {loading ? (
                             <MySpinner animation="border" />
                         ) : (
                             <>
                                 <Row className={`fade-container ${animate ? "show" : ""}`}>
                                     {products.map((p) => (
-                                        <Col key={p.id} md={4} className="mb-4">
+                                        <Col key={p.id} md={3} className="mb-4 product-col"> {/* Thêm class product-col */}
                                             <Card
                                                 className="h-100 shadow-sm card-custom"
                                                 onClick={() => nav(`/productdetail/${p.id}`)}
@@ -279,7 +286,7 @@ const Home = () => {
                                                 <Card.Img
                                                     variant="top"
                                                     src={p.mainImageUrl}
-                                                    style={{ height: "250px", objectFit: "cover" }}
+                                                    style={{ height: "280px", objectFit: "cover" }}
                                                 />
                                                 <Card.Body className="d-flex flex-column">
                                                     <Card.Title style={{ fontSize: "16px", fontWeight: "bold", minHeight: "48px" }}>
@@ -288,15 +295,29 @@ const Home = () => {
                                                     <Card.Text className="price" style={{ fontWeight: "bold" }}>
                                                         {p.price.toLocaleString()}₫
                                                     </Card.Text>
-                                                    <Button
-                                                        className="btn-add-cart mt-auto"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            addToCart(p.id);
-                                                        }}
-                                                    >
-                                                        Thêm vào giỏ hàng
-                                                    </Button>
+
+                                                    {/* Kiểm tra tồn kho trước khi hiển thị nút */}
+                                                    {p.inventory && p.inventory > 0 ? (
+                                                        <Button
+                                                            className="btn-add-cart mt-auto"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                addToCart(p.id);
+                                                            }}
+                                                        >
+                                                            Thêm vào giỏ hàng
+                                                        </Button>
+                                                    ) : (
+                                                        <Button
+                                                            variant="secondary"
+                                                            className="mt-auto"
+                                                            disabled
+                                                            style={{ cursor: "not-allowed" }}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            Hết hàng
+                                                        </Button>
+                                                    )}
                                                 </Card.Body>
                                             </Card>
                                         </Col>

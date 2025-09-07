@@ -16,6 +16,8 @@ const OrderDetail = () => {
             try {
                 let res = await authApis().get(endpoints["orderDetail"](orderNumber));
                 if (res.data?.success) {
+                    console.log("Order data:", res.data.order); // Debug log
+                    console.log("Order status:", res.data.order?.status); // Debug log
                     setOrder(res.data.order || null);
                 } else {
                     alert("Không tìm thấy đơn hàng!");
@@ -32,17 +34,28 @@ const OrderDetail = () => {
     if (loading) return <MySpinner animation="border" />;
     if (!order) return <p className="text-center mt-4">Không tìm thấy đơn hàng</p>;
 
-    // Ánh xạ trạng thái từ enum OrderStatus sang các bước hiển thị
+    // Ánh xạ trạng thái từ backend (tiếng Việt) sang các bước hiển thị (tiếng Anh)
     const statusSteps = {
-        PENDING: "Pending Order",
-        CONFIRMED: "Order Confirmed",
-        SHIPPED: "Order Shipped",
-        DELIVERED: "Order Delivered",
+        "Chờ xử lý": "Pending Order",
+        "Đã xác nhận": "Order Confirmed",
+        "Đã giao hàng": "Order Shipped",
+        "Đã nhận hàng": "Order Delivered",
     };
 
     // Xác định trạng thái hiện tại
-    const currentStatus = order.status || "PENDING";
-    const statusOrder = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"];
+    const currentStatus = order.status || "Chờ xử lý";
+    const statusOrder = ["Chờ xử lý", "Đã xác nhận", "Đã giao hàng", "Đã nhận hàng"];
+
+    // Mapping icons cho status tiếng Việt
+    const getIcon = (status) => {
+        const iconMap = {
+            "Chờ xử lý": FaFile,
+            "Đã xác nhận": FaCheckCircle,
+            "Đã giao hàng": FaShippingFast,
+            "Đã nhận hàng": FaTruck,
+        };
+        return iconMap[status] || FaFile;
+    };
 
     return (
         <div className="container mt-4">
@@ -53,14 +66,10 @@ const OrderDetail = () => {
             {/* Thanh tiến trình trạng thái với icon */}
             <div className="order-progress mb-4">
                 {statusOrder.map((status, index) => {
+                    const currentIndex = statusOrder.indexOf(currentStatus);
                     const isCurrent = status === currentStatus;
-                    const isCompleted = statusOrder.indexOf(currentStatus) > index;
-                    const Icon = {
-                        PENDING: FaFile,
-                        CONFIRMED: FaCheckCircle,
-                        SHIPPED: FaShippingFast,
-                        DELIVERED: FaTruck,
-                    }[status];
+                    const isCompleted = index <= currentIndex; // Include current status as completed
+                    const Icon = getIcon(status);
 
                     return (
                         <div key={status} className="progress-step">
@@ -76,7 +85,7 @@ const OrderDetail = () => {
                             </div>
                             {index < statusOrder.length - 1 && (
                                 <div
-                                    className={`progress-line ${statusOrder.indexOf(currentStatus) >= index + 1 ? "completed" : ""}`}
+                                    className={`progress-line ${index < currentIndex ? "completed" : ""}`}
                                 ></div>
                             )}
                         </div>

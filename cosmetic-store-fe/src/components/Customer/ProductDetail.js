@@ -67,14 +67,27 @@ const ProductDetail = () => {
 
     const addToCart = async (productId) => {
         try {
+            // Kiểm tra tồn kho trước khi thêm vào giỏ
+            if (product.inventory <= 0) {
+                alert("Sản phẩm đã hết hàng!");
+                return;
+            }
+
             await authApis().post(endpoints["addToCart"], {
                 productId,
                 quantity: 1
             });
             let res = await authApis().get(endpoints["cartCount"]);
             cartDispatch({ type: "set", payload: res.data });
-        } catch (err) {
-            console.error("Lỗi thêm vào giỏ hàng:", err);
+            alert("Đã thêm sản phẩm vào giỏ hàng!");
+        } catch (error) {
+            if (error.needAuth) {
+                alert(error.message);
+                window.location.href = '/login';
+            } else {
+                alert(error.message || "Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng");
+                console.error(error);
+            }
         }
     };
     return (
@@ -138,9 +151,15 @@ const ProductDetail = () => {
                     <h3 className="mb-3">{product.name}</h3>
                     <h4 className="price mb-3">{product.price.toLocaleString()} ₫</h4>
                     <p><strong>Mô tả:</strong> {product.description || "Chưa có mô tả"}</p>
-                    <Button variant="outline-dark" className="mb-3 btn-add-cart" onClick={() => {
-                        addToCart(product.id);
-                    }}>Thêm Vào Giỏ Hàng</Button>
+                    <Button
+                        variant={product.inventory > 0 ? "outline-dark" : "secondary"}
+                        className="mb-3 btn-add-cart"
+                        disabled={product.inventory <= 0}
+                        onClick={() => {
+                            addToCart(product.id);
+                        }}>
+                        {product.inventory > 0 ? "Thêm Vào Giỏ Hàng" : "Hết Hàng"}
+                    </Button>
                     <hr style={{ borderTop: "3px solid #eabbb7", margin: "1.5rem 0" }} />
                     <p><strong>Loại:</strong> {product.categoryName || "Chưa có thông tin"}</p>
                     <p><strong>Tình trạng kho:</strong> {product.inventory > 0 ? `${product.inventory} sản phẩm` : "Hết hàng"}</p>

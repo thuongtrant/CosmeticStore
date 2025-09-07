@@ -3,6 +3,7 @@ import { authApis, endpoints } from "../../configs/Apis";
 import MySpinner from "../layout/MySpinner";
 import { Table, Button, Badge } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import Pagination from "../common/Pagination";
 import "../../styles/pagination.css";
 
 const Orders = () => {
@@ -71,39 +72,6 @@ const Orders = () => {
         const statusInfo = statusMap[status] || { variant: 'secondary', text: status };
         return <Badge bg={statusInfo.variant}>{statusInfo.text}</Badge>;
     };
-
-    const renderPagination = () => (
-        <div className="pagination-container">
-            <button
-                className="pagination-btn"
-                disabled={pagination.currentPage === 0 || pageLoading}
-                onClick={() => handlePageChange(0)}
-            >
-                «
-            </button>
-        
-
-            {[...Array(pagination.totalPages)].map((_, index) => (
-                <button
-                    key={index}
-                    className={`pagination-btn ${index === pagination.currentPage ? "active" : ""}`}
-                    disabled={pageLoading}
-                    onClick={() => handlePageChange(index)}
-                >
-                    {index + 1}
-                </button>
-            ))}
-
-            
-            <button
-                className="pagination-btn"
-                disabled={pagination.currentPage === pagination.totalPages - 1 || pageLoading}
-                onClick={() => handlePageChange(pagination.totalPages - 1)}
-            >
-                »
-            </button>
-        </div>
-    );
 
     if (initialLoading) return <MySpinner animation="border" />;
 
@@ -176,7 +144,12 @@ const Orders = () => {
                                 </div>
                             )}
                             <div className={pageLoading ? 'opacity-50' : ''}>
-                                {renderPagination()}
+                                <Pagination
+                                    currentPage={pagination.currentPage + 1} // Convert from 0-based to 1-based
+                                    totalPages={pagination.totalPages}
+                                    onPageChange={(page) => handlePageChange(page - 1)} // Convert back to 0-based
+                                    maxVisiblePages={3}
+                                />
                             </div>
                         </div>
                     )}
