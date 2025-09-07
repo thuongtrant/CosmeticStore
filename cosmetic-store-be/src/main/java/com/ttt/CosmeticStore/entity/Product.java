@@ -21,16 +21,13 @@ public class Product {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Lob
-    @Column(name = "benefits")
+    @Column(name = "benefits", columnDefinition = "LONGTEXT")
     private String benefits;
 
-    @Lob
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "LONGTEXT")
     private String description;
 
-    @Lob
-    @Column(name = "how_to_use")
+    @Column(name = "how_to_use", columnDefinition = "LONGTEXT")
     private String howToUse;
 
     @NotNull

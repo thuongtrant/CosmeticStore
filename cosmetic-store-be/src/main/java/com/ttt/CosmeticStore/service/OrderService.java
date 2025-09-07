@@ -20,7 +20,9 @@ public interface OrderService {
     PagedResponse<OrdersResponseC> getMyOrders(User user, int pageable, int size);
 
     OrderResponse orderDetail(String orderNumber);
+
+    Order getOrderEntity(String orderNumber);
+
     void updatePaymentStatus(String orderNumber, String status, String transactionId);
 
 }
-

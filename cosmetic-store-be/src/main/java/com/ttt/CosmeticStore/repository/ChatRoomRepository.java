@@ -14,10 +14,10 @@ import java.util.List;
 @Repository
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
-    @Query("SELECT c FROM ChatRoom c WHERE c.customerId = :customerId AND c.status = 'ACTIVE'")
+    @Query("SELECT c FROM ChatRoom c WHERE c.customer.id = :customerId AND c.status = 'ACTIVE'")
     List<ChatRoom> findActiveByCustomerId(@Param("customerId") Long customerId);
 
-    @Query("SELECT c FROM ChatRoom c WHERE c.customerId = :customerId ORDER BY c.createdAt DESC")
+    @Query("SELECT c FROM ChatRoom c WHERE c.customer.id = :customerId ORDER BY c.createdAt DESC")
     List<ChatRoom> findAllByCustomerId(@Param("customerId") Long customerId);
 
     @Query("SELECT c FROM ChatRoom c WHERE c.status = :status ORDER BY c.lastMessageTime DESC")
@@ -25,5 +25,6 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
     @Query("UPDATE ChatRoom c SET c.unreadCount = 0 WHERE c.id = :chatRoomId")
     @Modifying
+    @Transactional
     void markAsRead(@Param("chatRoomId") Long chatRoomId);
 }

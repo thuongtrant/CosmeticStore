@@ -20,7 +20,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -47,6 +46,7 @@ public class WebSecurityConfig {
             "/api/payment/momo/callback",
             "/api/payment/momo/return",
             "/api/oauth2/redirect",
+            "/api/products/**","/api/filters/**",
     };
 
     private static final String[] ADMIN_WEB_ENDPOINTS = {
@@ -57,9 +57,9 @@ public class WebSecurityConfig {
             "/api/admin/**", "/api/firebase/**"
     };
 
-    private static final String[] CUSTOMER_WEB_ENDPOINTS = {
-            "/customer-dashboard/**", "/customer-dashboard"
-    };
+//    private static final String[] CUSTOMER_WEB_ENDPOINTS = {
+//            "/customer-dashboard/**", "/customer-dashboard"
+//    };
 //
 //    private static final String[] CUSTOMER_API_ENDPOINTS = {
 //            "/api/customer/**"
@@ -183,7 +183,7 @@ public class WebSecurityConfig {
                         .invalidSessionUrl("/login?expired=true")
                 )
 
-                // Authorization Rules (Sử dụng constants như Spring MVC)
+                // Authorization Rules
                 .authorizeHttpRequests(authz -> authz
                         // Public resources
                         .requestMatchers(STATIC_RESOURCES).permitAll()
@@ -195,7 +195,7 @@ public class WebSecurityConfig {
                         .requestMatchers(ADMIN_API_ENDPOINTS).hasRole("ADMIN")
 
                         // Customer endpoints
-                        .requestMatchers(CUSTOMER_WEB_ENDPOINTS).hasRole("CUSTOMER")
+//                        .requestMatchers(CUSTOMER_WEB_ENDPOINTS).hasRole("CUSTOMER")
                         .requestMatchers(CUSTOMER_API_ENDPOINTS).hasRole("CUSTOMER")
 
                         // Protected API endpoints
@@ -226,19 +226,13 @@ public class WebSecurityConfig {
                         .failureUrl("/login?error=true")
                         .permitAll()
                 )
-
-                // Logout
                 .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutRequestMatcher(
-                                new AntPathRequestMatcher("/logout", "GET")
-                        )
+                        .logoutUrl("/logout") // mặc định là POST
                         .logoutSuccessUrl("/login?logout")
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()
                 )
-
                 // Remember Me
                 .rememberMe(rememberMe -> rememberMe
                         .key("BeautyForYou-RememberMe-Secret-Key")

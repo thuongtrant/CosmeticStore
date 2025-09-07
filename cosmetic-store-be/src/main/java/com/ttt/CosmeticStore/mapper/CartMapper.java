@@ -34,7 +34,7 @@ public class CartMapper {
                     .map(this::toCartItemResponse)
                     .collect(Collectors.toList()));
 
-            // Calculate totals
+            // Calculate totals using CURRENT product price (not unitPrice)
             BigDecimal totalAmount = cart.getCartItems().stream()
                     .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -53,7 +53,7 @@ public class CartMapper {
         return response;
     }
 
-    // CartMapper.java - thêm null check và xử lý lazy loading
+    // CartMapper.java - sử dụng giá hiện tại của sản phẩm cho giỏ hàng
     private CartResponse.CartItemResponse toCartItemResponse(CartItem cartItem) {
         if (cartItem == null || cartItem.getProduct() == null) {
             return null;
@@ -67,6 +67,8 @@ public class CartMapper {
         Product product = cartItem.getProduct();
         itemResponse.setProductId(product.getId());
         itemResponse.setProductName(product.getName());
+
+        // Sử dụng giá HIỆN TẠI của sản phẩm cho giỏ hàng (không phải unitPrice)
         itemResponse.setProductPrice(product.getPrice());
         itemResponse.setProductImageUrl(product.getMainImageUrl());
 
@@ -80,11 +82,11 @@ public class CartMapper {
             itemResponse.setCategoryName(null);
         }
 
-        // Stock information
+        // Stock information - dùng inventory hiện tại để kiểm tra còn hàng
         itemResponse.setInStock(product.getInventory() != null && product.getInventory() > 0);
         itemResponse.setAvailableQuantity(product.getInventory() != null ? product.getInventory() : 0);
 
-        // Calculate subtotal
+        // Calculate subtotal using CURRENT product price
         if (product.getPrice() != null) {
             BigDecimal subtotal = product.getPrice()
                     .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
