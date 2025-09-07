@@ -32,17 +32,12 @@ public class ReportController {
     public String showReportsPage(Model model,
                                   @RequestParam(value = "days", defaultValue = "7") int days) {
 
-        log.info("=== HIỂN THỊ TRANG BÁO CÁO THỐNG KÊ ===");
-        log.info("Số ngày thống kê: {}", days);
-
         try {
             // Calculate date range
             DateRange range = dateCalculator.calculateRange(days);
 
-            // Delegate to service for data retrieval
             ReportSummary summary = reportDataService.getReportSummary(range.getStart(), range.getEnd());
 
-            // Add to model - simplified attribute mapping
             model.addAttribute("selectedDays", days);
             model.addAttribute("summary", summary);
             model.addAttribute("totalRevenue", summary.getTotalRevenue());
@@ -58,10 +53,8 @@ public class ReportController {
             model.addAttribute("lowStockCount", summary.getLowStockCount());
             model.addAttribute("outOfStockProducts", summary.getOutOfStockProducts());
 
-            log.info("✅ Báo cáo thống kê được tải thành công");
 
         } catch (Exception e) {
-            log.error("❌ Lỗi khi tải báo cáo thống kê: ", e);
             addDefaultAttributes(model, days);
             model.addAttribute("error", "Có lỗi xảy ra khi tải dữ liệu báo cáo: " + e.getMessage());
         }

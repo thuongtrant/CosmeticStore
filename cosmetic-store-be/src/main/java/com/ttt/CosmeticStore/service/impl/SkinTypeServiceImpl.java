@@ -47,10 +47,8 @@ public class SkinTypeServiceImpl implements SkinTypeService {
     @Transactional
     public SkinType saveSkinType(SkinType skinType) {
         try {
-            // Validate and prepare the skin type using mapper
             SkinType preparedSkinType = skinTypeMapper.prepareForSave(skinType);
 
-            // Check for duplicate name (excluding current entity if updating)
             validateUniqueNameOnSave(preparedSkinType);
 
             return skinTypeRepository.save(preparedSkinType);
@@ -67,14 +65,9 @@ public class SkinTypeServiceImpl implements SkinTypeService {
         }
 
         try {
-            // Check if skin type exists before deleting
             if (!skinTypeRepository.existsById(id)) {
                 throw new RuntimeException("Không tìm thấy loại da với ID: " + id);
             }
-
-            // Check if skin type is being used (you might need to add this check based on your business logic)
-            // validateSkinTypeNotInUse(id);
-
             skinTypeRepository.deleteById(id);
         } catch (Exception e) {
             if (e instanceof RuntimeException) {
@@ -86,8 +79,6 @@ public class SkinTypeServiceImpl implements SkinTypeService {
 
 
     private void validateUniqueNameOnSave(SkinType skinType) {
-        // This assumes you have a method in repository to find by name
-        // If not available, you can implement it or use findAll() and filter
 
         List<SkinType> existingSkinTypes = skinTypeRepository.findAll();
         boolean nameExists = existingSkinTypes.stream()

@@ -33,11 +33,9 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         }
 
         try {
-            // Thử parse làm user ID trước
             Long userId = Long.parseLong(authName);
             return userService.getUserById(userId);
         } catch (NumberFormatException e) {
-            // Nếu không phải số, xử lý như username
             try {
                 return userService.findByUsername(authName);
             } catch (UsernameNotFoundException ex) {

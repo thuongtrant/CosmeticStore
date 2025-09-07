@@ -31,7 +31,6 @@ public class ProductController {
     public String listProducts(Model model,
                               @RequestParam(defaultValue = "0") int page,
                               @RequestParam(defaultValue = "10") int size) {
-        // Sử dụng method phân trang mới thay vì getAllProductsForList
         PagedResponse pagedProducts = productService.getProducts(page, size);
         model.addAttribute("pagedProducts", pagedProducts);
         model.addAttribute("products", pagedProducts.getProducts());
@@ -157,7 +156,6 @@ public class ProductController {
             }
             request.setImages(imageUrls);
 
-            // Xử lý isBestSeller, isNew
             if (request.getIsBestSeller() == null) request.setIsBestSeller(false);
             if (request.getIsNew() == null) request.setIsNew(false);
 
@@ -174,12 +172,6 @@ public class ProductController {
         }
     }
 
-    // Thêm method GET cho delete để hỗ trợ link từ HTML
-    @GetMapping("/{id}/delete")
-    public String deleteProductConfirm(@PathVariable Long id) {
-        productService.deleteProduct(id);
-        return "redirect:/admin/products";
-    }
 
     @PostMapping("/{id}/delete")
     public String deleteProduct(@PathVariable Long id) {

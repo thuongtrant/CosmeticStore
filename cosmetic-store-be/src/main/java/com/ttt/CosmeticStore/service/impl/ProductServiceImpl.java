@@ -42,13 +42,6 @@ public class ProductServiceImpl implements ProductService {
         return pageProductMapper.toPagedResponse(products, productPage);
     }
 
-//    @Override
-//    public List<ProductResponse> getAllProducts() {
-//        return productRepository.findAll().stream()
-//                .map(productMapper::toResponse)
-//                .collect(Collectors.toList());
-//    }
-
     @Override
     public ProductResponse getProductById(Long id) {
         Product product = productRepository.findById(id)

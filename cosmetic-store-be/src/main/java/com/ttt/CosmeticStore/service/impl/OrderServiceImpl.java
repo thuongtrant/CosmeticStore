@@ -108,8 +108,6 @@ public class OrderServiceImpl implements OrderService {
         // Lưu đơn hàng
         Order savedOrder = orderRepository.save(order);
 
-        // Bước 2: Xác nhận trừ tồn kho sau khi lưu đơn hàng thành công
-        // Chỉ trừ tồn kho cho COD, với MoMo sẽ trừ khi callback xác nhận thanh toán thành công
         if ("COD".equals(request.getPaymentMethod())) {
             inventoryService.confirmInventoryDeduction(savedOrder);
         }

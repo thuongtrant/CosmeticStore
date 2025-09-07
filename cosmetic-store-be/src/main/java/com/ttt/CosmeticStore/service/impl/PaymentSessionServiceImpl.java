@@ -19,7 +19,6 @@ public class PaymentSessionServiceImpl implements PaymentSessionService {
         String sessionId = "CHECKOUT_" + System.currentTimeMillis();
         checkoutSessions.put(sessionId, request);
         sessionUsers.put(sessionId, username);
-        log.info("Created session: {}", sessionId);
         return sessionId;
     }
 

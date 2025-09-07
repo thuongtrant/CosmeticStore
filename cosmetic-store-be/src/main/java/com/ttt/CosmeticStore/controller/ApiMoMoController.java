@@ -75,7 +75,6 @@ public class ApiMoMoController {
                 ));
             }
             else if (resultCode == 1006) {
-                // Transaction is being processed
                 if (orderId.startsWith("CHECKOUT_")) {
                     return ResponseEntity.ok(Map.of(
                             "success", false,
@@ -177,7 +176,7 @@ public class ApiMoMoController {
     private void processSuccessfulPayment(String sessionId, Map<String, Object> callbackData) {
         String existingOrder = sessionService.getCompletedOrder(sessionId);
         if (existingOrder != null) {
-            return; // Already processed
+            return;
         }
 
         CheckoutRequest checkoutRequest = sessionService.getCheckoutRequest(sessionId);

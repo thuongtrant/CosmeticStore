@@ -24,7 +24,6 @@ public class ReportServiceImpl implements ReportService {
     private final ReportDataService dataService;
     private final ChartDataService chartService;
 
-    // Basic statistics - delegate to ReportDataService
     @Override
     public BigDecimal getTotalRevenue(LocalDateTime startDate, LocalDateTime endDate) {
         return dataService.getTotalRevenue(startDate, endDate);
@@ -138,7 +137,6 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public Map<String, Object> getUserGrowthData(int months) {
-        // Simplified implementation - could be moved to a separate service later
         log.warn("getUserGrowthData simplified implementation");
         return Map.of("labels", List.of(), "data", List.of());
     }

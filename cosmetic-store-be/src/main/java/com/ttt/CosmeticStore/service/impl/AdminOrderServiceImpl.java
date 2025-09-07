@@ -87,9 +87,6 @@ public class AdminOrderServiceImpl implements AdminOrderService {
 
 
 
-    /**
-     * Kiểm tra tính hợp lệ của việc chuyển trạng thái
-     */
     private void validateStatusTransition(Order.OrderStatus currentStatus, Order.OrderStatus newStatus) {
         switch (currentStatus) {
             case PENDING:
