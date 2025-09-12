@@ -65,9 +65,9 @@ public class AiAssistantServiceImpl implements AiAssistantService {
             LocalDateTime resetTime = aiRateLimitService.getResetTime(request.getUserId());
 
             return AiChatResponse.rateLimitError(String.format(
-                    "Bạn đã gửi quá nhiều tin nhắn. Vui lòng chờ đến %s để tiếp tục. \" +\n" +
-                            "                        \"Hiện tại bạn còn %d tin nhắn có thể gửi.",
-                    resetTime.toString().substring(11, 16), // HH:mm format
+                    "Bạn đã gửi quá nhiều tin nhắn. Vui lòng chờ %d phút nữa để tiếp tục. " +
+                            "Hiện tại bạn còn %d tin nhắn có thể gửi.",
+                    java.time.Duration.between(LocalDateTime.now(), resetTime).toMinutes() + 1,
                     remainingMessages
             ), remainingMessages, resetTime);
         }
@@ -77,14 +77,14 @@ public class AiAssistantServiceImpl implements AiAssistantService {
 
         try {
 
-            // 2.
+
             String threadId = threadManagerService.getOrCreateThreadForUser(request.getUserId());
 
-            // 3. Gửi message lên OpenAI Assistant
+            //Gửi message lên OpenAI Assistant
             String aiResponse = openAIAssistantApiService.processMessageWithAssistant(
                     threadId, request.getMessage(), assistantId);
 
-            // 5. Build response with recommendations
+            //Build response with recommendations
             AiChatResponse response = AiChatResponse.success(aiResponse);
             response.setChatRoomId(sessionId);
 
@@ -136,7 +136,6 @@ public class AiAssistantServiceImpl implements AiAssistantService {
             String response = openAIAssistantApiService.processMessageWithAssistant(
                     threadId, prompt, assistantId);
 
-            // Clean up temporary thread
             threadManagerService.clearThreadForUser(tempUserId);
 
             markAiServiceHealthy();
