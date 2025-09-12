@@ -10,20 +10,15 @@ import java.util.stream.Collectors;
 @Component
 public class AiDataMapper {
 
-    /**
-     * Enhanced product recommendation extraction from AI response
-     * This is the only method we still need with OpenAI Assistant API
-     */
     public List<AiChatResponse.ProductRecommendation> extractProductRecommendations(
             String aiResponse,
             List<Product> allProducts) {
 
         String response = aiResponse.toLowerCase();
 
-        // Use LinkedHashSet to maintain order and ensure uniqueness
         Set<Product> matchedProducts = new LinkedHashSet<>();
 
-        // Strategy 1: Exact name match (highest priority)
+        // tìm sp chứa tên
         allProducts.stream()
                 .filter(product -> {
                     String productName = product.getName().toLowerCase();
@@ -31,30 +26,29 @@ public class AiDataMapper {
                 })
                 .forEach(matchedProducts::add);
 
-        // Strategy 2: Specific product patterns (high priority)
+        // tìm kw có trong ten
         allProducts.stream()
                 .filter(product -> checkSpecificProductPatterns(response, product))
                 .forEach(matchedProducts::add);
 
-        // Strategy 3: Partial name matching (medium priority)
-        if (matchedProducts.size() < 4) { // Only if we need more products
+        // khớp tên sp
+        if (matchedProducts.size() < 4) {
             allProducts.stream()
                     .filter(product -> checkPartialNameMatch(response, product))
                     .filter(product -> !matchedProducts.contains(product)) // Avoid duplicates
                     .forEach(matchedProducts::add);
         }
 
-        // Strategy 4: Keyword and category matching (lower priority)
-        if (matchedProducts.size() < 3) { // Only if we still need more products
+        // khớp kw
+        if (matchedProducts.size() < 3) {
             allProducts.stream()
                     .filter(product -> checkProductKeywords(response, product) ||
                                      checkCategoryMatch(response, product))
-                    .filter(product -> !matchedProducts.contains(product)) // Avoid duplicates
-                    .limit(3 - matchedProducts.size()) // Fill up to 3 total
+                    .filter(product -> !matchedProducts.contains(product))
+                    .limit(3 - matchedProducts.size())
                     .forEach(matchedProducts::add);
         }
 
-        // Convert to list and limit to maximum 4 products to avoid overwhelming user
         return matchedProducts.stream()
                 .limit(4)
                 .map(product -> mapToProductRecommendation(product,
@@ -62,9 +56,6 @@ public class AiDataMapper {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Check for partial name matching with improved logic
-     */
     private boolean checkPartialNameMatch(String response, Product product) {
         String productName = product.getName().toLowerCase();
         String[] productWords = productName.split("\\s+");
@@ -73,50 +64,39 @@ public class AiDataMapper {
             return false;
         }
 
-        // Check if at least 2 significant words from product name appear in response
         long matchingWords = Arrays.stream(productWords)
-                .filter(word -> word.length() > 3) // Skip short words like "gel", "for"
-                .filter(word -> !isCommonWord(word)) // Skip common skincare words
+                .filter(word -> word.length() > 3)
+                .filter(word -> !isCommonWord(word))
                 .mapToLong(word -> response.contains(word) ? 1 : 0)
                 .sum();
 
         return matchingWords >= 2;
     }
 
-    /**
-     * Check if word is a common skincare term that shouldn't be used for matching
-     */
     private boolean isCommonWord(String word) {
         Set<String> commonWords = Set.of("serum", "cream", "gel", "lotion", "cleanser",
                                         "toner", "essence", "mask", "oil", "foam", "daily");
         return commonWords.contains(word.toLowerCase());
     }
 
-    /**
-     * Check if AI response contains product-related keywords
-     */
+
     private boolean checkProductKeywords(String response, Product product) {
         String productName = product.getName().toLowerCase();
         String[] keywords = productName.split("\\s+");
 
         return Arrays.stream(keywords)
-                .filter(keyword -> keyword.length() > 4) // Increase threshold
-                .filter(keyword -> !isCommonWord(keyword)) // Skip common words
+                .filter(keyword -> keyword.length() > 4)
+                .filter(keyword -> !isCommonWord(keyword))
                 .anyMatch(response::contains);
     }
 
-    /**
-     * Check if AI response mentions product category
-     */
     private boolean checkCategoryMatch(String response, Product product) {
         if (product.getCategory() == null) return false;
         String category = product.getCategory().getName().toLowerCase();
         return response.contains(category);
     }
 
-    /**
-     * Map Product entity to ProductRecommendation DTO with custom reason
-     */
+
     public AiChatResponse.ProductRecommendation mapToProductRecommendation(Product product, String reason) {
         return new AiChatResponse.ProductRecommendation(
             product.getId(),
@@ -127,13 +107,9 @@ public class AiDataMapper {
         );
     }
 
-    /**
-     * Check for specific product name patterns that might be mentioned in AI response
-     */
     private boolean checkSpecificProductPatterns(String response, Product product) {
         String productName = product.getName().toLowerCase();
 
-        // Check for brand/product line patterns
         if (productName.contains("biogenic") && response.contains("biogenic")) {
             return true;
         }
@@ -150,7 +126,6 @@ public class AiDataMapper {
             return true;
         }
 
-        // Check for product codes or specific identifiers
         if (productName.contains("s311") && response.contains("s311")) {
             return true;
         }

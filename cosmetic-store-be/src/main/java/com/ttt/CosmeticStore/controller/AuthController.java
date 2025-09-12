@@ -9,7 +9,7 @@ import com.ttt.CosmeticStore.entity.Role;
 import com.ttt.CosmeticStore.entity.User;
 import com.ttt.CosmeticStore.repository.RoleRepository;
 import com.ttt.CosmeticStore.repository.UserRepository;
-import com.ttt.CosmeticStore.service.UserPrincipal;
+import com.ttt.CosmeticStore.service.impl.UserPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

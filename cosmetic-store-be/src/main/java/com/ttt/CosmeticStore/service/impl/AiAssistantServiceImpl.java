@@ -54,12 +54,11 @@ public class AiAssistantServiceImpl implements AiAssistantService {
 
     @Override
     public AiChatResponse processUserMessage(AiChatRequest request) {
-        // Check AI health status
         if (!isAiEnabled()) {
             return AiChatResponse.error("AI Assistant hiện đang bảo trì...");
         }
 
-        // Rate limiting check
+        // kiểm tra rate limit
         if (!aiRateLimitService.checkAndUpdateRateLimit(request.getUserId())) {
             int remainingMessages = aiRateLimitService.getRemainingMessages(request.getUserId());
             LocalDateTime resetTime = aiRateLimitService.getResetTime(request.getUserId());
@@ -84,17 +83,17 @@ public class AiAssistantServiceImpl implements AiAssistantService {
             String aiResponse = openAIAssistantApiService.processMessageWithAssistant(
                     threadId, request.getMessage(), assistantId);
 
-            //Build response with recommendations
+            //tạo request với các sản phẩm gợi í
             AiChatResponse response = AiChatResponse.success(aiResponse);
             response.setChatRoomId(sessionId);
 
-            // Extract product recommendations - keep this for UI compatibility
+            // lấy danh sch sản phẩm gợi í
             List<Product> allProducts = productRepository.findAll();
             List<AiChatResponse.ProductRecommendation> recommendations =
                     aiDataMapper.extractProductRecommendations(aiResponse, allProducts);
             response.setRecommendations(recommendations);
 
-            // Mark AI service as healthy
+            // thành công
             markAiServiceHealthy();
 
             log.info("Successfully processed AI message for userId: {}, sessionId: {}, threadId: {}",
@@ -105,10 +104,9 @@ public class AiAssistantServiceImpl implements AiAssistantService {
         } catch (Exception e) {
             log.error("Error processing AI message for userId: {}", request.getUserId(), e);
 
-            // Mark AI service as potentially unhealthy
+            // thất bại
             markAiServiceUnhealthy();
 
-            // Determine error type and return appropriate message
             if (e.getMessage().contains("timeout") || e.getMessage().contains("connect")) {
                 return AiChatResponse.error("AI Assistant đang quá tải. Vui lòng thử lại sau ít phút hoặc chat với nhân viên tư vấn.");
             } else {
@@ -124,8 +122,8 @@ public class AiAssistantServiceImpl implements AiAssistantService {
         }
 
         try {
-            // Create a temporary thread for this standalone recommendation
-            Long tempUserId = System.currentTimeMillis(); // Use timestamp as temp user ID
+            // tạo thead tạm cho yêu cầu riêng lẻ
+            Long tempUserId = System.currentTimeMillis();
             String threadId = threadManagerService.createNewThreadForUser(tempUserId);
 
             String prompt = String.format(

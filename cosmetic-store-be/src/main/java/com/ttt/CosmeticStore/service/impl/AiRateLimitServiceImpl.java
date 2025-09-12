@@ -48,14 +48,14 @@ public class AiRateLimitServiceImpl implements AiRateLimitService {
 
             AiRateLimit rateLimit = rateLimitOpt.get();
 
-            // Check if rate limit exceeded
+            // Kiểm tra rate limit
             if (rateLimit.isRateLimitExceeded(maxMessages, windowMinutes)) {
                 log.warn("Rate limit exceeded for userId: {}. Count: {}, Window: {}",
                         userId, rateLimit.getMessageCount(), rateLimit.getWindowStart());
                 return false;
             }
 
-            // Update count
+            // Cập nhật số lượng tin nhắn đã gửi
             rateLimit.incrementCount();
             aiRateLimitRepository.save(rateLimit);
 
@@ -90,7 +90,7 @@ public class AiRateLimitServiceImpl implements AiRateLimitService {
 
         } catch (Exception e) {
             log.error("Error getting remaining messages for userId: {}", userId, e);
-            return maxMessages; // Return full limit on error
+            return maxMessages;
         }
     }
 
