@@ -68,96 +68,6 @@
                                     <button class="btn btn-pink" type="submit" id="sendButton" disabled>
                                         <i class="fas fa-paper-plane me-1"></i>Gửi
                                     </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Custom styles for chat -->
-        <style>
-            .chat-room {
-                cursor: pointer;
-                transition: all 0.3s ease;
-                border: none !important;
-                border-radius: 10px !important;
-                margin-bottom: 5px;
-            }
-
-            .chat-room:hover {
-                background-color: var(--light-pink) !important;
-                transform: translateX(5px);
-            }
-
-            .chat-room.active {
-                background: linear-gradient(135deg, var(--primary-pink) 0%, var(--dark-pink) 100%) !important;
-                color: white !important;
-            }
-
-            .chat-room.active .text-muted {
-                color: rgba(255, 255, 255, 0.8) !important;
-            }
-
-            .message-bubble {
-                max-width: 70%;
-                word-wrap: break-word;
-                border-radius: 15px;
-                padding: 10px 15px;
-                margin: 5px 0;
-            }
-
-            .admin-message {
-                background: linear-gradient(135deg, var(--primary-pink) 0%, var(--dark-pink) 100%);
-                color: white;
-                margin-left: auto;
-            }
-
-            .customer-message {
-                background-color: var(--white);
-                color: var(--text-dark);
-                border: 2px solid rgba(224, 183, 179, 0.3);
-            }
-
-            .unread-badge {
-                background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-                color: white;
-                font-size: 0.7rem;
-                padding: 0.3rem 0.6rem;
-                border-radius: 12px;
-            }
-
-            .chat-container {
-                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-                border: 2px solid rgba(224, 183, 179, 0.2);
-            }
-
-            .chat-rooms-container::-webkit-scrollbar,
-            .chat-container::-webkit-scrollbar {
-                width: 6px;
-            }
-
-            .chat-rooms-container::-webkit-scrollbar-track,
-            .chat-container::-webkit-scrollbar-track {
-                background: var(--light-gray);
-                border-radius: 10px;
-            }
-
-            .chat-rooms-container::-webkit-scrollbar-thumb,
-            .chat-container::-webkit-scrollbar-thumb {
-                background: var(--primary-pink);
-                border-radius: 10px;
-            }
-
-            .message-time {
-                font-size: 0.7rem;
-                opacity: 0.7;
-            }
-        </style>
-
-        <!-- Firebase Scripts - Dynamic Config Loading -->
-        <script type="module">
             // Import Firebase v9+ modular SDK
             import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
             import {
@@ -525,26 +435,7 @@
                     messageInput.addEventListener('keypress', (e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
-                            sendMessage(e);
+                // Setup Enter key handler
                         }
-                    });
-                }
-
-                // Make functions global for buttons
                 window.refreshChatData = refreshChatData;
-                window.selectChatRoom = selectChatRoom;
 
-                // Load Firebase config and initialize
-                loadFirebaseConfig();
-            });
-
-            // Cleanup when page unloads
-            window.addEventListener('beforeunload', () => {
-                if (messagesUnsubscribe) messagesUnsubscribe();
-                if (chatRoomsUnsubscribe) chatRoomsUnsubscribe();
-            });
-        </script>
-    </content>
-</th:block>
-
-</html>

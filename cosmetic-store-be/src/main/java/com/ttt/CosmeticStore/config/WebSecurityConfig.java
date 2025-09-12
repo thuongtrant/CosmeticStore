@@ -68,7 +68,7 @@ public class WebSecurityConfig {
     private static final String[] CUSTOMER_API_ENDPOINTS  = {
             "/api/products/**", "/api/categories/**", "/api/secure/**",
             "/api/cart/**","/api/shipping-addresses/**","/api/payment/**",
-            "/api/chat/**", "/api/firebase/config"
+            "/api/chat/**", "/api/ai-chat/**", "/api/firebase/config"
     };
 
     private final UserServiceImpl userDetailsService;
