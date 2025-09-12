@@ -15,9 +15,7 @@ const AiChat = ({ userId, userName, onSwitchToHuman }) => {
         aiMessages,
         sendAiMessage,
         sendQuickResponse,
-        clearAiChat,
         loading,
-        error,
         aiEnabled,
         quickResponses,
     } = useAiChatService(userId);
@@ -211,7 +209,7 @@ const AiChat = ({ userId, userName, onSwitchToHuman }) => {
     return (
         <div className="d-flex flex-column h-100">
 
-            {/* Quick Response Buttons */}
+            {/* Quick Response  */}
             {Object.keys(quickResponses).length > 0 && (
                 <div className="p-2 border-bottom">
                     <div className="d-flex flex-wrap gap-1">
@@ -232,7 +230,7 @@ const AiChat = ({ userId, userName, onSwitchToHuman }) => {
             )}
 
             {/* Messages */}
-            <div className="flex-grow-1 p-2" style={{ overflowY: 'auto', maxHeight: 'calc(60vh - 200px)', minHeight: '200px' }}>
+            <div className="flex-grow-1 p-2" style={{ overflowY: 'auto', maxHeight: '350px', minHeight: '200px' }}>
                 {aiMessages.length === 0 ? (
                     <div className="text-center text-muted p-3">
                         <BsRobot size={30} className="mb-2" />
