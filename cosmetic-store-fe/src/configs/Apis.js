@@ -25,12 +25,6 @@ export const endpoints = {
     'shippingAddress': '/api/shipping-address',
     'defaultAddress': '/api/shipping-address/default',
 
-    // 'checkout': '/api/payment/checkout',
-    // 'checkoutSid':sid=> `/api/payment/momo/check-order/${sid}`,
-    // 'processPayment': orderNumber => `/api/payment/process/${orderNumber}`,
-    // 'orders': '/api/payment/orders',
-    // 'orderDetail': orderNumber => `/api/payment/order/${orderNumber}`,
-    // 'paymentMethods': '/api/payment/methods',
     'checkout': '/api/checkout/orders',
     'checkoutSid': sid => `/api/payment/momo/check-order/${sid}`,
     'processPayment': orderNumber => `/api/checkout/process/${orderNumber}`,
@@ -42,6 +36,12 @@ export const endpoints = {
     'chat-validate': '/api/chat/validate-user',
     'chat-send': '/api/chat/send',
     'firebase-config': '/api/firebase/config',
+
+    'ai-chat-message': '/api/ai-chat/message',
+    'ai-chat-status': '/api/ai-chat/status',
+    'ai-chat-quick-responses': '/api/ai-chat/quick-responses',
+    'ai-chat-recommendation': '/api/ai-chat/recommendation',
+    'ai-chat-new-conversation': '/api/ai-chat/new-conversation',
 };
 // export const authApis = () => {
 //     const token = cookie.load('token');
@@ -71,12 +71,10 @@ export const authApis = () => {
         } : {}
     });
 
-    // Response interceptor để handle 401/403 errors
     instance.interceptors.response.use(
         (response) => response,
         (error) => {
             if (error.response?.status === 401 || error.response?.status === 403) {
-                // Throw custom error với message tiếng Việt
                 const customError = new Error("Vui lòng đăng nhập để sử dụng tính năng này");
                 customError.needAuth = true;
                 customError.originalError = error;

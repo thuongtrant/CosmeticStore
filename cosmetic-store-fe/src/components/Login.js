@@ -290,7 +290,7 @@ const Login = () => {
                         Đăng nhập bằng Google
                     </Button>
 
-                    {/* Facebook Login Button */}
+                    {/* Facebook Login Button
                     <Button
                         variant="outline-primary"
                         className="w-100"
@@ -309,7 +309,7 @@ const Login = () => {
                     >
                         <i className="fab fa-facebook-f" style={{ fontSize: "18px" }}></i>
                         Đăng nhập bằng Facebook
-                    </Button>
+                    </Button> */}
                 </div>
 
                 <div
