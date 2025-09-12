@@ -5,7 +5,7 @@ import { Card, Button, Row, Col, Form, Accordion } from "react-bootstrap";
 import MySpinner from "./layout/MySpinner";
 import '../styles/cardProduct.css';
 import "../styles/filter.css";
-import "../styles/pagination.css"; // dùng chung style
+import "../styles/pagination.css"; 
 import { CartDispatchContext } from "../configs/CartContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import qs from "qs";
@@ -75,7 +75,7 @@ const Home = () => {
                         setTotalPages(res.data.totalPages);
                     }
                 }
-                setTimeout(() => setAnimate(true), 50); // trigger fade-in
+                setTimeout(() => setAnimate(true), 50); 
             } catch (err) {
                 console.error(err);
             } finally {
@@ -270,14 +270,14 @@ const Home = () => {
                     </Col>
 
                     {/* PRODUCTS */}
-                    <Col md={9} className="products-container"> {/* Thêm class products-container */}
+                    <Col md={9} className="products-container"> 
                         {loading ? (
                             <MySpinner animation="border" />
                         ) : (
                             <>
                                 <Row className={`fade-container ${animate ? "show" : ""}`}>
                                     {products.map((p) => (
-                                        <Col key={p.id} md={3} className="mb-4 product-col"> {/* Thêm class product-col */}
+                                        <Col key={p.id} md={3} className="mb-4 product-col"> 
                                             <Card
                                                 className="h-100 shadow-sm card-custom"
                                                 onClick={() => nav(`/productdetail/${p.id}`)}
@@ -296,7 +296,6 @@ const Home = () => {
                                                         {p.price.toLocaleString()}₫
                                                     </Card.Text>
 
-                                                    {/* Kiểm tra tồn kho trước khi hiển thị nút */}
                                                     {p.inventory && p.inventory > 0 ? (
                                                         <Button
                                                             className="btn-add-cart mt-auto"
