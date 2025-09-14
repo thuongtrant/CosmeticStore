@@ -152,7 +152,6 @@ public class OpenAIAssistantApiServiceImpl implements OpenAIAssistantApiService 
         try {
             OpenAIMessagesResponse messagesResponse = getMessages(threadId);
 
-            // Find the first assistant message (messages are ordered desc by created_at)
             for (OpenAIMessageResponse message : messagesResponse.getData()) {
                 if ("assistant".equals(message.getRole()) && message.getContent() != null && !message.getContent().isEmpty()) {
                     // Get the text content from the first content item
@@ -181,7 +180,7 @@ public class OpenAIAssistantApiServiceImpl implements OpenAIAssistantApiService 
             //gửi yêu cầu cho assistant
             OpenAIRunResponse run = runAssistant(threadId, assistantId);
 
-            // Step 3: Wait for completion with timeout
+            // Wait for completion with timeout
             String runId = run.getId();
             long startTime = System.currentTimeMillis();
             long timeoutMs = timeoutSeconds * 1000L;

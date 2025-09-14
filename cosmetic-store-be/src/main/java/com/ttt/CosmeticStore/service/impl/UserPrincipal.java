@@ -1,4 +1,4 @@
-package com.ttt.CosmeticStore.service;
+package com.ttt.CosmeticStore.service.impl;
 
 import com.ttt.CosmeticStore.entity.User;
 import org.springframework.security.core.GrantedAuthority;

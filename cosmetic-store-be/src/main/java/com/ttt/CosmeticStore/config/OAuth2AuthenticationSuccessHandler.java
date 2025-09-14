@@ -4,7 +4,7 @@ import com.ttt.CosmeticStore.entity.Role;
 import com.ttt.CosmeticStore.entity.User;
 import com.ttt.CosmeticStore.repository.RoleRepository;
 import com.ttt.CosmeticStore.repository.UserRepository;
-import com.ttt.CosmeticStore.service.UserPrincipal;
+import com.ttt.CosmeticStore.service.impl.UserPrincipal;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

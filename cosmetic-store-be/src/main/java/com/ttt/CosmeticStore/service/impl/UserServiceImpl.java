@@ -2,7 +2,6 @@ package com.ttt.CosmeticStore.service.impl;
 
 import com.ttt.CosmeticStore.entity.User;
 import com.ttt.CosmeticStore.repository.UserRepository;
-import com.ttt.CosmeticStore.service.UserPrincipal;
 import com.ttt.CosmeticStore.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;

@@ -17,7 +17,6 @@ public class ThreadManagerServiceImpl implements ThreadManagerService {
     @Autowired
     private OpenAIAssistantApiService openAIAssistantApiService;
 
-    // In-memory storage of user threads. In production, consider using Redis or database
     private final ConcurrentMap<Long, String> userThreads = new ConcurrentHashMap<>();
 
     @Override

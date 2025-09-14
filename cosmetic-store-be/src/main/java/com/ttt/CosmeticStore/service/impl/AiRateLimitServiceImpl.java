@@ -25,7 +25,7 @@ public class AiRateLimitServiceImpl implements AiRateLimitService {
     @Autowired
     private UserRepository userRepository;
 
-    @Value("${ai.rate-limit.max-messages:10}")
+    @Value("${ai.rate-limit.max-messages:3}")
     private int maxMessages;
 
     @Value("${ai.rate-limit.window-minutes:1}")
@@ -37,9 +37,8 @@ public class AiRateLimitServiceImpl implements AiRateLimitService {
             Optional<AiRateLimit> rateLimitOpt = aiRateLimitRepository.findByUserId(userId);
 
             if (rateLimitOpt.isEmpty()) {
-                // First message from this user - táº¡o record má»›i vá»›i User entity
                 User user = userRepository.findById(userId)
-                        .orElseThrow(() -> new RuntimeException("KhÃ´ng tÃ¬m tháº¥y ngÆ°á»i dÃ¹ng vá»›i ID: " + userId));
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy user " + userId));
 
                 AiRateLimit newRateLimit = new AiRateLimit(user);
                 aiRateLimitRepository.save(newRateLimit);
@@ -49,14 +48,14 @@ public class AiRateLimitServiceImpl implements AiRateLimitService {
 
             AiRateLimit rateLimit = rateLimitOpt.get();
 
-            // Check if rate limit exceeded
+            // Kiểm tra rate limit
             if (rateLimit.isRateLimitExceeded(maxMessages, windowMinutes)) {
                 log.warn("Rate limit exceeded for userId: {}. Count: {}, Window: {}",
                         userId, rateLimit.getMessageCount(), rateLimit.getWindowStart());
                 return false;
             }
 
-            // Update count
+            // Cập nhật số lượng tin nhắn đã gửi
             rateLimit.incrementCount();
             aiRateLimitRepository.save(rateLimit);
 
@@ -66,7 +65,6 @@ public class AiRateLimitServiceImpl implements AiRateLimitService {
 
         } catch (Exception e) {
             log.error("Error checking rate limit for userId: {}", userId, e);
-            // Allow request on error to avoid blocking legitimate users
             return true;
         }
     }
@@ -78,12 +76,11 @@ public class AiRateLimitServiceImpl implements AiRateLimitService {
             Optional<AiRateLimit> rateLimitOpt = aiRateLimitRepository.findByUserId(userId);
 
             if (rateLimitOpt.isEmpty()) {
-                return maxMessages; // No record means full limit available
+                return maxMessages;
             }
 
             AiRateLimit rateLimit = rateLimitOpt.get();
 
-            // If window has passed, user gets full limit
             LocalDateTime windowEnd = rateLimit.getWindowStart().plusMinutes(windowMinutes);
             if (LocalDateTime.now().isAfter(windowEnd)) {
                 return maxMessages;
@@ -93,7 +90,7 @@ public class AiRateLimitServiceImpl implements AiRateLimitService {
 
         } catch (Exception e) {
             log.error("Error getting remaining messages for userId: {}", userId, e);
-            return maxMessages; // Return full limit on error
+            return maxMessages;
         }
     }
 
@@ -103,7 +100,7 @@ public class AiRateLimitServiceImpl implements AiRateLimitService {
             Optional<AiRateLimit> rateLimitOpt = aiRateLimitRepository.findByUserId(userId);
 
             if (rateLimitOpt.isEmpty()) {
-                return LocalDateTime.now(); // No limit means immediate reset
+                return LocalDateTime.now();
             }
 
             return rateLimitOpt.get().getWindowStart().plusMinutes(windowMinutes);

@@ -8,7 +8,6 @@ import com.ttt.CosmeticStore.service.UserAuthenticationService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -129,10 +128,9 @@ public class AiChatController {
             "da_kho", "Tôi có da khô và cần dưỡng ẩm",
             "da_hon_hop", "Tôi có da hỗn hợp, vùng T nhờn, má khô",
             "da_nhay_cam", "Tôi có da nhạy cảm, dễ kích ứng",
-            "chua_biet", "Tôi chưa biết loại da của mình, hướng dẫn giúp tôi",
-            "mun", "Tôi đang gặp vấn đề về mụn",
-            "lao_hoa", "Tôi muốn chống lão hóa và làm sáng da"
-        );
+            "mun", "Tôi đang gặp vấn đề về mụn", "chua_biet", "Tôi chưa biết loại da của mình, hướng dẫn giúp tôi"
+
+                );
 
         return ResponseEntity.ok(quickResponses);
     }
