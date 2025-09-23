@@ -35,3 +35,9 @@ build/
 ### Sensitive files ###
 s-data/
 .env
+
+# Exclude all .tfvars files, which contain sensitive data
+*.tfvars
+
+# Ignore macOS system files
+.DS_Store
