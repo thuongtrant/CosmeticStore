@@ -1,10 +1,13 @@
 #!/bin/bash
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DIR_NAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-source "$SCRIPT_DIR/log-func.sh"
+source "$DIR_NAME/../../shared/log-func.sh"
+
+print_heading "Docker Build Step"
 
 func_push_docker_image() {
+	# Arguments:
     local image_repo="$1/$2"
     local version=$3
     local build_context=${4:-.}
@@ -19,12 +22,7 @@ func_push_docker_image() {
 
     # Setup Docker Buildx for multi-platform builds
     print_info "Setting up Docker Buildx for multi-platform builds"
-    
-    # Remove existing builder if it exists
-    docker buildx rm multi-platform-builder 2>/dev/null || true
-    
-    # Create and use new builder
-    if docker buildx create --use --name multi-platform-builder --driver docker-container; then
+    if docker buildx create --use --name multi-platform-builder --driver docker-container 2>/dev/null || docker buildx use multi-platform-builder; then
         print_success "Docker Buildx setup completed"
     else
         print_error "Failed to setup Docker Buildx"
@@ -50,3 +48,12 @@ func_push_docker_image() {
         return 1
     fi
 }
+
+# Docker Build and Push to Registry
+func_push_docker_image "$USERNAME" "$IMAGE_NAME" "$VERSION" "$BUILD_CONTEXT" "$DOCKER_FILE_NAME"
+
+# Set GitHub Actions outputs
+{
+	echo "image_repo=$USERNAME/$IMAGE_NAME:$VERSION"
+	echo "version=$VERSION"
+} >> "$GITHUB_OUTPUT"

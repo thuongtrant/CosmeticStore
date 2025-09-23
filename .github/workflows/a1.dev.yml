@@ -1,0 +1,281 @@
+name: A1 - CI/CD
+
+on:
+  push:
+    tags:
+      - 'v*.*.*-fe'
+      - 'v*.*.*-be'
+    # branches:
+    #   - '**'
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service Name'
+        required: true
+        type: choice
+        options:
+          - frontend
+          - backend
+        default: 'frontend'
+      version:
+        description: 'Version'
+        required: true
+        default: 'latest'
+env:
+  ENVIRONMENT: dev
+
+jobs:
+  provision-tag:
+    name: Provision Tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      version: ${{ steps.tag.outputs.version }}
+      suffix: ${{ steps.tag.outputs.suffix }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Grant Scripts Execute Permission
+      run: chmod +x ./.github/scripts/**/*.sh
+
+    - name: Get Tag on Push Event
+      id: get_tag_push
+      if: ${{ github.event_name == 'push' && github.ref_type == 'tag' }}
+      run: echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+
+    - name: Get Tag on Dispatch Event
+      id: get_tag_dispatch
+      if: ${{ github.event_name == 'workflow_dispatch' }}
+      env:
+        SERVICE: ${{ github.event.inputs.service }}
+        VERSION: ${{ github.event.inputs.version }}
+      run: ./.github/scripts/provision-tag/get_tag_dispatch.action.sh
+
+    - name: Tag
+      id: tag
+      env:
+        TAG: ${{ steps.get_tag_push.outputs.tag || steps.get_tag_dispatch.outputs.tag }}
+        PATTERN: '^(v[0-9]+\.[0-9]+\.[0-9]+)-(fe|be)$'
+      run: ./.github/scripts/provision-tag/tag.action.sh
+
+    - name: Summary
+      run: |
+        {
+            echo "✅ Tag ${{ steps.tag.outputs.tag }} provisioned!"
+        } >> $GITHUB_STEP_SUMMARY
+
+  provision-service:
+    name: Provision Service
+    runs-on: ubuntu-latest
+    needs: provision-tag
+    environment:
+      name: dev
+    if: ${{ needs.provision-tag.outputs.tag }}
+    env:
+      TAG: ${{ needs.provision-tag.outputs.tag }}
+      TAG_VERSION: ${{ needs.provision-tag.outputs.version }}
+      TAG_SUFFIX: ${{ needs.provision-tag.outputs.suffix }}
+    outputs:
+      TAG: ${{ steps.service.outputs.tag }}
+      SERVICE_NAME: ${{ steps.service.outputs.name }}
+      # SERVICE_NAME_SHORT: ${{ steps.service.outputs.short_name }}
+      DIR: ${{ steps.service.outputs.dir }}
+      DOCKER_IMAGE_VERSION: ${{ steps.service.outputs.version }}
+      DOCKER_IMAGE_NAME: ${{ steps.service.outputs.docker_image_name }}
+      SERVICE_PORT: ${{ steps.service.outputs.port }}
+      HEALTH_CHECK_URL: ${{ steps.service.outputs.health_check_url }}
+      DOCKER_FILE_NAME: ${{ steps.service.outputs.docker_file_name }}
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Grant execute permission for scripts
+      run: chmod +x ./.github/scripts/**/*.sh
+
+    - name: Service
+      id: service
+      env:
+        TAG: ${{ env.TAG }}
+        TAG_VERSION: ${{ env.TAG_VERSION }}
+        TAG_SUFFIX: ${{ env.TAG_SUFFIX }}
+        SECRETS_BACKEND: ${{ secrets.BACKEND }}
+        SECRETS_FRONTEND: ${{ secrets.FRONTEND }}
+      run: ./.github/scripts/provision-service/service.action.sh
+    - name: Summary
+      run: |
+        {
+            echo "✅ Service ${{ steps.service.outputs.name }} provisioned!"
+            echo "Version: ${{ steps.service.outputs.version }}"
+        } >> $GITHUB_STEP_SUMMARY
+
+  provision-artifact:
+    name: Provision Artifact
+    runs-on: ubuntu-latest
+    needs: provision-service
+    environment:
+      name: dev
+    if: ${{ needs.provision-service.outputs.SERVICE_NAME }}
+    env:
+      TAG: ${{ needs.provision-service.outputs.TAG || 0 }}
+      SERVICE_NAME: ${{ needs.provision-service.outputs.SERVICE_NAME || 0 }}
+      DOCKER_IMAGE_NAME: ${{ needs.provision-service.outputs.DOCKER_IMAGE_NAME || 0 }}
+      DOCKER_IMAGE_VERSION: ${{ needs.provision-service.outputs.DOCKER_IMAGE_VERSION || 0 }}
+      DOCKER_FILE_NAME: ${{ needs.provision-service.outputs.DOCKER_FILE_NAME || 0 }}
+      BUILD_CONTEXT: ${{ needs.provision-service.outputs.DIR || 0 }}
+      HEALTH_CHECK_URL: ${{ needs.provision-service.outputs.HEALTH_CHECK_URL || 0 }}
+      SERVICE_PORT: ${{ needs.provision-service.outputs.SERVICE_PORT || 0 }}
+    outputs:
+      SERVICE_NAME: ${{ env.SERVICE_NAME }}
+      DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
+      DOCKER_IMAGE_VERSION: ${{ env.DOCKER_IMAGE_VERSION }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Grant execute permission for scripts
+      run: chmod +x ./.github/scripts/**/*.sh
+    # - name: Initialize Environment Variables
+    #   id: env
+    #   env:
+    #     ENV_SECRETS: ${{ secrets.SECRETS }}
+    #     ENV_SECRETS_PREFIX: "SECRETS__"
+    #     SET_GITHUB_VAR: "ENV"
+    #   run: ./.github/scripts/provision-service/env.action.sh
+    - name: Set up Docker Buildx
+      if: ${{ github.event_name == 'push' }}
+      uses: docker/setup-buildx-action@v3
+      with:
+        platforms: linux/amd64,linux/arm64
+    
+    - name: Log in to Docker Hub
+      if: ${{ github.event_name == 'push' }}
+      uses: docker/login-action@v3
+      with:
+        registry: "docker.io"
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+    - name: Build and push Docker image
+      id: docker_build
+      if: ${{ github.event_name == 'push' }}
+      env:
+        USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+        IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
+        VERSION: ${{ env.DOCKER_IMAGE_VERSION }}
+        BUILD_CONTEXT: ${{ env.BUILD_CONTEXT }}
+        DOCKER_FILE_NAME: ${{ env.DOCKER_FILE_NAME }}
+      run: .github/scripts/provision-artifact/docker_build.action.sh
+
+    - name: Summary
+      run: |
+        {
+            echo "✅ Artifact ${{ env.SERVICE_NAME }} provisioned!"
+        } >> $GITHUB_STEP_SUMMARY
+    
+  deploy-production:
+    name: Deploy Production
+    runs-on: ubuntu-latest
+    needs: [provision-artifact, provision-service]
+    environment:
+      name: dev
+    if: ${{ needs.provision-artifact.outputs.DOCKER_IMAGE_NAME }}
+    permissions:
+      contents: write
+    env:
+      DOCKER_IMAGE_NAME: ${{ needs.provision-service.outputs.DOCKER_IMAGE_NAME }}
+      DOCKER_IMAGE_VERSION: ${{ needs.provision-service.outputs.DOCKER_IMAGE_VERSION }}
+      SERVICE_PORT: ${{ needs.provision-service.outputs.SERVICE_PORT }}
+      SERVICE_NAME: ${{ needs.provision-service.outputs.SERVICE_NAME }}
+      HEALTH_CHECK_URL: ${{ needs.provision-service.outputs.HEALTH_CHECK_URL }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Grant execute permission for scripts
+      run: chmod +x ./.github/scripts/**/*.sh
+
+    # - name: Initialize SECRETS
+    #   id: env_secrets
+    #   env:
+    #     ENV_SECRETS: ${{ secrets.SECRETS }}
+    #     ENV_SECRETS_PREFIX: "SECRETS__"
+    #     SET_GITHUB_VAR: "ENV"
+    #   run: ./.github/scripts/provision-service/env.action.sh
+    - name: Initialize CLOUD
+      id: env_cloud
+      env:
+        ENV_SECRETS: ${{ vars.CLOUD }}
+        ENV_SECRETS_PREFIX: "CLOUD__"
+        SET_GITHUB_VAR: "ENV"
+      run: ./.github/scripts/provision-service/env.action.sh
+
+    - name: Configure AWS credentials  
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-southeast-1
+
+    - name: SSH and Deploy to EC2
+      id: ec2_deploy
+      env:
+        # SSH Credentials
+        KEY_PAIR: ${{ secrets.KEY_PAIR }}
+        SSH_USER: ${{ secrets.SSH_USER }}
+        SSH_IP: ${{ env.CLOUD__WEB_INSTANCE_PUBLIC_IP }}
+        SSH_HOST: ${{ env.CLOUD__WEB_INSTANCE_PUBLIC_IP }}
+        SSH_DNS: ${{ env.CLOUD__WEB_INSTANCE_PUBLIC_DNS }}
+        INSTANCE_BASH_DIR: /home/ubuntu
+
+
+        # Application Info
+        APP_DIR: /home/ubuntu
+
+        # Docker Images and Containers
+        DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+        DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+        DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
+        DOCKER_IMAGE_VERSION: ${{ env.DOCKER_IMAGE_VERSION }}
+        DOCKER_COMPOSE_NAME: docker-compose.prod.yml
+
+        # Service Info
+        SERVICE_PORT: ${{ env.SERVICE_PORT }}
+        SERVICE_NAME: ${{ env.SERVICE_NAME }}
+        HEALTH_CHECK_URL: ${{ env.HEALTH_CHECK_URL }}
+
+
+        BACKEND_PREV_VERSION: ${{ env.DEPLOYMENT_BACKEND_SERVICE_VERSION }}
+        FRONTEND_PREV_VERSION: ${{ env.DEPLOYMENT_FRONTEND_SERVICE_VERSION }}
+
+        # Secrets
+        BACKEND_SECRETS: ${{ secrets.BACKEND }}
+        FRONTEND_SECRETS: ${{ secrets.FRONTEND }}
+        DATABASE_SECRETS: ${{ secrets.DATABASE }}
+        BACKEND_SERVICE_ENV: ${{ secrets.BACKEND_SERVICE_ENV }}
+        DATABASE_SERVICE_ENV: ${{ secrets.DATABASE_SERVICE_ENV }}
+
+
+      run: ./.github/scripts/deploy-ec2/ec2_deploy.action.sh
+      
+    - name: Commit Deployment State
+      uses: stefanzweifel/git-auto-commit-action@v6
+      with:
+        commit_message: "New Release → ${{ env.SERVICE_NAME }}:${{ env.DOCKER_IMAGE_VERSION }}"
+        file_pattern: ".github/state/deployment.txt"
+        branch: ${{ github.event.repository.default_branch }}
+
+    - name: Echo Deployment State Commit
+      run: |
+        echo "Committing changes to deployment state"
+
+    - name: Summary
+      run: |
+        {
+            echo "🎉 Service ${{ env.SERVICE_NAME }} deployment completed!"
+            echo "🔗 Home: http://${{ env.CLOUD__WEB_INSTANCE_PUBLIC_IP }}"
+            echo "🔗 DNS:  http://${{ env.CLOUD__WEB_INSTANCE_PUBLIC_DNS }}"
+        } >> $GITHUB_STEP_SUMMARY
