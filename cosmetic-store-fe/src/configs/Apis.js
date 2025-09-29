@@ -1,8 +1,8 @@
 import axios from "axios";
 import cookie from "react-cookies";
 
-// const BASE_URL = "http://localhost:8080";
-const BASE_URL = `http://${window.location.hostname}:8080`;
+const PORT = window.location.port ? `:8080` : '';
+const BASE_URL = `${window.location.protocol}//${window.location.hostname}${PORT}`;
 
 export const endpoints = {
     'register': '/api/auth/signup',
