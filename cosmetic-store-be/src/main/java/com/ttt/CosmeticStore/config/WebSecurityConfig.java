@@ -174,13 +174,12 @@ public class WebSecurityConfig {
 
                 // Session Management
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                         .maximumSessions(1)
                         .maxSessionsPreventsLogin(false)
                         .sessionRegistry(sessionRegistry())
                         .and()
                         .sessionFixation().migrateSession()
-                        .invalidSessionUrl("/login?expired=true")
                 )
 
                 // Authorization Rules
