@@ -3,7 +3,6 @@ name: cosmetic-store
 services:
   mysql:
     image: mysql:8.0
-    container_name: cosmetic-db
     env_file:
       - ./database-service.env
     ports:
@@ -28,11 +27,23 @@ services:
 
   backend:
     build: ./cosmetic-store-be
-    container_name: cosmetic-backend
     env_file:
       - ./backend-service.env
     ports:
-      - "8080:8080"
+      - 8080
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 20s
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
     networks:
       - cosmetic-network
     depends_on:
@@ -47,9 +58,8 @@ services:
 
   frontend:
     build: ./cosmetic-store-fe
-    container_name: cosmetic-frontend
     ports:
-      - 3000:80
+      - 80
     networks:
       - cosmetic-network
     depends_on:
@@ -57,7 +67,6 @@ services:
     restart: unless-stopped
   nginx:
     image: nginx:alpine
-    container_name: cosmetic-nginx
     depends_on: [frontend, backend]
     ports:
       - "80:80"
