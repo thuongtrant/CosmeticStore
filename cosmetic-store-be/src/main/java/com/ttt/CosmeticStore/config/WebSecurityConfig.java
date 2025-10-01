@@ -47,7 +47,7 @@ public class WebSecurityConfig {
             "/api/payment/momo/return",
             "/api/oauth2/redirect",
             "/api/products/**","/api/filters/**",
-            "/actuator/health", "/actuator/info"
+            "/actuator/**"
     };
 
     private static final String[] ADMIN_WEB_ENDPOINTS = {
